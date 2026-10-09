@@ -2,8 +2,7 @@ import { Focusable, GamepadButton, Navigation } from "@decky/ui";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createTown, TownGame, TownStatus } from "./town/engine";
 import { AppExtra, cachedAchievements, downloadProgress, GameEntry, loadLibrary, openGamePage, overviewMinutes, subscribeAppExtra } from "./games";
-import { InfoRow } from "./InfoRow";
-import { friendsInGame } from "./friends";
+import { friendsPlayingMap } from "./friends";
 import { openNativeGameMenu } from "./nativeMenu";
 import { findHeaderSearch, focusFirstIn } from "./steamDom";
 import { getSettings, updateSettings, useSettings } from "./settings";
@@ -39,15 +38,39 @@ function statusOf(g: GameEntry): { status: TownStatus; progress: number } {
 }
 
 function toTown(list: GameEntry[], t: Strings): TownGame[] {
+  const friends = friendsPlayingMap();
+  const now = Date.now() / 1000;
   return list.map((g) => {
     const { status, progress } = statusOf(g);
-    const hours = Math.floor(overviewMinutes(g.overview) / 60);
+    const ex = extraSeen.get(g.appid);
+    const minutes = Math.max(overviewMinutes(g.overview), ex?.minutes ?? 0);
+    const hours = Math.floor(minutes / 60);
     const label: Record<TownStatus, string> = { recent: t.stRecent, new: t.stNew, dusty: t.stDusty, closed: t.stClosed, downloading: t.stDownloading, ready: t.stReady };
-    return { appid: g.appid, name: g.name, status, progress, hours, sign: hours > 0 ? `${hours}h` : label[status], art: g.header, capsule: g.capsule };
+    // A non-Steam shortcut's playtime only comes with its details: until then show none rather than "not played".
+    const pending = !ex && g.overview?.app_type === APP_TYPE_SHORTCUT && minutes === 0;
+    const lastAt = Math.max(g.lastPlayed, ex?.lastPlayed ?? 0);
+    const ach = ex ? ex.ach : cachedAchievements(g.appid) ?? null;
+    const fr = friends?.get(g.appid) ?? 0;
+    return {
+      appid: g.appid,
+      name: g.name,
+      status,
+      progress,
+      hours,
+      sign: hours > 0 ? `${hours}h` : label[status],
+      art: g.header,
+      capsule: g.capsule,
+      icon: g.icon,
+      info: {
+        play: pending ? "" : t.playtimeShort(minutes),
+        last: lastAt > STEAM_EPOCH ? t.ago(Math.floor((now - lastAt) / DAY)) : null,
+        ach: ach ? [ach.achieved, ach.total] : null,
+        friends: fr ? t.friendsPlaying(fr) : null,
+      },
+    };
   });
 }
 
-const CHIP: Record<TownStatus, string> = { recent: "#62d6b2", dusty: "#b9adc2", downloading: "#86c9ff", closed: "#ff7f8e", new: "#ffb938", ready: "#d9cfe0" };
 
 interface Props {
   active: boolean;                // false while Steam's sections are shown
@@ -64,7 +87,8 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   const engine = useRef<ReturnType<typeof createTown> | null>(null);
   const [libKey, setLibKey] = useState(0);
   const entries = useMemo(() => loadLibrary(s.library, s.sortMode), [s.library, s.sortMode, libKey]);
-  const games = useMemo(() => toTown(entries, t), [entries, t]);
+  const [exVer, setExVer] = useState(0); // bumps when a game's details arrive (its sign updates)
+  const games = useMemo(() => toTown(entries, t), [entries, t, exVer]);
   const [sel, setSel] = useState(0);
   const [mode, setMode] = useState("browse");
   const live = useRef({ entries, games, s, t });
@@ -311,75 +335,24 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
     return { dir: f("dir"), down: f("down"), ok: f("ok"), options: f("options"), menu: f("menu") };
   }, []);
 
-  // ── The road text: name + Spindeck's icon info row ──
+  // ── The resting game's details (achievements, shortcut playtime) go onto its shop sign ──
   const tg = games[sel];
-  const tierIdx = tg ? (tg.hours >= 500 ? 3 : tg.hours >= 200 ? 2 : tg.hours >= 100 ? 1 : 0) : 0;
-  const chipLabel: Record<TownStatus, string> = { recent: t.stRecent, new: t.stNew, dusty: t.stDusty, closed: t.stClosed, downloading: t.stDownloading, ready: t.stReady };
-  // App details (achievements, shortcut playtime) once the selection rests, tagged
-  // with the appid so the previous game's values never show for the next one.
-  const [extra, setExtra] = useState<(AppExtra & { appid: number }) | null>(null);
   useEffect(() => {
     if (!current) return;
     const appid = current.appid;
-    let alive = true;
     let unsub = () => {};
     const tm = setTimeout(() => (unsub = subscribeAppExtra(appid, (x) => {
+      const old = extraSeen.get(appid);
       extraSeen.set(appid, x);
-      if (alive) setExtra({ ...x, appid });
+      if (!old || old.minutes !== x.minutes || old.lastPlayed !== x.lastPlayed || old.ach?.achieved !== x.ach?.achieved || old.ach?.total !== x.ach?.total) setExVer((v) => v + 1);
     })), extraSeen.has(appid) ? 120 : 30);
     return () => {
-      alive = false;
       clearTimeout(tm);
       unsub();
     };
   }, [current?.appid]);
-  const ex = current ? (extra?.appid === current.appid ? extra : extraSeen.get(current.appid) ?? null) : null;
-  // A non-Steam shortcut's playtime only comes with its details: until they arrive, show none rather than "not played".
-  const pending = !!current && !ex && current.overview?.app_type === APP_TYPE_SHORTCUT && overviewMinutes(current.overview) === 0;
-  const ach = ex ? ex.ach : current ? cachedAchievements(current.appid) ?? null : null;
-  const minutes = current ? Math.max(overviewMinutes(current.overview), ex?.minutes ?? 0) : 0;
-  const lastAt = Math.max(current?.lastPlayed ?? 0, ex?.lastPlayed ?? 0);
-  const friends = useMemo(() => (current ? friendsInGame(current.appid) : null), [current?.appid]);
-  // Only the states worth a word: the info icons already say the rest.
-  const statusWord = tg && (tg.status === "closed" || tg.status === "new" || tg.status === "downloading")
-    ? tg.status === "downloading" ? `${chipLabel.downloading} ${Math.floor(tg.progress)}%` : chipLabel[tg.status]
-    : null;
   const neon = s.theme === "neon";
   const display = '"Jua","Motiva Sans","Noto Sans CJK KR",sans-serif';
-  const info = (size: number) => (
-    <InfoRow
-      playtime={pending ? "" : t.playtimeShort(minutes)}
-      lastPlayed={lastAt > STEAM_EPOCH ? t.ago(Math.floor((Date.now() / 1000 - lastAt) / DAY)) : null}
-      ach={ach}
-      friends={friends ? t.friendsPlaying(friends) : null}
-      accent={neon ? "#3ff0ff" : "#ffb938"}
-      size={size}
-    />
-  );
-  const badges = (size: number) =>
-    tg && (statusWord || tierIdx) ? (
-      <span style={{ display: "flex", gap: 12, fontFamily: "Motiva Sans, sans-serif", fontSize: size, fontWeight: 800, letterSpacing: "0.05em", whiteSpace: "nowrap", textShadow: "0 2px 0 rgba(0,0,0,.65), 0 0 10px rgba(0,0,0,.6)" }}>
-        {statusWord ? <span style={{ color: CHIP[tg.status] }}>{statusWord}</span> : null}
-        {tierIdx ? <span style={{ color: ["", "#e0a46a", "#dfe7f2", "#ffd24a"][tierIdx] }}>{t.tiers[tierIdx]} {[0, 100, 200, 500][tierIdx]}h+</span> : null}
-      </span>
-    ) : null;
-  const fade = { opacity: mode === "playing" ? 0 : 1, transition: "opacity .3s" };
-  const titleShadow = neon ? "0 0 10px rgba(63,240,255,.75), 0 0 24px rgba(255,63,164,.45), 0 3px 0 rgba(0,0,0,.7)" : "0 3px 0 rgba(0,0,0,.55), 0 0 18px rgba(0,0,0,.45)";
-  /** The picked game's info: top-left under Steam's bar, like a page title. */
-  const renderInfo = () =>
-    tg ? (
-      <>
-        {/* a soft shade under Steam's bar so the title reads over a bright sky */}
-        <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: 210, pointerEvents: "none", background: neon ? "linear-gradient(to bottom, rgba(5,4,12,.78) 0%, rgba(5,4,12,.5) 55%, rgba(5,4,12,0) 100%)" : "linear-gradient(to bottom, rgba(14,22,40,.66) 0%, rgba(14,22,40,.38) 55%, rgba(14,22,40,0) 100%)" }} />
-        <div style={{ position: "absolute", left: 32, top: 54, right: 32, pointerEvents: "none", ...fade }}>
-          <div style={{ fontFamily: display, fontSize: 46, lineHeight: 1.08, letterSpacing: "0.01em", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: titleShadow }}>{tg.name}</div>
-          <div style={{ display: "flex", gap: 22, alignItems: "center", marginTop: 10 }}>
-            {info(18)}
-            {badges(16)}
-          </div>
-        </div>
-      </>
-    ) : null;
   return (
     <Focusable
       // @ts-ignore autoFocus exists at runtime
@@ -395,7 +368,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       onGamepadFocus={() => onTownFocus?.()}
       style={{ position: "absolute", inset: 0, overflow: "hidden", background: neon ? "#07060c" : "#15121b" }}
     >
-      <div ref={boxRef} style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      <div ref={boxRef} data-minimi-sel={tg?.name ?? ""} style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
         <canvas ref={cvRef} style={{ position: "absolute", display: "block", touchAction: "none" }} />
         <div style={{ position: "absolute", left: 24, top: 52, display: tg ? "none" : "flex", gap: 12, alignItems: "center", pointerEvents: "none", fontFamily: display }}>
           <span style={{ fontSize: 26, color: "#fff", textShadow: neon ? "0 0 10px #ff3fa4, 0 0 22px rgba(255,63,164,.6)" : "0 2px 0 rgba(0,0,0,.35)" }}>{neon ? t.brandNeon : t.brandTown}</span>
@@ -404,7 +377,6 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
         {games.length === 0 ? (
           <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#fff", fontFamily: display, fontSize: 22, padding: 40, textAlign: "center" }}>{t.empty}</div>
         ) : null}
-        {tg ? renderInfo() : null}
       </div>
     </Focusable>
   );

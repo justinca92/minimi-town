@@ -21,7 +21,7 @@ FLOW = """async () => {
   const box = town().closest('[data-minimi-town]').parentElement.parentElement;
   const ev = (button, extra = {}) => ({ detail: { button, ...extra }, preventDefault() { this.p = true; }, stopPropagation() {} });
   const log = [];
-  const hud = () => document.querySelector('[data-minimi-town]').innerText.split('\\n').slice(0, 4).join(' / ');
+  const hud = () => document.querySelector('[data-minimi-sel]').dataset.minimiSel + ' / top-left text: ' + JSON.stringify(document.querySelector('[data-minimi-town]').innerText.trim());
   log.push(['HUD at start', hud()]);
   town().__props.onGamepadDirection(ev(12)); town().__props.onGamepadDirection(ev(12)); await sleep(300);
   log.push(['▶▶ HUD', hud()]);

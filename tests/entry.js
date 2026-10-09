@@ -35,7 +35,7 @@ const apps = Array.from({ length: 30 }, (_, i) => ({ appid: 100 + i, app_type: 1
 // a non-Steam shortcut: no playtime in the library overview, only in its app details (which answer late)
 Object.assign(apps[1], { app_type: 1073741824, display_name: "My Emulator", installed: true, minutes_playtime_forever: 0, rt_last_time_played: 0, rt_last_time_locally_played: now - 2.5 * D });
 window.collectionStore = { GetCollection: () => ({ allApps: apps }), userCollections: [] };
-window.appStore = { GetCustomLandcapeImageURLs: (a) => ["/head" + (a.appid % 3) + ".png?" + a.appid], GetCustomHeroImageURLs: (a) => ["/hero" + (a.appid % 3) + ".png?" + a.appid] };
+window.appStore = { GetCustomLandcapeImageURLs: (a) => ["/head" + (a.appid % 3) + ".png?" + a.appid], GetCustomHeroImageURLs: (a) => ["/hero" + (a.appid % 3) + ".png?" + a.appid], GetIconURLForApp: (a) => "/icon" + (a.appid % 6) + ".png" };
 window.__runs = [];
 window.appAchievementProgressCache = { mapCache: new Map(apps.map((a, i) => [a.appid, { total: 40, unlocked: (i * 7 + 23) % 41 }])) };
 window.friendStore = { allFriends: [{ persona: { m_unGamePlayedAppID: 100 } }, { persona: { m_unGamePlayedAppID: 100 } }, { persona: { m_unGamePlayedAppID: 112 } }] };

@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.1.16
+
+- Every shop now carries its own game info on its sign, with Spindeck's icons (playtime · last played · achievements · friends playing): a neon tube sign in Neon Rain City, a painted signboard under the storefront screen in Minimi Town. Items that don't fit are left off.
+- Neon Rain City's vertical blade signs show the game's own icon in a neon frame instead of letters.
+- The title and info at the top left are gone; the street itself says it now. Welcome pennants hang below the sign instead of over it.
+
 ## 0.1.15
 
 - Flicking fast through the street (50 or 100 games in a row) no longer leaves a penguin trail: while you rush it stays inside the frame running alongside, doesn't trip, and kicks up no dust. A tumble that slides off-screen ends right away.

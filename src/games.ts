@@ -16,6 +16,7 @@ export interface GameEntry {
   hero: string[];      // candidate URLs, first that loads wins
   capsule: string[];
   header: string[];    // landscape art (the storefront screen)
+  icon: string[];      // the game's small square icon (the neon blade sign)
   minutes: number;     // total playtime
   overview: any;       // Steam's app overview object (needed for the native ≡ menu)
 }
@@ -48,6 +49,23 @@ function logArtApi() {
   } catch {
     /* ignore */
   }
+}
+
+/** The game's own icon: Steam's local URL first, then the community CDN by icon hash. */
+function iconUrls(app: any): string[] {
+  const out: string[] = [];
+  for (const m of ["GetIconURLForApp", "GetCachedIconURLForApp"]) {
+    try {
+      const u = appStore?.[m]?.(app);
+      if (typeof u === "string" && u && !out.includes(u)) out.push(u);
+    } catch {
+      /* ignore */
+    }
+  }
+  const h = app?.icon_hash;
+  if (app?.app_type !== APP_TYPE_SHORTCUT && typeof h === "string" && /^[0-9a-f]{40}$/.test(h))
+    out.push(`https://cdn.cloudflare.steamstatic.com/steamcommunity/public/images/apps/${app.appid}/${h}.jpg`);
+  return out;
 }
 
 function urls(app: any, kind: "hero" | "capsule" | "header"): string[] {
@@ -139,6 +157,7 @@ function toEntries(apps: any[], installedOnly: boolean, sort: "recent" | "alpha"
       hero: urls(a, "hero"),
       capsule: urls(a, "capsule"),
       header: urls(a, "header"),
+      icon: iconUrls(a),
       minutes: overviewMinutes(a),
       overview: a,
     }))
