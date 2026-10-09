@@ -53,7 +53,7 @@ function fit(w,h){
   cv.width=Math.round(W*K);cv.height=Math.round(H*K);
   drawFrame();
 }
-const EN={'퍽!':'Splat!','콩!':'Bonk!','철퍼덕!':'Oof!','건드리지 마!':"Don't touch me!",'왜…':'What…','그만해라':'Stop it','내려줘!!':'Put me down!!','잠깐만…':'Hang on…','으아악!':'Aaargh!','화났어!!':"I'm mad!!",'진짜!!':'Seriously!!','비다! 우비 입어야지':'Rain! Raincoat time','순찰 시작.':'On patrol.','햇살 좋다!':'What a sunny day!','흥.':'Hmph.','흥. 안 가.':'Hmph. Not going.','헉… 헉…':'Huff… huff…','헉… 헉… 가자!':"Huff… let's go!",'하아아암~':'Yaaawn~','콜록… 들어가도 돼?':'Ahem… can I come in?','으앗?':'Whoa?','으아앗!':'Waaah!','으아아아':'Whoaaa','으… 기다려!':'Ugh… wait up!','어질어질…':'So dizzy…','안녕!':'Hi!','설치부터 할게!':"Let's install it!",'버텨…!':'Hold on…!','놓쳤다아':'Lost my grip','…헤헤':'…hehe','잠깐만~!':'Wait for me~!','같이 가아~!':'Coming~!','간다.':'Going in.','…들어간다.':'…going in.'};
+const EN={'퍽!':'Splat!','콩!':'Bonk!','철퍼덕!':'Oof!','건드리지 마!':"Don't touch me!",'왜…':'What…','그만해라':'Stop it','내려줘!!':'Put me down!!','잠깐만…':'Hang on…','으아악!':'Aaargh!','화났어!!':"I'm mad!!",'진짜!!':'Seriously!!','비다! 우비 입어야지':'Rain! Raincoat time','순찰 시작.':'On patrol.','출동.':'Moving out.','햇살 좋다!':'What a sunny day!','흥.':'Hmph.','흥. 안 가.':'Hmph. Not going.','헉… 헉…':'Huff… huff…','헉… 헉… 가자!':"Huff… let's go!",'하아아암~':'Yaaawn~','콜록… 들어가도 돼?':'Ahem… can I come in?','으앗?':'Whoa?','으아앗!':'Waaah!','으아아아':'Whoaaa','으… 기다려!':'Ugh… wait up!','어질어질…':'So dizzy…','안녕!':'Hi!','설치부터 할게!':"Let's install it!",'버텨…!':'Hold on…!','놓쳤다아':'Lost my grip','…헤헤':'…hehe','잠깐만~!':'Wait for me~!','같이 가아~!':'Coming~!','간다.':'Going in.','…들어간다.':'…going in.'};
 const tx=s=>host.lang==='en'?(EN[s]??s):s;
 
 const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t, rnd=(a,b)=>a+Math.random()*(b-a);
@@ -726,7 +726,7 @@ function drawBalloons(b,left,top){
   if(b.st==='new'){const tx=left+L.card.x+CW-6,ty=top+L.card.y-4;ctx.save();ctx.translate(tx,ty);ctx.rotate(.18);ctx.fillStyle='#ffb938';rr(ctx,-26,-12,52,24,6);ctx.fill();ctx.fillStyle='#1b1420';ctx.font='15px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('NEW',0,1);ctx.restore()}
 }
 
-/* the minimi: an original round baby penguin (scarf in town, a neon-city cop with a toy blaster) */
+/* the minimi: an original round baby penguin (scarf in town; in the neon city tactical gear: short-sleeve shirt, leather shoulder rig, fingerless gloves, toy blaster) */
 function drawMinimi(sx,f){
   const s=m.state;ctx.save();
   // shadow
@@ -783,7 +783,7 @@ function drawMinimi(sx,f){
   ctx.scale(sxx,syy);
   const back=(s==='sulk'&&m.sulkKind==='back')||(s==='enter'&&m.t>.08);
   const ink='#26283a',navy=Z?'#2b3550':'#33405e',navyD=Z?'#1c233a':'#222c46',belly=f.red>0?mix('#ffffff','#ffc2b6',f.red):'#ffffff';
-  const coat='#2c4ea3',coatD='#1a2f6b',gold='#ffd34d',neonC='#3ff0ff'; // neon city: police uniform
+  const coat='#4b5249',coatD='#30352f',leather='#86562f',leatherD='#4d2f19',neonC='#3ff0ff'; // neon city: tactical shirt + leather shoulder rig
   ctx.lineWidth=3;ctx.strokeStyle=ink;
   // orange feet
   const sitting=s==='sit'||(s==='sulk'&&m.sulkKind==='back');
@@ -798,33 +798,40 @@ function drawMinimi(sx,f){
   if(!back){ // heart-shaped white face mask + round belly
     // the two eye patches slide together into one cheek patch in profile
     const cx=dd*R*.42,mrx=lerp(R*.43,R*.5,pf),mry=lerp(R*.37,R*.42,pf);ctx.fillStyle=belly;ell(ctx,lerp(-R*.33,cx,pf),-R*1.36,mrx,mry);ctx.fill();ell(ctx,lerp(R*.33,cx,pf),-R*1.36,mrx,mry);ctx.fill();ell(ctx,dd*pf*R*.3,-R*.6,R*.72*(1-pf*.22),R*.82);ctx.fill()}
-  if(Z&&back){ctx.fillStyle=coat;ctx.fillRect(-R*1.4,-R*1.7,R*2.8,R*2.9);
-    ctx.fillStyle=neonC;ctx.font='bold 10px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor=neonC;ctx.shadowBlur=6;ctx.fillText('POLICE',0,-R*1.15);ctx.shadowBlur=0;
-    ctx.fillStyle='#14182a';ctx.fillRect(-R*1.4,-R*.5,R*2.8,R*.22)}
-  else if(Z){ // police jacket, open over the white belly
-    const co=dd*pf*R*.35;ctx.fillStyle=coat;[-1,1].forEach(sd=>{ctx.beginPath();ctx.moveTo(sd*R*1.4,-R*1.02);ctx.lineTo(sd*R*.36+co,-R*1.02);ctx.lineTo(sd*R*.26+co,R);ctx.lineTo(sd*R*1.4,R);ctx.closePath();ctx.fill()});
-    ctx.strokeStyle=coatD;ctx.lineWidth=1.6;[-1,1].forEach(sd=>{ctx.beginPath();ctx.moveTo(sd*R*.36+co,-R*1.02);ctx.lineTo(sd*R*.26+co,R);ctx.stroke()});
-    // collar points
-    ctx.fillStyle=coatD;[-1,1].forEach(sd=>{ctx.beginPath();ctx.moveTo(sd*R*.36+co,-R*1.02);ctx.lineTo(sd*R*.78+co,-R*1.02);ctx.lineTo(sd*R*.5+co,-R*.8);ctx.closePath();ctx.fill()});
-    // gold buttons
-    ctx.fillStyle=gold;[-.78,-.52].forEach(y=>{ell(ctx,R*.47+co,R*y,1.9,1.9);ctx.fill()});
-    // star badge on the chest (the side facing us)
-    if(pf<.85)star(-R*.66+co*1.4,-R*.78,5.2,gold);
-    // duty belt with a buckle
-    ctx.fillStyle='#14182a';ctx.fillRect(-R*1.4,-R*.5,R*2.8,R*.22);ctx.fillStyle=gold;rr(ctx,-4+co*.9,-R*.52,8,R*.26,1.5);ctx.fill();
-    ctx.fillStyle=neonC;ctx.fillRect(-R*1.4,-R*.5,R*2.8,1.2)}
+  if(Z&&back){ // shirt, the rig crossing on the back with two magazine pouches
+    ctx.fillStyle=coat;ctx.beginPath();ctx.moveTo(-R*1.5,-R*1.12);ctx.quadraticCurveTo(0,-R*.92,R*1.5,-R*1.12);ctx.lineTo(R*1.5,R);ctx.lineTo(-R*1.5,R);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=coatD;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-R*1.5,-R*1.12);ctx.quadraticCurveTo(0,-R*.92,R*1.5,-R*1.12);ctx.stroke();
+    ctx.lineCap='round';[[-1,1],[1,-1]].forEach(([a1,a2])=>{ctx.strokeStyle=leatherD;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(a1*R*.8,-R*1.7);ctx.lineTo(a2*R*.9,-R*.66);ctx.stroke();ctx.strokeStyle=leather;ctx.lineWidth=4;ctx.stroke()});
+    ctx.fillStyle=leather;ctx.strokeStyle=leatherD;ctx.lineWidth=1.4;[-5.5,5.5].forEach(x=>{rr(ctx,x-5,-R*1.12,10,15,2);ctx.fill();ctx.stroke();ctx.fillStyle=leatherD;ctx.fillRect(x-5,-R*1.12,10,4);ctx.fillStyle=leather});
+    ctx.fillStyle=neonC;ctx.fillRect(-10.5,-R*1.12+13,21,1.2);
+    ctx.fillStyle='#23271f';ctx.fillRect(-R*1.5,-R*.5,R*3,R*.24)}
+  else if(Z){ // short-sleeve tactical shirt, leather shoulder rig with a holster on each side, belt with pouches
+    const co=dd*pf*R*.35;
+    ctx.fillStyle=coat;ctx.beginPath();ctx.moveTo(-R*1.5,-R*1.12);ctx.quadraticCurveTo(0,-R*.92,R*1.5,-R*1.12);ctx.lineTo(R*1.5,R);ctx.lineTo(-R*1.5,R);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=coatD;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-R*1.5,-R*1.12);ctx.quadraticCurveTo(0,-R*.92,R*1.5,-R*1.12);ctx.stroke();
+    ctx.strokeStyle=coatD;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(co,-R*.98);ctx.lineTo(co*.9,-R*.5);ctx.stroke();
+    ctx.lineCap='round';
+    [-1,1].forEach(sd=>{
+      const far=sd!==dd;if(far&&pf>.55)return;const x0=sd*R*.6+co,y0=-R*1.8,hx=sd*R*.76+co*1.1,hy=-R*.84;
+      ctx.strokeStyle=leatherD;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo(sd*R*.92+co,-R*1.35,hx,hy-6);ctx.stroke();
+      ctx.strokeStyle=leather;ctx.lineWidth=4;ctx.stroke();
+      ctx.save();ctx.translate(hx,hy);ctx.rotate(sd*.18);
+      ctx.fillStyle='#1b1e22';rr(ctx,-3,-11,6,8,1.5);ctx.fill();
+      ctx.fillStyle=leather;ctx.strokeStyle=leatherD;ctx.lineWidth=1.4;rr(ctx,-5,-5,10,15,3);ctx.fill();ctx.stroke();
+      ctx.fillStyle=neonC;ctx.fillRect(-3.5,2,7,1.1);ctx.restore()});
+    ctx.fillStyle='#23271f';ctx.fillRect(-R*1.5,-R*.5,R*3,R*.24);
+    ctx.fillStyle='#c9ced8';rr(ctx,-4+co*.9,-R*.52,8,R*.28,1.5);ctx.fill();
+    ctx.fillStyle=coatD;ctx.strokeStyle='#1b1e22';ctx.lineWidth=1.2;[-1,1].forEach(sd=>{if(sd!==dd&&pf>.55)return;rr(ctx,sd*R*.56+co-6,-R*.5,12,13,2);ctx.fill();ctx.stroke()})}
   ctx.restore();
   ctx.strokeStyle=ink;ctx.lineWidth=3;bodyPath();ctx.stroke();
   const sw=Math.sin(T*3+m.phase*.5)*.15+(moving?-m.dir*.25:0)+(s==='air'?Math.sin(T*25)*.4:0);
-  if(Z){ // police cap: crown, neon band, visor toward the way it faces, gold badge
-    const fx=back?0:dd*pf*R*.32;
-    ctx.lineWidth=2.4;ctx.strokeStyle=ink;
-    ctx.fillStyle=coat;ctx.beginPath();ctx.moveTo(-R*.98,-R*1.86);ctx.bezierCurveTo(-R*1.12,-R*2.72,R*1.12,-R*2.72,R*.98,-R*1.86);ctx.closePath();ctx.fill();ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.ellipse(-R*.42,-R*2.32,7,2.4,-.35,0,Math.PI*2);ctx.fill();
-    ctx.fillStyle='#14182a';rr(ctx,-R*.99,-R*1.98,R*1.98,R*.2,2);ctx.fill();ctx.stroke();
-    ctx.fillStyle=neonC;ctx.fillRect(-R*.95,-R*1.9,R*1.9,1.4);
-    if(!back){ctx.fillStyle='#0d1020';ctx.beginPath();ctx.ellipse(fx+dd*pf*R*.18,-R*1.78,R*(.78+pf*.12),R*.13,dd*pf*.12,0,Math.PI);ctx.fill();ctx.stroke();
-      const bx=fx;ctx.fillStyle=gold;ctx.beginPath();ctx.moveTo(bx,-R*2.3);ctx.lineTo(bx+5.5,-R*2.24);ctx.lineTo(bx+4.5,-R*2.08);ctx.lineTo(bx,-R*2.0);ctx.lineTo(bx-4.5,-R*2.08);ctx.lineTo(bx-5.5,-R*2.24);ctx.closePath();ctx.fill();ctx.lineWidth=1.2;ctx.stroke()}}
+  if(Z){ // spiky crest and a neon earpiece with a mic
+    ctx.save();ctx.translate(dd*pf*R*.15,-R*2.16);ctx.rotate(sw-dd*pf*.25);ctx.strokeStyle=navyD;ctx.lineWidth=3.2;ctx.lineCap='round';
+    [[-6,-.7],[-2,-.25],[2,.2],[6,.65]].forEach(([x,a])=>{ctx.beginPath();ctx.moveTo(x*.5,2);ctx.quadraticCurveTo(x+Math.sin(a)*4,-5,x+Math.sin(a)*9,-10);ctx.stroke()});ctx.restore();
+    if(!back){const ed=pf>.3?dd:1,ex=ed*R*(.9-pf*.3)+dd*pf*R*.1,ey=-R*1.55;
+      ctx.strokeStyle='#14182a';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(ex,ey+4);ctx.quadraticCurveTo(ex-ed*2,-R*1.05,ex-ed*R*.38,-R*1.0);ctx.stroke();
+      ctx.fillStyle='#14182a';ell(ctx,ex,ey,5,6);ctx.fill();ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=`rgba(63,240,255,${.7+.3*Math.sin(T*4)})`;ell(ctx,ex,ey,2.2,2.2);ctx.fill();ctx.restore();
+      ctx.fillStyle=neonC;ell(ctx,ex-ed*R*.38,-R*1.0,1.8,1.8);ctx.fill()}}
   else{ // fluffy head tuft + knit scarf
     ctx.save();ctx.translate(0,-R*2.16);ctx.rotate(sw);ctx.strokeStyle=navyD;ctx.lineWidth=3;ctx.lineCap='round';
     [[-4,-.5],[0,0],[4,.5]].forEach(([x,a])=>{ctx.beginPath();ctx.moveTo(x*.5,2);ctx.quadraticCurveTo(x+Math.sin(a)*3,-4,x+Math.sin(a)*6,-8);ctx.stroke()});ctx.restore();
@@ -837,7 +844,10 @@ function drawMinimi(sx,f){
   ctx.lineWidth=2.6;
   [[-1,armL],[1,armR]].forEach(([sd,a])=>{const far=sd!==dd,fa=far?clamp((.7-pf)/.35,0,1):1;if(fa<=.02)return;ctx.save();ctx.translate(sd*R*.92*(1-(far?0:pf*.72)),-R*1.08);
     let r=sd*-a*.9;if(!far&&pf>0&&!['held','air','splatW','splatG','trip'].includes(s))r=lerp(r,(moving?Math.sin(ph)*.75:0)-dd*.12,pf);if(aiming&&!far)r=-dd*1.35+Math.sin(ph*2)*.04; // arm out, aiming ahead
-    ctx.rotate(r);ctx.fillStyle=Z?coat:navy;ctx.beginPath();ctx.ellipse(sd*2.5*fa,12,Math.max(.5,5.8*fa),15,sd*-.12,0,Math.PI*2);ctx.fill();ctx.stroke();
+    ctx.rotate(r);ctx.fillStyle=navy;ctx.beginPath();ctx.ellipse(sd*2.5*fa,12,Math.max(.5,5.8*fa),15,sd*-.12,0,Math.PI*2);ctx.fill();ctx.stroke();
+    if(Z){ctx.save();ctx.beginPath();ctx.ellipse(sd*2.5*fa,12,Math.max(.5,5.8*fa),15,sd*-.12,0,Math.PI*2);ctx.clip();
+      ctx.fillStyle=coat;ctx.fillRect(-12,-6,24,13);ctx.fillStyle='#1d2027';ctx.fillRect(-12,19,24,12);ctx.fillStyle=neonC;ctx.fillRect(-12,19,24,1.1);ctx.restore();
+      ctx.strokeStyle=ink;ctx.lineWidth=2.6;ctx.beginPath();ctx.ellipse(sd*2.5*fa,12,Math.max(.5,5.8*fa),15,sd*-.12,0,Math.PI*2);ctx.stroke()}
     if(armed&&s!=='shoot'&&(s==='brace'?sd===1:!far)){ctx.translate(sd*2.5*fa,24);ctx.rotate(Math.PI/2);ctx.scale(1,s==='brace'?1:dd);drawGun(s==='brace'&&m.t>.25||aiming)} // always in hand; held low unless aiming
     ctx.restore()});
   if(s==='shoot'){ // aimed at the glass: the blaster points at where the shot lands
@@ -849,7 +859,7 @@ function drawMinimi(sx,f){
     ctx.restore()}
   if(!back)drawFace(f);
   else{ // back view: little tail nub
-    ctx.fillStyle=Z?coat:navyD;ctx.strokeStyle=ink;ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(-7,-R*.3);ctx.quadraticCurveTo(0,-R*.3+14+Math.sin(T*8)*1.5,7,-R*.3);ctx.closePath();ctx.fill();ctx.stroke()}
+    ctx.fillStyle=navyD;ctx.strokeStyle=ink;ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(-7,-R*.3);ctx.quadraticCurveTo(0,-R*.3+14+Math.sin(T*8)*1.5,7,-R*.3);ctx.closePath();ctx.fill();ctx.stroke()}
   ctx.restore();
   // extras in screen-ish space (not rotated)
   const hx=sx,hy=m.y-2.45*R*m.scale-bob-6;
@@ -946,7 +956,7 @@ function drawFrame(){
   ctx.restore();
   if(holes.length||flashT>0||beamT>0)drawHoles();
   // off-screen marker
-  const msx=m.x+ox;if(m.state!=='inside'&&(msx<-20||msx>W+20)){const side=msx<0?-1:1,x=side<0?34:W-34,y=FEET-40;ctx.fillStyle='rgba(22,17,30,.8)';ell(ctx,x,y,24,24);ctx.fill();ctx.fillStyle=Z?'#2c4ea3':'#33405e';ell(ctx,x,y+2,16,15);ctx.fill();ctx.fillStyle='#fff';ell(ctx,x-4,y+1,6,6);ctx.fill();ell(ctx,x+4,y+1,6,6);ctx.fill();ctx.fillStyle='#26283a';ell(ctx,x-4,y,1.8,2.4);ctx.fill();ell(ctx,x+4,y,1.8,2.4);ctx.fill();ctx.fillStyle='#ff9d3a';ell(ctx,x,y+6,3,2);ctx.fill();ctx.fillStyle='#ffb938';ctx.beginPath();ctx.moveTo(x+side*30,y);ctx.lineTo(x+side*22,y-7);ctx.lineTo(x+side*22,y+7);ctx.fill()}
+  const msx=m.x+ox;if(m.state!=='inside'&&(msx<-20||msx>W+20)){const side=msx<0?-1:1,x=side<0?34:W-34,y=FEET-40;ctx.fillStyle='rgba(22,17,30,.8)';ell(ctx,x,y,24,24);ctx.fill();ctx.fillStyle=Z?'#4b5249':'#33405e';ell(ctx,x,y+2,16,15);ctx.fill();ctx.fillStyle='#fff';ell(ctx,x-4,y+1,6,6);ctx.fill();ell(ctx,x+4,y+1,6,6);ctx.fill();ctx.fillStyle='#26283a';ell(ctx,x-4,y,1.8,2.4);ctx.fill();ell(ctx,x+4,y,1.8,2.4);ctx.fill();ctx.fillStyle='#ff9d3a';ell(ctx,x,y+6,3,2);ctx.fill();ctx.fillStyle='#ffb938';ctx.beginPath();ctx.moveTo(x+side*30,y);ctx.lineTo(x+side*22,y-7);ctx.lineTo(x+side*22,y+7);ctx.fill()}
 }
 
 
@@ -1044,7 +1054,7 @@ function patchGames(list){
 function setTheme(t,talk){
   theme=t==='neon'?'neon':'town';Z=theme==='neon';
   B.forEach(b=>{b.fac=null});
-  if(talk&&mode==='browse')say(Z?'순찰 시작.':'햇살 좋다!',1.4);
+  if(talk&&mode==='browse')say(Z?'출동.':'햇살 좋다!',1.4);
   drawFrame();
 }
 function setSky(s){skyMode=s||'auto';drawFrame()}
