@@ -836,8 +836,8 @@ function drawGrandOpening(b,left,top){
     for(let k=0;k<12;k++){const a=k/12*Math.PI*2;ctx.fillStyle=pet[k%3];if(Z){ctx.shadowColor=pet[k%3];ctx.shadowBlur=6}ell(ctx,fx+Math.cos(a)*r,fy-14+Math.sin(a)*r,6.5,6.5);ctx.fill()}
     ctx.shadowBlur=0;ctx.fillStyle=Z?'#2a1030':'#5f9a54';ell(ctx,fx,fy-14,11,11);ctx.fill();
     // the ribbon hanging down the middle
-    ctx.fillStyle=Z?'#ffd24a':'#d6303c';ctx.fillRect(fx-5,fy-14,10,40);ctx.fillStyle=Z?'#16081a':'#fff6d8';ctx.font='8px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';
-    (host.lang==='en'?['C','O','N','G']:['축','개','업']).forEach((ch,k)=>ctx.fillText(ch,fx,fy-6+k*10));
+    ctx.fillStyle=Z?'#ffd24a':'#d6303c';ctx.fillRect(fx-5,fy-14,10,host.lang==='en'?54:40);ctx.fillStyle=Z?'#16081a':'#fff6d8';ctx.font='8px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';
+    (host.lang==='en'?['G','R','A','T','Z']:['축','개','업']).forEach((ch,k)=>ctx.fillText(ch,fx,fy-6+k*10));
   });
 }
 function drawBalloons(b,left,top){

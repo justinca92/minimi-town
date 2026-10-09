@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.22
+
+- The flower stands' ribbon reads GRATZ in English.
+
 ## 0.1.21
 
 - Recently played shops hang a real OPEN sign: a little plate swinging on the door glass in Minimi Town, a classic window neon (blue frame, red letters) in Neon Rain City.
