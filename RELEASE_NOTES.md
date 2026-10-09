@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.34
+
+- Browsing with the left stick (or the D-pad) no longer buzzes the trackpads. The trackpad mode the penguin's hand needs (Steam's keyboard action set) adds pad haptics to stick movement, so it steps aside while you browse and comes back about a second after the stick rests.
+
 ## 0.1.33
 
 - The trackpad hand has three poses: an open hand hovering while your thumb is on the pad, a palm-down hand patting the top of the head in time with your rubbing (토닥토닥, with little pat marks), and thumb and index pinching the top of the head when you grab.

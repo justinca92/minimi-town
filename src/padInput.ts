@@ -66,6 +66,21 @@ export function padButton(button: number, down: boolean): boolean {
   return true;
 }
 
+let pausedUntil = 0;
+let padPaused = false;
+/** The stick or D-pad is being used: step out of the trackpad mode for a while (no pad haptics on stick moves). */
+export function pausePad(ms = 1200) {
+  pausedUntil = Date.now() + ms;
+  if (padPaused || !users) return;
+  padPaused = true;
+  padDiag.on = false;
+  try {
+    SteamClient?.Input?.SetKeyboardActionset?.(false, false);
+  } catch {
+    /* ignore */
+  }
+}
+
 // One Steam registration shared by every subscriber (a hidden copy of the home can subscribe too).
 let users = 0;
 let stopSteam: (() => void) | null = null;
@@ -119,12 +134,18 @@ function startSteam(): () => void {
       // A copy of the home that was taken out of the page never cleans up: drop it, and stop when none is left.
       for (const [f, alive] of [...listeners]) if (!alive()) dropListener(f);
       if (!users) return;
+      const paused = Date.now() < pausedUntil;
+      if (paused === padPaused && paused) return;
       try {
-        Input.SetKeyboardActionset(true, false);
+        // Paused while you browse with the stick / D-pad: in this mode Steam adds trackpad
+        // haptics to stick movement. Back on once the stick has been still for a moment.
+        Input.SetKeyboardActionset(!paused, false);
+        padPaused = paused;
+        padDiag.on = !paused;
       } catch {
         /* ignore */
       }
-    }, 1000);
+    }, 250);
   }, START_DELAY_MS);
   return () => {
     clearTimeout(startT);
@@ -146,6 +167,7 @@ function startSteam(): () => void {
     }
     uiTouch = analogTouch = false;
     cur.touch = cur.click = false;
+    padPaused = false;
   };
 }
 

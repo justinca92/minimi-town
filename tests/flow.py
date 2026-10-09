@@ -66,6 +66,9 @@ FLOW = """async () => {
   await sleep(500);
   const dd = ev(12); town().__props.onGamepadDirection(dd); await sleep(300);
   log.push(['real D-pad ▶ still moves', sel() !== selBefore]);
+  const kbLast = () => (window.__ks || []).filter(k => /^kb:/.test(k)).slice(-1)[0];
+  log.push(['  trackpad mode paused while browsing with the stick', kbLast()]);
+  await sleep(1600); log.push(['  back on after the stick rests', kbLast()]);
   town().__props.onGamepadDirection(ev(13)); await sleep(1500);
   // Ⓐ: the penguin walks in, then the game's page opens (nothing starts by itself)
   window.__nav = null;

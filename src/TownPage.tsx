@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createTown, TownGame, TownStatus } from "./town/engine";
 import { AppExtra, cachedAchievements, downloadProgress, GameEntry, loadLibrary, openGamePage, overviewMinutes, subscribeAppExtra } from "./games";
 import { friendsPlayingMap } from "./friends";
-import { noteDir, padButton, padDiag, padRecentlyTouched, subscribeLeftPad } from "./padInput";
+import { noteDir, padButton, padDiag, padRecentlyTouched, pausePad, subscribeLeftPad } from "./padInput";
 import { openNativeGameMenu } from "./nativeMenu";
 import { findHeaderSearch, focusFirstIn } from "./steamDom";
 import { getSettings, updateSettings, useSettings } from "./settings";
@@ -334,6 +334,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
         // The left trackpad also arrives as D-pad presses, and its touch can be reported a moment
         // later: wait a beat, and move only if no thumb is on the pad (the pad is the hand now).
         if (padRecentlyTouched()) return;
+        pausePad(); // browsing with the stick / D-pad: no trackpad mode (and its pad haptics) meanwhile
         const d = b === GamepadButton.DIR_RIGHT ? 1 : -1;
         setTimeout(() => {
           if (!padRecentlyTouched()) engine.current?.nav(d);
