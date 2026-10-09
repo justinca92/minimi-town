@@ -8,13 +8,11 @@ export type SortMode = "recent" | "alpha" | "playtime";
 export type Theme = "town" | "neon";
 export type SkyMode = "auto" | "day" | "dusk" | "night";
 export type CardStyle = "wide" | "capsule";
-export type InfoStyle = "top" | "sign" | "tag";
 
 export interface TownSettings {
   homeEnabled: boolean;   // replace the Steam home screen with the town
   theme: Theme;           // "town" = sunny street, "neon" = rainy neon city
   sky: SkyMode;           // town theme only: follow the clock or pin a sky
-  infoStyle: InfoStyle;   // where the picked game's info shows: top-left, a sidewalk board, or a tag under its screen
   cardStyle: CardStyle;   // storefront screens: wide capsule (460×215) or tall capsule (600×900), shown whole
   library: string;        // "base:installed" / "base:all" or a Steam collection id
   sortMode: SortMode;
@@ -31,7 +29,6 @@ export const DEFAULTS: TownSettings = {
   theme: "town",
   sky: "auto",
   cardStyle: "wide",
-  infoStyle: "top",
   library: "base:installed",
   sortMode: "recent",
   soundEnabled: true,

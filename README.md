@@ -1,6 +1,6 @@
 # Minimi Town
 
-**Your Steam Deck library as a little street.** Every game is a storefront, and a baby penguin walks along the street to whichever one you pick. Press Ⓐ and it waddles to the door, turns around and goes in, and your game starts. When you quit, it comes back out with a yawn.
+**Your Steam Deck library as a little street.** Every game is a storefront, and a baby penguin walks along the street to whichever one you pick. Press Ⓐ and it waddles to the door, turns around and goes in, and the game's page opens. Come back and it steps out of the same door.
 
 [한국어](#한국어) · [![Support on Ko-fi](https://img.shields.io/badge/Support-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/jhw0806)
 
@@ -17,7 +17,7 @@
 | Input | Action |
 |---|---|
 | D-pad ◀ ▶ | Move along the street |
-| Ⓐ | Play (the penguin goes in). Not installed: opens the game's page to install |
+| Ⓐ | The penguin goes in and the game's page opens (Play / Install are there) |
 | L2 | Search, like ▲ on the stock home |
 | R2 | What's New / Friends / Recommended (Steam's own sections), sliding in from the right |
 | L2 there (or swipe right) | Back to the street |
@@ -50,9 +50,9 @@ Built on Spindeck's home-screen plumbing. The penguin, the buildings and every p
 
 ## 한국어
 
-**스팀덱 라이브러리를 작은 거리로.** 게임 하나가 가게 하나이고, 아기 펭귄이 고른 가게 앞까지 걸어가요. Ⓐ를 누르면 문 앞으로 뒤뚱뒤뚱 걸어가 뒤돌아 들어가고 게임이 시작돼요. 게임을 끄면 하품하며 다시 나와요.
+**스팀덱 라이브러리를 작은 거리로.** 게임 하나가 가게 하나이고, 아기 펭귄이 고른 가게 앞까지 걸어가요. Ⓐ를 누르면 문 앞으로 뒤뚱뒤뚱 걸어가 뒤돌아 들어가고 게임 페이지가 열려요. 돌아오면 같은 문에서 걸어 나와요.
 
-- **조작:** ◀ ▶ 이동 · Ⓐ 실행 · L2 검색 · R2 새 소식·친구·추천(오른쪽에서 밀려 들어옴, L2로 복귀) · ≡ 게임 메뉴 · Ⓨ 흔들기 · 터치로 펭귄 잡아 던지기/콕콕/쓰다듬기
+- **조작:** ◀ ▶ 이동 · Ⓐ 게임 페이지 · L2 검색 · R2 새 소식·친구·추천(오른쪽에서 밀려 들어옴, L2로 복귀) · ≡ 게임 메뉴 · Ⓨ 흔들기 · 터치로 펭귄 잡아 던지기/콕콕/쓰다듬기
 - **테마:** 미니미 타운(시간 따라 바뀌는 하늘) / 네온 레인 시티(비 오는 밤, CRT 화면)
 - **플레이 시간 등급:** 100시간 단골 · 200시간 명소 · 500시간 전설 건물이 점점 화려해져요
 - **설정:** Quick Access(…) → Minimi Town

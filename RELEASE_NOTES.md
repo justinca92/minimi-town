@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.1.4
+
+- Ⓐ: the penguin goes in through the door and the game's page opens. Nothing starts by itself any more; Play is on that page.
+- Back from the game page (or search), the same game is still picked, and the penguin steps out of its door.
+- The picked game's name and info now sit top-left under Steam's bar, with Spindeck's icon line: playtime, last played, achievements (with a bar), friends playing, plus state and playtime tier where they apply.
+- The road's centre line is back in its place, toned down to grey.
+
 ## 0.1.3
 
 - D-pad ▲ / ▼ never switch between the street and the sections any more (only R2 / L2 do).

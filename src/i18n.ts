@@ -29,7 +29,7 @@ const ko = {
   hours: (h: number) => `총 ${h}시간`,
   tiers: ["", "단골", "명소", "전설"],
   // buttons
-  play: "실행",
+  play: "게임 페이지",
   install: "설치",
   menu: "메뉴",
   search: "검색",
@@ -93,7 +93,7 @@ const ko = {
   pControls: "조작",
   controls: [
     ["◀ ▶", "건물 이동"],
-    ["Ⓐ", "실행 (펭귄이 문으로 들어가요)"],
+    ["Ⓐ", "게임 페이지 (펭귄이 문으로 들어가요)"],
     ["L2", "검색"],
     ["R2", "새 소식 · 친구 · 추천 (L2로 복귀)"],
     ["≡", "게임 메뉴"],
@@ -123,7 +123,7 @@ const en: Strings = {
   friendsPlaying: (n) => `${n} PLAYING`,
   hours: (h) => `${h} h total`,
   tiers: ["", "Regular", "Landmark", "Legend"],
-  play: "Play",
+  play: "Game page",
   install: "Install",
   menu: "Menu",
   search: "Search",
@@ -185,7 +185,7 @@ const en: Strings = {
   pControls: "Controls",
   controls: [
     ["◀ ▶", "Move along the street"],
-    ["Ⓐ", "Play (the penguin goes in)"],
+    ["Ⓐ", "Game page (the penguin goes in)"],
     ["L2", "Search"],
     ["R2", "What's New · Friends · Recommended (L2 back)"],
     ["≡", "Game menu"],
