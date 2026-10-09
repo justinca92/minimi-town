@@ -275,7 +275,7 @@ function update(dt){
   const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*Math.PI/180;
   // doors ease open/closed; lights come on when you pick the building
   {const ci=Math.round(camX/SP),bi0=Math.max(0,ci-5),bi1=Math.min(B.length-1,ci+5);for(let i=bi0;i<=bi1;i++){const b=B[i];
-   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));const lt=(b.i===sel||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*(lt?5:3)));if(b.cele>0)b.cele-=dt}}
+   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));const lt=(b.i===sel||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*(lt?3:2.5)));if(b.cele>0)b.cele-=dt}}
   // mood regen
   if(T-lastBother>5&&mood<70){mood=Math.min(70,mood+dt*1.1)}
   // timers
@@ -522,22 +522,32 @@ function drawRain(){
   ctx.lineWidth=1.2;splash.forEach(s=>{const k=s.t/.32;ctx.strokeStyle=`rgba(190,225,255,${.5*(1-k)})`;ell(ctx,s.x,s.y,3+k*12*s.z,1+k*3*s.z);ctx.stroke()});
   const g=ctx.createLinearGradient(0,H-160,0,H);g.addColorStop(0,'rgba(120,60,170,0)');g.addColorStop(1,'rgba(120,60,170,.22)');ctx.fillStyle=g;ctx.fillRect(-300,H-160,W+600,460);
 }
+// Street lamps stand on the sidewalk in front of the shops (drawn after them),
+// a bit lower than the shop roofs. Lit (night, dusk, or the neon city), each
+// throws a cone of light down onto the shop front and a pool on the pavement.
+const LAMP_TOP=SIDE-196;
 function drawLamp(x,sk,front,i=0){
-  if(Z){const lc=i%2?'#ff3fa4':'#3ff0ff';
-    if(!front){ctx.fillStyle='#0c0b12';ctx.fillRect(x-3,SIDE-236,6,236+40);ctx.fillRect(x-9,SIDE+30,18,10);
-      ctx.beginPath();ctx.moveTo(x,SIDE-236);ctx.quadraticCurveTo(x,SIDE-256,x+22,SIDE-252);ctx.lineWidth=5;ctx.strokeStyle='#0c0b12';ctx.stroke();
-      ctx.fillStyle='#0c0b12';rr(ctx,x+12,SIDE-256,24,12,4);ctx.fill();ctx.fillStyle=lc;ctx.fillRect(x+15,SIDE-246,18,4)}
-    else{ctx.save();ctx.globalCompositeOperation='lighter';
-      let g=ctx.createRadialGradient(x+24,SIDE-242,2,x+24,SIDE-242,80);g.addColorStop(0,hexA(lc,.55));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.fillRect(x-60,SIDE-322,170,160);
-      g=ctx.createRadialGradient(x+24,SIDE+34,4,x+24,SIDE+34,130);g.addColorStop(0,hexA(lc,.28));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x+24,SIDE+34,140,36,0,0,Math.PI*2);ctx.fill();ctx.restore()}
+  const lit=Z||sk!=='day',lc=Z?(i%2?'#ff3fa4':'#3ff0ff'):'#ffd98a',pole=Z?'#0c0b12':'#2f2a36';
+  const hx=x+24,hy=LAMP_TOP-8;
+  if(!front){
+    ctx.fillStyle=pole;ctx.fillRect(x-3,LAMP_TOP,6,SIDE+40-LAMP_TOP);ctx.fillRect(x-9,SIDE+30,18,10);
+    ctx.beginPath();ctx.moveTo(x,LAMP_TOP);ctx.quadraticCurveTo(x,LAMP_TOP-18,x+22,LAMP_TOP-15);ctx.lineWidth=5;ctx.strokeStyle=pole;ctx.stroke();
+    ctx.fillStyle=pole;rr(ctx,x+12,LAMP_TOP-19,24,12,4);ctx.fill();
+    ctx.fillStyle=lit?(Z?lc:'#fff1b8'):'#e8e2d0';ctx.fillRect(x+15,LAMP_TOP-9,18,4);
     return}
-  const night=sk!=='day';
-  if(!front){ctx.fillStyle='#2f2a36';ctx.fillRect(x-3,SIDE-236,6,236+40);ctx.fillRect(x-9,SIDE+30,18,10);
-    ctx.beginPath();ctx.moveTo(x,SIDE-236);ctx.quadraticCurveTo(x,SIDE-256,x+22,SIDE-252);ctx.lineWidth=5;ctx.strokeStyle='#2f2a36';ctx.stroke();
-    ctx.fillStyle='#2f2a36';rr(ctx,x+12,SIDE-256,24,12,4);ctx.fill();ctx.fillStyle=night?'#fff1b8':'#e8e2d0';ctx.fillRect(x+16,SIDE-245,16,5)}
-  else if(night){ctx.save();ctx.globalCompositeOperation='lighter';
-    let g=ctx.createRadialGradient(x+24,SIDE-242,2,x+24,SIDE-242,70);g.addColorStop(0,'rgba(255,220,140,.55)');g.addColorStop(1,'rgba(255,220,140,0)');ctx.fillStyle=g;ctx.fillRect(x-50,SIDE-312,150,140);
-    g=ctx.createRadialGradient(x+24,SIDE+34,4,x+24,SIDE+34,120);g.addColorStop(0,`rgba(255,214,140,${sk==='night'?.32:.16})`);g.addColorStop(1,'rgba(255,214,140,0)');ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(x+24,SIDE+34,130,34,0,0,Math.PI*2);ctx.fill();ctx.restore()}
+  if(!lit)return;
+  const k=Z?1:sk==='night'?1:.55;
+  ctx.save();ctx.globalCompositeOperation='lighter';
+  // the cone, falling on the shop front and the pavement
+  const cg=ctx.createLinearGradient(0,hy,0,SIDE+40);cg.addColorStop(0,hexA(lc,.26*k));cg.addColorStop(.75,hexA(lc,.08*k));cg.addColorStop(1,hexA(lc,0));
+  ctx.fillStyle=cg;ctx.beginPath();ctx.moveTo(hx-9,hy);ctx.lineTo(hx+9,hy);ctx.lineTo(hx+100,SIDE+40);ctx.lineTo(hx-100,SIDE+40);ctx.closePath();ctx.fill();
+  // a soft wash on the wall behind
+  let g=ctx.createRadialGradient(hx,SIDE-70,10,hx,SIDE-70,150);g.addColorStop(0,hexA(lc,.10*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.fillRect(hx-150,SIDE-220,300,300);
+  // the bulb
+  g=ctx.createRadialGradient(hx,hy,2,hx,hy,46);g.addColorStop(0,hexA(lc,.6*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.fillRect(hx-46,hy-46,92,92);
+  // the pool on the pavement
+  g=ctx.createRadialGradient(hx,SIDE+34,4,hx,SIDE+34,130);g.addColorStop(0,hexA(lc,.3*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(hx,SIDE+34,140,34,0,0,Math.PI*2);ctx.fill();
+  ctx.restore();
 }
 function drawBuilding(b,sk,ox){
   if(!b.fac)renderFacade(b);if(!b.img)loadArt(b);if(!b.card)renderCard(b);
@@ -557,8 +567,7 @@ function drawBuilding(b,sk,ox){
     if(b.g.roof===1){ctx.fillStyle=`rgba(255,50,70,${Math.sin(T*4+b.i)>0?1:.25})`;ell(ctx,left+BW/2+42,top-34,3,3);ctx.fill()}}
   // windows
   const dusty=b.st==='dusty',closed=b.st==='closed';
-  // a short flicker while the lights come on, like a switch being flipped
-  const lit=b.light*(b.i===sel&&b.light>.05&&b.light<.8&&Math.sin(T*53+b.i*3)<-.2?.35:1);const wins=L.wins.concat(L.up);
+  const lit=b.light*b.light*(3-2*b.light);const wins=L.wins.concat(L.up); // lights come up smoothlyconst wins=L.wins.concat(L.up);
   wins.forEach((w,j)=>{const x=left+w.x,y=top+w.y;
     ctx.fillStyle=night?'#1d2235':dusk?'#3b3a55':'#33405a';ctx.fillRect(x,y,w.w,w.h);
     if(!night){ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(x,y+w.h*.7);ctx.lineTo(x+w.w*.6,y);ctx.lineTo(x+w.w*.85,y);ctx.lineTo(x,y+w.h);ctx.fill()}
@@ -894,9 +903,9 @@ function drawFrame(){
   Z?drawGroundNeon(ox):drawGround(sk);
   const lampXs=[];const li0=Math.max(-1,Math.floor((camX-900)/SP)),li1=Math.min(B.length-1,Math.ceil((camX+900)/SP));for(let i=li0;i<=li1;i++)lampXs.push(i*SP+SP/2);
   const vis=x=>x+ox>-420&&x+ox<W+420;
-  lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,false,i+li0)});
   {const bi0=Math.max(0,Math.floor((camX-1100)/SP)),bi1=Math.min(B.length-1,Math.ceil((camX+1100)/SP));for(let i=bi0;i<=bi1;i++){try{drawBuilding(B[i],sk,ox)}catch(err){if(!drawErr){drawErr=true;console.debug('[MinimiTown:draw] building failed',B[i]?.appid,err)}}}}
-  if(sk!=='day')lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,true,i+li0)});
+  lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,false,i+li0)}); // in front of the shops
+  lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,true,i+li0)});
   if(sk==='night'){ctx.fillStyle=Z?'rgba(20,6,40,.12)':'rgba(10,12,40,.18)';ctx.fillRect(-300,-300,W+600,H+600)}
   if(!m.behind&&m.state!=='inside')drawMinimi(m.x+ox,f);
   drawParts(ox);

@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.1.5
+
+- Street lamps stand in front of the shops, a little lower than the roofs. When they're lit (dusk, night, and always in Neon Rain City) each throws a cone of light down onto the shop front and a pool onto the pavement.
+- A picked shop's lights come up smoothly (no flicker).
+- Neon Rain City: the penguin draws a toy neon blaster when it runs after you, stops at the door with a grim "Going in." before entering, and if you keep poking it, it shoots the screen three times (laser dot, flash, cracks in the glass that fade).
+
 ## 0.1.4
 
 - Ⓐ: the penguin goes in through the door and the game's page opens. Nothing starts by itself any more; Play is on that page.
