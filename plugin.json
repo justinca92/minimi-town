@@ -1,0 +1,11 @@
+{
+  "name": "Minimi Town",
+  "author": "justinca92",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["launcher", "ui", "home"],
+    "description": "Your library as a little street. A baby penguin walks to the game you pick and goes in through the door.",
+    "image": ""
+  }
+}
