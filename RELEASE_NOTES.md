@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.37
+
+- Every playtime tier is a visible upgrade of the building itself now, on top of the smaller trims: 150h puts chasing marquee bulbs round the name sign, 200h adds columns on both sides of the facade (chrome neon tubes in Neon Rain City), 350h makes the building a whole floor taller with another row of windows, and 500h gilds it with a gold edge all round (glowing gold neon in Neon Rain City).
+
 ## 0.1.36
 
 - Five playtime tiers instead of three, each adding one more thing so a building grows step by step: 100h 단골 Regular (gold trim, flower boxes), 150h 인기 Popular (string lights; Neon: chase lights around the screen), 200h 명소 Landmark (a flag, searchlights, a frame), 350h 명물 Icon (the golden dome; Neon: the spinning crown sign), 500h 전설 Legend (red carpet, sparkles, everything in gold).

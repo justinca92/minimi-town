@@ -236,13 +236,14 @@ const LOOKS=[['#5b6f9a','#3f4f73'],['#7f9a7c','#566f55'],['#6d8f96','#4b6a70'],[
 const HEIGHTS=[372,410,350,432,390,360,418,380,400,356,424,384];
 function hash(n){n=(n^61)^(n>>>16);n=n+(n<<3);n=n^(n>>>4);n=Math.imul(n,0x27d4eb2d);n=n^(n>>>15);return n>>>0}
 function makeBuilding(game,i){
-  const h=hash(game.appid>>>0||i+1),look=LOOKS[h%LOOKS.length],bh=Math.max(HEIGHTS[(h>>>5)%HEIGHTS.length],CH+158+(cardStyle==='capsule'?52:40));
+  const gh=game.hours||0,extra=gh>=500?86:gh>=350?70:0; // 350h+: the building has grown a floor
+  const h=hash(game.appid>>>0||i+1),look=LOOKS[h%LOOKS.length],bh=Math.max(HEIGHTS[(h>>>5)%HEIGHTS.length],CH+158+(cardStyle==='capsule'?52:40))+extra;
   const g={t:game.name,g:game.sign,c:look[0],tr:look[1],roof:(h>>>9)%3,bh};
   const b={i,g,game,appid:game.appid,bh,cx:i*SP,st:game.status,p:game.progress||0,door:0,doorTarget:0,light:0,playing:false,hours:game.hours||0,cele:0,neon:NEON[h%NEON.length],img:null,imgTried:0,card:null,fac:null};
   const cardY=bh-158-CH;
   b.L={card:{x:(BW-CW)/2,y:cardY},door:{x:BW/2-38,y:bh-114,w:76,h:114},awn:{x:18,y:bh-142,w:BW-36,h:22},
     wins:[{x:26,y:bh-102,w:64,h:58},{x:BW-90,y:bh-102,w:64,h:58}],up:[]};
-  if(cardY>=104){const n=3;for(let k=0;k<n;k++)b.L.up.push({x:44+k*((BW-88-46)/(n-1)),y:34,w:46,h:Math.min(52,cardY-62)})}
+  if(cardY>=104){const n=3,rows=Math.max(1,Math.floor((cardY-50)/70));for(let r=0;r<rows;r++)for(let k=0;k<n;k++)b.L.up.push({x:44+k*((BW-88-46)/(n-1)),y:34+r*70,w:46,h:Math.min(52,cardY-62-r*70)})}
   return b;
 }
 /** Keep bitmaps only near the camera. */
@@ -806,6 +807,7 @@ function premiumBeams(b,left,top,sk){
 function carpet(dx,d,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.moveTo(dx+6,SIDE);ctx.lineTo(dx+d.w-6,SIDE);ctx.lineTo(dx+d.w+18,SIDE+56);ctx.lineTo(dx-18,SIDE+56);ctx.closePath();ctx.fill()}
 function premiumBack(b,left,top,sk){
   const t=tierOf(b);if(!t)return;const L=b.L,d=L.door,dx=left+d.x,cx=left+BW/2,night=sk!=='day';
+  tierUpgrades(b,left,top,t,night);
   if(!Z){
     const gold=ctx.createLinearGradient(0,top-2,0,top+18);gold.addColorStop(0,'#fff0a8');gold.addColorStop(.5,'#e6b23a');gold.addColorStop(1,'#a8781e');
     ctx.fillStyle=gold;ctx.fillRect(left-12,top-2,BW+24,5);ctx.fillRect(left-12,top+14,BW+24,3);
@@ -844,6 +846,28 @@ function premiumBack(b,left,top,sk){
       carpet(dx,d,'#3a0f2a');ctx.save();ctx.strokeStyle='#ffe14d';ctx.shadowColor='#ffe14d';ctx.shadowBlur=10;ctx.lineWidth=2;ctx.stroke();ctx.restore();
       for(let k=0;k<5;k++){const u=(k/5+T*.6)%1;ctx.fillStyle=hexA('#ffe14d',.8*(1-u));ell(ctx,dx+d.w/2,SIDE+u*52,lerp(10,26,u),2);ctx.fill()}}
   }
+}
+/** The big, visible step of each tier (on top of the smaller trims): 150h marquee bulbs round
+ *  the name sign, 200h columns on both sides, 350h a floor taller (makeBuilding), 500h gilded all round. */
+function tierUpgrades(b,left,top,t,night){
+  const L=b.L,a=L.awn;
+  if(t>=3){ // columns / chrome tubes framing the facade
+    [left+4,left+BW-18].forEach(x=>{
+      if(Z){ctx.save();ctx.strokeStyle=t>=5?'#ffe14d':b.neon;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=12;ctx.lineWidth=3;ctx.globalAlpha=.85;
+        ctx.beginPath();ctx.moveTo(x+4,top+30);ctx.lineTo(x+4,SIDE-4);ctx.moveTo(x+10,top+30);ctx.lineTo(x+10,SIDE-4);ctx.stroke();ctx.restore()}
+      else{const g=ctx.createLinearGradient(x,0,x+14,0);g.addColorStop(0,t>=5?'#f6dc8a':'#f1ece2');g.addColorStop(.5,'#ffffff');g.addColorStop(1,t>=5?'#c9982e':'#cfc6b8');
+        ctx.fillStyle=g;ctx.fillRect(x,top+22,14,b.bh-22);ctx.fillStyle='rgba(0,0,0,.08)';[3,7,11].forEach(o=>ctx.fillRect(x+o,top+30,1,b.bh-40));
+        ctx.fillStyle=t>=5?'#e6b23a':'#e9e2d4';ctx.fillRect(x-3,top+18,20,7);ctx.fillRect(x-3,SIDE-8,20,8)}})}
+  if(t>=2){ // marquee bulbs round the name sign
+    const x0=left+a.x-8,y0=top+a.y-9,w=a.w+16,h=a.h+18,n=26,sh=Math.floor(T*6);
+    for(let k=0;k<n;k++){const p=k/n*2*(w+h);let x,y;if(p<w){x=x0+p;y=y0}else if(p<w+h){x=x0+w;y=y0+p-w}else if(p<2*w+h){x=x0+w-(p-w-h);y=y0+h}else{x=x0;y=y0+h-(p-2*w-h)}
+      const on=(k+sh)%3!==0,col=Z?(t>=5?'#ffe14d':b.neon):(t>=5?'#ffe48a':'#fff3b0');
+      ctx.fillStyle=on?col:(Z?'rgba(255,255,255,.12)':'#9a8a60');ell(ctx,x,y,on?3:2.4,on?3:2.4);ctx.fill();
+      if(on&&(Z||night)){ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=hexA(col,.3);ell(ctx,x,y,8,8);ctx.fill();ctx.restore()}}}
+  if(t>=5){ // gilded: a gold edge round the whole building
+    ctx.save();ctx.strokeStyle=Z?'#ffe14d':'#e6b23a';ctx.lineWidth=Z?2.5:4;if(Z){ctx.shadowColor='#ffe14d';ctx.shadowBlur=14+Math.sin(T*3)*4}
+    ctx.strokeRect(left-1,top-1,BW+2,b.bh+1);ctx.restore();
+    if(!Z){ctx.fillStyle='rgba(255,214,90,.10)';ctx.fillRect(left,top,BW,b.bh)}}
 }
 /** Achievements as a medal pinned to the screen's top-right corner: bronze 50%+, silver 80%+, gold 100%
  *  (with a laurel and a PERFECT ribbon). Playtime tiers stay the building's own look. */
