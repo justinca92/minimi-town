@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.10
+
+- Neon Rain City: the penguin wears tactical gear instead of the police uniform: a short-sleeve shirt, a leather shoulder rig with a holster at each side and magazine pouches on the back, fingerless gloves, a belt with pouches, and a neon earpiece.
+- The outfit is drawn around the body, so it carries on naturally from the front through the side to the back (the shoulder straps cross on the back, the neckline follows the turn).
+
 ## 0.1.9
 
 - Neon Rain City: the penguin is a cop now: police cap with a gold badge and a neon band, a blue uniform jacket with a star badge and a duty belt, and "POLICE" on the back. Its toy blaster is always in hand (held low, raised when it chases or goes in).

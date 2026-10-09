@@ -798,30 +798,42 @@ function drawMinimi(sx,f){
   if(!back){ // heart-shaped white face mask + round belly
     // the two eye patches slide together into one cheek patch in profile
     const cx=dd*R*.42,mrx=lerp(R*.43,R*.5,pf),mry=lerp(R*.37,R*.42,pf);ctx.fillStyle=belly;ell(ctx,lerp(-R*.33,cx,pf),-R*1.36,mrx,mry);ctx.fill();ell(ctx,lerp(R*.33,cx,pf),-R*1.36,mrx,mry);ctx.fill();ell(ctx,dd*pf*R*.3,-R*.6,R*.72*(1-pf*.22),R*.82);ctx.fill()}
-  if(Z&&back){ // shirt, the rig crossing on the back with two magazine pouches
-    ctx.fillStyle=coat;ctx.beginPath();ctx.moveTo(-R*1.5,-R*1.12);ctx.quadraticCurveTo(0,-R*.92,R*1.5,-R*1.12);ctx.lineTo(R*1.5,R);ctx.lineTo(-R*1.5,R);ctx.closePath();ctx.fill();
-    ctx.strokeStyle=coatD;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-R*1.5,-R*1.12);ctx.quadraticCurveTo(0,-R*.92,R*1.5,-R*1.12);ctx.stroke();
-    ctx.lineCap='round';[[-1,1],[1,-1]].forEach(([a1,a2])=>{ctx.strokeStyle=leatherD;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(a1*R*.8,-R*1.7);ctx.lineTo(a2*R*.9,-R*.66);ctx.stroke();ctx.strokeStyle=leather;ctx.lineWidth=4;ctx.stroke()});
-    ctx.fillStyle=leather;ctx.strokeStyle=leatherD;ctx.lineWidth=1.4;[-5.5,5.5].forEach(x=>{rr(ctx,x-5,-R*1.12,10,15,2);ctx.fill();ctx.stroke();ctx.fillStyle=leatherD;ctx.fillRect(x-5,-R*1.12,10,4);ctx.fillStyle=leather});
-    ctx.fillStyle=neonC;ctx.fillRect(-10.5,-R*1.12+13,21,1.2);
-    ctx.fillStyle='#23271f';ctx.fillRect(-R*1.5,-R*.5,R*3,R*.24)}
-  else if(Z){ // short-sleeve tactical shirt, leather shoulder rig with a holster on each side, belt with pouches
-    const co=dd*pf*R*.35;
-    ctx.fillStyle=coat;ctx.beginPath();ctx.moveTo(-R*1.5,-R*1.12);ctx.quadraticCurveTo(0,-R*.92,R*1.5,-R*1.12);ctx.lineTo(R*1.5,R);ctx.lineTo(-R*1.5,R);ctx.closePath();ctx.fill();
-    ctx.strokeStyle=coatD;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-R*1.5,-R*1.12);ctx.quadraticCurveTo(0,-R*.92,R*1.5,-R*1.12);ctx.stroke();
-    ctx.strokeStyle=coatD;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(co,-R*.98);ctx.lineTo(co*.9,-R*.5);ctx.stroke();
-    ctx.lineCap='round';
+  if(Z){ // tactical outfit, drawn around the body as a cylinder so front, side and back are one outfit
+    // how far the body has turned: 0 = facing us, ±π/2 = side-on, π = back (it spins round at the door)
+    const turn=s==='enter'?Math.PI*clamp(m.t/.16,0,1)*(dd||1):back?Math.PI:dd*pf*Math.PI/2;
+    const hw=y=>y>-R*1.0?R*1.02:R*1.02*Math.sqrt(Math.max(0,1-((y+R*1.0)/(R*1.24))**2)); // body half-width at y
+    const P=(th,y)=>{const a=th+turn;return [Math.sin(a)*hw(y),y,Math.cos(a)]};
+    const path=(pts,w,col)=>{ // a strap: only the parts on the side facing us
+      ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';ctx.lineJoin='round';let on=false;ctx.beginPath();
+      for(const [x,y,v] of pts){if(v>-.02){on?ctx.lineTo(x,y):ctx.moveTo(x,y);on=true}else on=false}ctx.stroke()};
+    const strap=(th0,y0,th1,y1,n=14)=>{const pts=[];for(let k=0;k<=n;k++){const t2=k/n;pts.push(P(lerp(th0,th1,t2),lerp(y0,y1,t2)))}path(pts,6,leatherD);path(pts,4,leather)};
+    // shirt: the neckline dips at the front and rises at the back, wherever the front happens to be
+    const neck=th=>-R*1.16+R*.2*Math.cos(th)-R*.06*Math.cos(th)**8;
+    ctx.fillStyle=coat;ctx.beginPath();
+    for(let k=0;k<=40;k++){const x=-R*1.5+k/40*R*3,r=hw(-R*1.05),q=clamp(x/r,-1,1),th=Math.asin(q)-turn;ctx.lineTo(x,neck(th)+(1-Math.sqrt(1-q*q))*R*.08)}
+    ctx.lineTo(R*1.5,R);ctx.lineTo(-R*1.5,R);ctx.closePath();ctx.fill();
+    ctx.strokeStyle=coatD;ctx.lineWidth=2;ctx.beginPath();for(let k=0;k<=40;k++){const x=-R*1.5+k/40*R*3,r=hw(-R*1.05),q=clamp(x/r,-1,1),th=Math.asin(q)-turn;ctx.lineTo(x,neck(th)+(1-Math.sqrt(1-q*q))*R*.08)}ctx.stroke();
+    // button placket down the front
+    {const [x,,v]=P(0,-R*.9);if(v>.15){ctx.strokeStyle=coatD;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(x,neck(0)+2);ctx.lineTo(x,-R*.5);ctx.stroke()}}
+    // shoulder rig: over each shoulder, down the front to a holster at the side, and across the back in an X
     [-1,1].forEach(sd=>{
-      const far=sd!==dd;if(far&&pf>.55)return;const x0=sd*R*.6+co,y0=-R*1.8,hx=sd*R*.76+co*1.1,hy=-R*.84;
-      ctx.strokeStyle=leatherD;ctx.lineWidth=6;ctx.beginPath();ctx.moveTo(x0,y0);ctx.quadraticCurveTo(sd*R*.92+co,-R*1.35,hx,hy-6);ctx.stroke();
-      ctx.strokeStyle=leather;ctx.lineWidth=4;ctx.stroke();
-      ctx.save();ctx.translate(hx,hy);ctx.rotate(sd*.18);
+      // straps start at the shoulder, right at the neckline (a penguin's shoulders are low)
+      strap(sd*.62,neck(.62)+3,sd*1.42,-R*.7);                     // front strap down to the holster
+      strap(sd*(Math.PI-.62),neck(Math.PI-.62)+3,sd*(Math.PI+1.42),-R*.62,18); // back strap, across the back to the other hip
+    });
+    // holsters at the sides, grips forward
+    [-1,1].forEach(sd=>{const [x,y,v]=P(sd*1.42,-R*.66);if(v<-.25)return;ctx.save();ctx.translate(x,y);ctx.rotate(sd*.18*Math.cos(turn));ctx.globalAlpha*=clamp((v+.25)/.3,0,1);
       ctx.fillStyle='#1b1e22';rr(ctx,-3,-11,6,8,1.5);ctx.fill();
       ctx.fillStyle=leather;ctx.strokeStyle=leatherD;ctx.lineWidth=1.4;rr(ctx,-5,-5,10,15,3);ctx.fill();ctx.stroke();
       ctx.fillStyle=neonC;ctx.fillRect(-3.5,2,7,1.1);ctx.restore()});
+    // magazine pouches where the back straps cross
+    [-.2,.2].forEach(dth=>{const [x,,v]=P(Math.PI+dth,-R*1.0);if(v<.1)return;ctx.save();ctx.translate(x,-R*1.06);ctx.scale(Math.max(.3,v),1);
+      ctx.fillStyle=leather;ctx.strokeStyle=leatherD;ctx.lineWidth=1.4;rr(ctx,-5,0,10,15,2);ctx.fill();ctx.stroke();ctx.fillStyle=leatherD;ctx.fillRect(-5,0,10,4);ctx.fillStyle=neonC;ctx.fillRect(-5,13,10,1.2);ctx.restore()});
+    // belt all the way round: buckle at the front, a pouch on each hip
     ctx.fillStyle='#23271f';ctx.fillRect(-R*1.5,-R*.5,R*3,R*.24);
-    ctx.fillStyle='#c9ced8';rr(ctx,-4+co*.9,-R*.52,8,R*.28,1.5);ctx.fill();
-    ctx.fillStyle=coatD;ctx.strokeStyle='#1b1e22';ctx.lineWidth=1.2;[-1,1].forEach(sd=>{if(sd!==dd&&pf>.55)return;rr(ctx,sd*R*.56+co-6,-R*.5,12,13,2);ctx.fill();ctx.stroke()})}
+    {const [x,,v]=P(0,-R*.4);if(v>.1){ctx.save();ctx.translate(x,0);ctx.scale(Math.max(.3,v),1);ctx.fillStyle='#c9ced8';rr(ctx,-4,-R*.52,8,R*.28,1.5);ctx.fill();ctx.restore()}}
+    [-1,1].forEach(sd=>{const [x,,v]=P(sd*1.05,-R*.4);if(v<.05)return;ctx.save();ctx.translate(x,0);ctx.scale(Math.max(.35,v),1);ctx.fillStyle=coatD;ctx.strokeStyle='#1b1e22';ctx.lineWidth=1.2;rr(ctx,-6,-R*.5,12,13,2);ctx.fill();ctx.stroke();ctx.restore()});
+  }
   ctx.restore();
   ctx.strokeStyle=ink;ctx.lineWidth=3;bodyPath();ctx.stroke();
   const sw=Math.sin(T*3+m.phase*.5)*.15+(moving?-m.dir*.25:0)+(s==='air'?Math.sin(T*25)*.4:0);
