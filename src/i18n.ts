@@ -2,6 +2,12 @@
 import { useMemo } from "react";
 import { getLang, Lang, useLang } from "./locale";
 
+/** 95 min → "1.6", 754 min → "12.6", 6000 min → "100" (same as Spindeck). */
+const fmtHours = (min: number) => {
+  const h = min / 60;
+  return h >= 100 ? String(Math.round(h)) : (Math.round(h * 10) / 10).toString();
+};
+
 const ko = {
   brandTown: "미니미 타운",
   brandNeon: "네온 미니미",
@@ -16,6 +22,10 @@ const ko = {
   installing: "설치 중",
   lastPlayed: (d: number) => (d <= 0 ? "마지막 플레이 · 오늘" : d === 1 ? "마지막 플레이 · 어제" : d < 365 ? `마지막 플레이 · ${d}일 전` : `마지막 플레이 · ${Math.floor(d / 365)}년 전`),
   neverPlayed: "아직 안 해봄",
+  playtimeShort: (min: number) => (!min ? "아직 플레이 안 함" : min < 60 ? `${min}분` : `${fmtHours(min)}시간`),
+  ago: (days: number) =>
+    days <= 0 ? "오늘" : days === 1 ? "어제" : days < 7 ? `${days}일 전` : days < 30 ? `${Math.floor(days / 7)}주 전` : days < 365 ? `${Math.floor(days / 30)}개월 전` : `${Math.floor(days / 365)}년 전`,
+  friendsPlaying: (n: number) => `${n}명 플레이 중`,
   hours: (h: number) => `총 ${h}시간`,
   tiers: ["", "단골", "명소", "전설"],
   // buttons
@@ -107,6 +117,10 @@ const en: Strings = {
   installing: "Installing",
   lastPlayed: (d) => (d <= 0 ? "Last played · today" : d === 1 ? "Last played · yesterday" : d < 365 ? `Last played · ${d} days ago` : `Last played · ${Math.floor(d / 365)}y ago`),
   neverPlayed: "Never played",
+  playtimeShort: (min) => (!min ? "NOT PLAYED YET" : min < 60 ? `${min} MIN` : `${fmtHours(min)} ${fmtHours(min) === "1" ? "HR" : "HRS"}`),
+  ago: (days) =>
+    days <= 0 ? "TODAY" : days === 1 ? "YESTERDAY" : days < 7 ? `${days} DAYS AGO` : days < 30 ? `${Math.floor(days / 7)} WK AGO` : days < 365 ? `${Math.floor(days / 30)} MO AGO` : `${Math.floor(days / 365)} YR AGO`,
+  friendsPlaying: (n) => `${n} PLAYING`,
   hours: (h) => `${h} h total`,
   tiers: ["", "Regular", "Landmark", "Legend"],
   play: "Play",

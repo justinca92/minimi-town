@@ -35,6 +35,8 @@ const apps = Array.from({ length: 30 }, (_, i) => ({ appid: 100 + i, app_type: 1
 window.collectionStore = { GetCollection: () => ({ allApps: apps }), userCollections: [] };
 window.appStore = { GetCustomLandcapeImageURLs: (a) => ["/head" + (a.appid % 3) + ".png?" + a.appid], GetCustomHeroImageURLs: (a) => ["/hero" + (a.appid % 3) + ".png?" + a.appid] };
 window.__runs = [];
+window.appAchievementProgressCache = { mapCache: new Map(apps.map((a, i) => [a.appid, { total: 40, unlocked: (i * 7) % 41 }])) };
+window.friendStore = { allFriends: [{ persona: { m_unGamePlayedAppID: 100 } }, { persona: { m_unGamePlayedAppID: 100 } }, { persona: { m_unGamePlayedAppID: 112 } }] };
 window.__ks = [];
 window.__pulses = [];
 const hapticModule = function () { return "PlaySteamDeckHaptic Playing legacy haptics"; };

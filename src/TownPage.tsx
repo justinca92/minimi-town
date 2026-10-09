@@ -1,7 +1,9 @@
 import { Focusable, GamepadButton, Navigation } from "@decky/ui";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createTown, TownGame, TownStatus } from "./town/engine";
-import { downloadProgress, GameEntry, launch, loadLibrary, openGamePage, overviewMinutes } from "./games";
+import { AppExtra, cachedAchievements, downloadProgress, GameEntry, loadLibrary, openGamePage, overviewMinutes, subscribeAppExtra } from "./games";
+import { InfoRow } from "./InfoRow";
+import { friendsInGame } from "./friends";
 import { openNativeGameMenu } from "./nativeMenu";
 import { findHeaderSearch } from "./steamDom";
 import { getSettings, updateSettings, useSettings } from "./settings";
@@ -10,10 +12,12 @@ import { wheelTick } from "./haptics";
 import { Strings, useT } from "./i18n";
 import { useLang } from "./locale";
 import { onTeardown } from "./safety";
-import { debug } from "./log";
-import { ARRIVAL_IGNORE_MS, LIBRARY_POLL_MS, LAUNCH_TIMEOUT_MS, WINDOW_REFOCUS_DELAY_MS } from "./constants";
+import { ARRIVAL_IGNORE_MS, LIBRARY_POLL_MS, WINDOW_REFOCUS_DELAY_MS } from "./constants";
 
-declare const SteamClient: any;
+// Remembered across remounts (Steam unmounts the home while a game page is open),
+// runtime only: the selected game, and a penguin that went in and should step out.
+let lastAppid: number | null = null;
+let pendingEmerge: number | null = null;
 
 const DAY = 86400;
 const STEAM_EPOCH = 1104537600; // anything older than 2005 means "never"
@@ -87,29 +91,29 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       saveMood: (mood) => updateSettings({ mood }),
       onSelect: (i) => {
         setSel(i);
+        const g = live.current.games[i];
+        if (g) lastAppid = g.appid;
         setMode(engine.current?.mode ?? "browse");
       },
       onInstall: (i) => {
         const g = live.current.entries[i];
         if (g) setTimeout(() => openGamePage(g), 500);
       },
+      // The penguin went in: open the game's page (Play is there; nothing starts by itself).
       onEntered: (i) => {
         setMode("playing");
         const g = live.current.entries[i];
-        if (!g) return e.goBack();
-        if (getSettings().soundEnabled) playUiSound("launch");
-        startWatch(g.appid);
-        try {
-          launch(g);
-        } catch (err) {
-          debug("launch", "RunGame failed, opening the game page", err);
-          e.goBack();
-          openGamePage(g);
-        }
+        if (!g) return e.emerge();
+        pendingEmerge = g.appid;
+        leftPage.current = false;
+        openGamePage(g);
       },
     });
     engine.current = e;
-    e.setGames(live.current.games, null);
+    e.setGames(live.current.games, lastAppid);
+    // Back from the game page with a fresh home: the penguin steps out of that door.
+    if (pendingEmerge !== null && live.current.games[e.selected]?.appid === pendingEmerge) e.emerge();
+    pendingEmerge = null;
     const fit = () => {
       const box = boxRef.current;
       if (box) e.fit(box.clientWidth, box.clientHeight);
@@ -125,7 +129,6 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       unregister();
       refits.forEach(clearTimeout);
       ro?.disconnect();
-      stopWatch();
       e.destroy();
       engine.current = null;
     };
@@ -181,51 +184,39 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   }, []);
   useEffect(() => engine.current?.setActive(active && winFocused), [active, winFocused]);
 
-  // ── The game's life: the penguin comes back out when it ends ──
-  const watch = useRef<{ appid: number; started: boolean; reg: any; timer: any } | null>(null);
-  function stopWatch() {
-    const w = watch.current;
-    if (!w) return;
-    clearTimeout(w.timer);
-    try {
-      w.reg?.unregister?.();
-    } catch {
-      /* ignore */
-    }
-    watch.current = null;
-  }
-  function comeBack() {
-    stopWatch();
-    engine.current?.goBack();
-    setMode("browse");
-  }
-  function startWatch(appid: number) {
-    stopWatch();
-    const w: any = { appid, started: false, reg: null, timer: null };
-    try {
-      w.reg = SteamClient?.GameSessions?.RegisterForAppLifetimeNotifications?.((n: any) => {
-        if (Number(n?.unAppID) !== appid) return;
-        if (n.bRunning) w.started = true;
-        else comeBack();
-      });
-    } catch {
-      /* no notifications on this client: the timer and refocus handle it */
-    }
-    // Never started (cancelled dialog, failed launch): come back out after a while.
-    w.timer = setTimeout(() => {
-      if (!w.started) comeBack();
-    }, LAUNCH_TIMEOUT_MS);
-    watch.current = w;
-  }
-  // Back on the home with nothing running (e.g. the notification was missed).
+  // ── Back from the game page while this home stayed mounted ──
+  // Seen as the street going out of view (the page covers it) and coming back.
+  const leftPage = useRef(false);
   useEffect(() => {
-    if (!active || !winFocused || engine.current?.mode !== "playing") return;
+    const cv = cvRef.current;
+    const view: any = cv?.ownerDocument?.defaultView;
+    if (!cv || !view?.IntersectionObserver) return;
+    const io = new view.IntersectionObserver((list: any[]) => {
+      const visible = list.some((x) => x.isIntersecting);
+      const e = engine.current;
+      if (!e || e.mode !== "playing") return;
+      if (!visible) leftPage.current = true;
+      else if (leftPage.current) {
+        leftPage.current = false;
+        pendingEmerge = null;
+        e.emerge();
+      }
+    });
+    io.observe(cv);
+    return () => io.disconnect();
+  }, []);
+  // A shown street that is still "inside" (the page never opened): step out after a moment.
+  useEffect(() => {
+    if (!active || !winFocused || mode !== "playing") return;
     const tm = setTimeout(() => {
-      const running = (globalThis as any).SteamUIStore?.RunningApps;
-      if (watch.current?.started && Array.isArray(running) && running.length === 0) comeBack();
-    }, 2500);
+      const e = engine.current;
+      if (e?.mode === "playing" && !leftPage.current) {
+        pendingEmerge = null;
+        e.emerge();
+      }
+    }, 4000);
     return () => clearTimeout(tm);
-  }, [active, winFocused]);
+  }, [active, winFocused, mode]);
 
   // ── Input ──
   const activeSince = useRef(Date.now());
@@ -282,15 +273,34 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
     return { dir: f("dir"), down: f("down"), ok: f("ok"), options: f("options"), menu: f("menu") };
   }, []);
 
-  // ── HUD ──
+  // ── The road text: name + Spindeck's icon info row ──
   const tg = games[sel];
   const tierIdx = tg ? (tg.hours >= 500 ? 3 : tg.hours >= 200 ? 2 : tg.hours >= 100 ? 1 : 0) : 0;
   const chipLabel: Record<TownStatus, string> = { recent: t.stRecent, new: t.stNew, dusty: t.stDusty, closed: t.stClosed, downloading: t.stDownloading, ready: t.stReady };
-  const lastLine = current
-    ? current.lastPlayed > STEAM_EPOCH
-      ? t.lastPlayed(Math.floor((Date.now() / 1000 - current.lastPlayed) / DAY))
-      : t.neverPlayed
-    : "";
+  // App details (achievements, shortcut playtime) once the selection rests, tagged
+  // with the appid so the previous game's values never show for the next one.
+  const [extra, setExtra] = useState<(AppExtra & { appid: number }) | null>(null);
+  useEffect(() => {
+    if (!current) return;
+    const appid = current.appid;
+    let alive = true;
+    let unsub = () => {};
+    const tm = setTimeout(() => (unsub = subscribeAppExtra(appid, (x) => alive && setExtra({ ...x, appid }))), 120);
+    return () => {
+      alive = false;
+      clearTimeout(tm);
+      unsub();
+    };
+  }, [current?.appid]);
+  const ex = current && extra?.appid === current.appid ? extra : null;
+  const ach = ex ? ex.ach : current ? cachedAchievements(current.appid) ?? null : null;
+  const minutes = current ? Math.max(overviewMinutes(current.overview), ex?.minutes ?? 0) : 0;
+  const lastAt = Math.max(current?.lastPlayed ?? 0, ex?.lastPlayed ?? 0);
+  const friends = useMemo(() => (current ? friendsInGame(current.appid) : null), [current?.appid]);
+  // Only the states worth a word: the info icons already say the rest.
+  const statusWord = tg && (tg.status === "closed" || tg.status === "new" || tg.status === "downloading")
+    ? tg.status === "downloading" ? `${chipLabel.downloading} ${Math.floor(tg.progress)}%` : chipLabel[tg.status]
+    : null;
   const neon = s.theme === "neon";
   const display = '"Jua","Motiva Sans","Noto Sans CJK KR",sans-serif';
   return (
@@ -318,34 +328,35 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
           <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#fff", fontFamily: display, fontSize: 22, padding: 40, textAlign: "center" }}>{t.empty}</div>
         ) : null}
         {tg ? (
-          // The selected game, written on the road under the street: plain text, no panel.
+          // The selected game, written on the road right under the street: no panel.
           <div
             style={{
-              position: "absolute", left: 40, right: 40, bottom: 20, pointerEvents: "none",
+              position: "absolute", left: 40, right: 40, top: "83.5%", pointerEvents: "none",
+              display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 22, rowGap: 6,
               opacity: mode === "playing" ? 0 : 1, transition: "opacity .3s",
             }}
           >
             <div
               style={{
-                fontFamily: display, fontSize: 40, lineHeight: 1.1, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-                textShadow: neon ? `0 0 8px ${CHIP[tg.status]}, 0 0 22px rgba(63,240,255,.55), 0 3px 0 rgba(0,0,0,.6)` : "0 3px 0 rgba(0,0,0,.55), 0 0 14px rgba(0,0,0,.55)",
+                fontFamily: display, fontSize: 36, lineHeight: 1.1, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%",
+                textShadow: neon ? "0 0 8px rgba(63,240,255,.7), 0 0 22px rgba(255,63,164,.45), 0 3px 0 rgba(0,0,0,.6)" : "0 3px 0 rgba(0,0,0,.55), 0 0 14px rgba(0,0,0,.5)",
               }}
             >
               {tg.name}
             </div>
-            <div
-              style={{
-                display: "flex", gap: 12, alignItems: "baseline", marginTop: 6, fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,.88)",
-                fontFamily: "Motiva Sans, sans-serif", whiteSpace: "nowrap", textShadow: "0 2px 0 rgba(0,0,0,.6), 0 0 10px rgba(0,0,0,.6)",
-              }}
-            >
-              <span style={{ color: CHIP[tg.status], fontWeight: 800 }}>
-                {tg.status === "downloading" ? `${chipLabel.downloading} ${Math.floor(tg.progress)}%` : chipLabel[tg.status]}
+            <InfoRow
+              playtime={t.playtimeShort(minutes)}
+              lastPlayed={lastAt > STEAM_EPOCH ? t.ago(Math.floor((Date.now() / 1000 - lastAt) / DAY)) : null}
+              ach={ach}
+              friends={friends ? t.friendsPlaying(friends) : null}
+              accent={neon ? "#3ff0ff" : "#ffb938"}
+            />
+            {statusWord || tierIdx ? (
+              <span style={{ display: "flex", gap: 14, fontFamily: "Motiva Sans, sans-serif", fontSize: 15, fontWeight: 800, letterSpacing: "0.05em", whiteSpace: "nowrap", textShadow: "0 2px 0 rgba(0,0,0,.65), 0 0 10px rgba(0,0,0,.6)" }}>
+                {statusWord ? <span style={{ color: CHIP[tg.status] }}>{statusWord}</span> : null}
+                {tierIdx ? <span style={{ color: ["", "#e0a46a", "#dfe7f2", "#ffd24a"][tierIdx] }}>{t.tiers[tierIdx]} {[0, 100, 200, 500][tierIdx]}h+</span> : null}
               </span>
-              {tg.status === "closed" ? null : <span>{lastLine}</span>}
-              {tg.hours > 0 ? <span>· {t.hours(tg.hours)}</span> : null}
-              {tierIdx ? <span style={{ color: ["", "#e0a46a", "#dfe7f2", "#ffd24a"][tierIdx], fontWeight: 800 }}>· {t.tiers[tierIdx]} {[0, 100, 200, 500][tierIdx]}h+</span> : null}
-            </div>
+            ) : null}
           </div>
         ) : null}
       </div>

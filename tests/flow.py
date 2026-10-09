@@ -40,13 +40,14 @@ FLOW = """async () => {
   await sleep(700);
   document.activeElement?.blur?.();
   town().__props.onButtonDown(ev(7)); await sleep(50); log.push(['L2 → search focused', document.activeElement?.tagName]);
-  // Ⓐ: the penguin walks in, then RunGame
+  // Ⓐ: the penguin walks in, then the game's page opens (nothing starts by itself)
+  window.__nav = null;
   town().__props.onOKButton(); await sleep(4500);
-  log.push(['Ⓐ → RunGame', JSON.stringify(window.__runs)]);
-  log.push(['lifetime registered', typeof window.__life]);
-  window.__life?.({ unAppID: Number(window.__runs[0]?.[0]), bRunning: true }); await sleep(300);
-  window.__life?.({ unAppID: Number(window.__runs[0]?.[0]), bRunning: false }); await sleep(2800);
-  log.push(['game ended → HUD back', hud()]);
+  log.push(['Ⓐ → game page, no RunGame', window.__nav, JSON.stringify(window.__runs)]);
+  // the page covers the home (hidden), then Ⓑ back: the penguin steps out, same game selected
+  const root = document.querySelector('[data-minimi-root]'); root.style.display = 'none'; await sleep(300);
+  root.style.display = ''; await sleep(2200);
+  log.push(['back from page → HUD', hud()]);
   return log;
 }"""
 

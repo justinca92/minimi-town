@@ -219,6 +219,8 @@ function launch(){
 }
 function enterDone(){const b=cur();mode='playing';b.playing=true;playStart=now();host.onEntered(sel)}
 /** The game ended (or never started): the penguin comes back out, sleepy if it was long. */
+/** Back from the game's page: the penguin steps out of the door (no yawn). */
+function emerge(){if(!B.length)return;const b=cur();mode='playing';b.playing=true;playStart=now();m.quick=true;goBack()}
 function goBack(){
   if(mode!=='playing'&&mode!=='launching')return;
   if(mode==='launching'){cancelLaunch();return}
@@ -326,7 +328,7 @@ function update(dt){
   else if(s==='enter'){const k=clamp(m.t/0.62,0,1);m.x=lerp(m.x,b.cx,.28);m.y=lerp(FEET,SIDE+2,k);m.scale=lerp(1,.8,k);m.alpha=clamp(1-(m.t-.3)/.32,0,1);m.phase+=dt*11;
     if(m.t>.7){m.alpha=0;setState('inside');b.doorTarget=0;enterDone()}}
   else if(s==='inside'){if(m.t>.85&&mode==='playing')freeze()}
-  else if(s==='exit'){const k=clamp((m.t-.25)/.6,0,1);m.alpha=k;m.scale=lerp(.82,1,k);m.y=lerp(SIDE+4,FEET,k);m.phase+=dt*8;if(m.t>.95){m.y=FEET;m.scale=1;m.alpha=1;b.doorTarget=0;setState('yawn');say('하아아암~',1.6);sfx('yawn')}}
+  else if(s==='exit'){const k=clamp((m.t-.25)/.6,0,1);m.alpha=k;m.scale=lerp(.82,1,k);m.y=lerp(SIDE+4,FEET,k);m.phase+=dt*8;if(m.t>.95){m.y=FEET;m.scale=1;m.alpha=1;b.doorTarget=0;if(m.quick){m.quick=false;m.dir=-1;m.side=-1;mode='browse';setState('idle');host.onSelect(sel)}else{setState('yawn');say('하아아암~',1.6);sfx('yawn')}}}
   else if(s==='yawn'){if(m.t>2){mode='browse';if(longPlay)m.sleepyT=6;setState('idle');host.onSelect(sel)}}
   else if(s==='held'){/* position set by pointer */ m.rot=clamp(-m.vx*.0009,-.6,.6)}
   else if(s==='air'){
@@ -425,7 +427,7 @@ function drawGround(sk){
   const s0=Math.floor((camX-1100)/64)*64;for(let x=s0;x<camX+1100;x+=64){ctx.beginPath();ctx.moveTo(x+off,SIDE);ctx.lineTo(x+off,SIDE+62);ctx.stroke()}
   ctx.fillStyle=night?'#6b6878':'#e3ddd4';ctx.fillRect(-400,SIDE+60,W+800,10);
   ctx.fillStyle=night?'#22222c':'#4b4a52';ctx.fillRect(-400,SIDE+70,W+800,700);
-  ctx.fillStyle=night?'rgba(255,240,190,.55)':'rgba(255,255,255,.8)';const d0=Math.floor((camX-1100)/120)*120;for(let x=d0;x<camX+1100;x+=120)ctx.fillRect(x+off,SIDE+88,60,5);
+  ctx.fillStyle=night?'rgba(150,150,160,.35)':'rgba(190,190,196,.4)';const d0=Math.floor((camX-1100)/120)*120;for(let x=d0;x<camX+1100;x+=120)ctx.fillRect(x+off,SIDE+128,60,5);
 }
 /* ---- neon rain city ---- */
 const skyFar=(()=>{const r=srand(11),a=[];let x=0;while(x<SKY_P){const w=60+r()*80,h=200+r()*260;a.push({x,w,h,s:r()});x+=w+r()*20}return a})();
@@ -451,7 +453,7 @@ function drawGroundNeon(ox){
   ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=2;const s0=Math.floor((camX-1100)/64)*64;for(let x=s0;x<camX+1100;x+=64){ctx.beginPath();ctx.moveTo(x+off,SIDE);ctx.lineTo(x+off,SIDE+62);ctx.stroke()}
   ctx.fillStyle='#2c2838';ctx.fillRect(-400,SIDE+60,W+800,10);
   ctx.fillStyle='#0d0c14';ctx.fillRect(-400,SIDE+70,W+800,700);
-  ctx.fillStyle='rgba(255,63,164,.45)';const d0=Math.floor((camX-1100)/120)*120;for(let x=d0;x<camX+1100;x+=120)ctx.fillRect(x+off,SIDE+88,60,4);
+  ctx.fillStyle='rgba(255,63,164,.45)';const d0=Math.floor((camX-1100)/120)*120;for(let x=d0;x<camX+1100;x+=120)ctx.fillRect(x+off,SIDE+128,60,4);
   // wet-street reflections of each storefront's neon
   ctx.save();ctx.globalCompositeOperation='lighter';
   B.forEach(b=>{const x=b.cx+ox;if(x<-300||x>W+300)return;const a=(b.i===sel?.34:.22)*flick(b.i);
@@ -939,7 +941,7 @@ function setCardStyle(st){st=st==='capsule'?'capsule':'wide';if(st===cardStyle)r
 function setActive(on){active=!!on;if(active){start()}else stop()}
 function destroy(){active=false;stop();clearTimeout(moodSaveT);try{host.saveMood(Math.round(mood))}catch(e){};listeners.forEach(([t,f])=>cv.removeEventListener(t,f));B=[]}
 setTimeout(()=>{if(mode==='browse')say('안녕!',1.6)},600);
-return {fit,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
+return {fit,emerge,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
   get selected(){return sel},get mode(){return mode},get mood(){return mood},set mood(v){mood=clamp(v,0,100);saveMood()},
   get debug(){return {m,B,camX}}};
 }
