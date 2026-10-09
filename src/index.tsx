@@ -8,7 +8,7 @@ import { KOFI_URL, PLUGIN_VERSION, REPO_URL } from "./links";
 import { SafeBoundary, teardownAll } from "./safety";
 import { sweepLeftovers } from "./steamDom";
 import { checkNow, startUpdate, useUpdateCheck } from "./updater";
-import { initSettings, SkyMode, SortMode, Theme, updateSettings, useSettings, useSettingsLoaded } from "./settings";
+import { CardStyle, initSettings, SkyMode, SortMode, Theme, updateSettings, useSettings, useSettingsLoaded } from "./settings";
 
 /** A little building for the Decky menu. */
 const TownIcon = () => (
@@ -72,6 +72,17 @@ function QuickAccessPanel() {
             />
           </PanelSectionRow>
         ) : null}
+        <PanelSectionRow>
+          <DropdownItem
+            label={t.pCard}
+            rgOptions={[
+              { data: "wide", label: t.cardWide },
+              { data: "capsule", label: t.cardCapsule },
+            ]}
+            selectedOption={s.cardStyle}
+            onChange={(o: any) => updateSettings({ cardStyle: o.data as CardStyle })}
+          />
+        </PanelSectionRow>
         <PanelSectionRow>
           <DropdownItem
             label={t.pLibrary}

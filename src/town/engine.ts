@@ -13,13 +13,15 @@ export interface TownGame {
   progress: number;   // 0–100 while downloading
   hours: number;      // total playtime
   sign: string;       // short label for the neon sign
-  art: string[];      // landscape art candidates, first that loads wins
+  art: string[];      // wide art candidates (header / wide capsule), first that loads wins
+  capsule: string[];  // tall library capsule candidates
 }
 export interface TownHost {
   lang: "ko" | "en";
   tiers: string[];
   theme: "town" | "neon";
   sky: "auto" | "day" | "dusk" | "night";
+  cardStyle: "wide" | "capsule";
   mood: number;
   sound(kind: string): void;      // tick, door, boing, splat, poke, pet, angry, yawn
   haptic(strength: number): void;
@@ -56,15 +58,20 @@ const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t, rnd=(a,b)=>a+Math.r
 function srand(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
 function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
 function ell(c,x,y,rx,ry,rot=0){c.beginPath();c.ellipse(x,y,Math.max(.1,rx),Math.max(.1,ry),rot,0,Math.PI*2)}
-const CW=236,CH=134,BW=300;
+// Storefront screen size follows the art: "wide" shows Steam's wide capsule
+// (460×215) whole, "capsule" shows the tall library capsule (600×900) whole.
+const CARD={wide:[260,121],capsule:[150,225]};
+let cardStyle=host.cardStyle==='capsule'?'capsule':'wide';
+let CW=CARD[cardStyle][0],CH=CARD[cardStyle][1];const BW=300;
 let B=[];
 
 /* ---------------- storefront screens (game art) ---------------- */
 // Card canvases and facades are made lazily for buildings near the camera and
 // dropped again far away, so a 1000-game library doesn't hold 1000 bitmaps.
 function loadArt(b){
-  if(b.img||b.imgLoading||b.imgTried>=b.game.art.length)return;
-  const url=b.game.art[b.imgTried++];
+  const list=(cardStyle==='capsule'?b.game.capsule:b.game.art)||[];
+  if(b.img||b.imgLoading||b.imgTried>=list.length)return;
+  const url=list[b.imgTried++];
   const im=new view.Image();b.imgLoading=true;
   im.onload=()=>{b.imgLoading=false;if(im.naturalWidth>8){b.img=im;b.card=null}else loadArt(b)};
   im.onerror=()=>{b.imgLoading=false;loadArt(b)};
@@ -73,15 +80,16 @@ function loadArt(b){
 function renderCard(b){
   const g=b.g,cc=view.document.createElement('canvas'),k=2;cc.width=CW*k;cc.height=CH*k;const c=cc.getContext('2d');c.scale(k,k);
   c.save();rr(c,0,0,CW,CH,10);c.clip();
-  if(b.img){const iw=b.img.naturalWidth,ih=b.img.naturalHeight,sc=Math.max(CW/iw,CH/ih),dw=iw*sc,dh=ih*sc;c.drawImage(b.img,(CW-dw)/2,(CH-dh)/2,dw,dh);
-    const gr=c.createLinearGradient(0,CH-46,0,CH);gr.addColorStop(0,'rgba(16,12,22,0)');gr.addColorStop(1,'rgba(16,12,22,.85)');c.fillStyle=gr;c.fillRect(0,CH-46,CW,46);
-    let fs=17;c.font=`${fs}px ${DISPLAY}`;while(c.measureText(g.t).width>CW-20&&fs>11){fs--;c.font=`${fs}px ${DISPLAY}`}
-    c.fillStyle='#fff';c.textBaseline='middle';c.shadowColor='rgba(0,0,0,.6)';c.shadowBlur=4;c.fillText(g.t,10,CH-14);c.shadowBlur=0}
+  if(b.img){ // the whole art: cover only trims the odd pixel when the art's shape is slightly off
+    const iw=b.img.naturalWidth,ih=b.img.naturalHeight,sc=Math.max(CW/iw,CH/ih),dw=iw*sc,dh=ih*sc;c.fillStyle='#111';c.fillRect(0,0,CW,CH);c.drawImage(b.img,(CW-dw)/2,(CH-dh)/2,dw,dh)}
   else{ // no art (yet): a coloured placeholder with the name
     const gr=c.createLinearGradient(0,0,CW,CH);gr.addColorStop(0,shade(g.c,.15));gr.addColorStop(1,shade(g.tr,-.35));c.fillStyle=gr;c.fillRect(0,0,CW,CH);
     c.fillStyle='rgba(255,255,255,.08)';for(let i=0;i<6;i++){ell(c,(i*53+b.i*17)%CW,(i*37)%CH,40,40);c.fill()}
-    let fs=24;c.font=`${fs}px ${DISPLAY}`;while(c.measureText(g.t).width>CW-24&&fs>12){fs--;c.font=`${fs}px ${DISPLAY}`}
-    c.fillStyle='#fff';c.textBaseline='middle';c.textAlign='center';c.fillText(g.t,CW/2,CH/2)}
+    // the name, wrapped onto a few lines for the tall screens
+    let fs=cardStyle==='capsule'?20:24;c.font=`${fs}px ${DISPLAY}`;c.fillStyle='#fff';c.textBaseline='middle';c.textAlign='center';
+    const words=String(g.t).split(/\s+/),lines=[];let ln='';for(const w of words){const t2=ln?ln+' '+w:w;if(c.measureText(t2).width>CW-20&&ln){lines.push(ln);ln=w}else ln=t2}if(ln)lines.push(ln);
+    while(lines.some(l=>c.measureText(l).width>CW-16)&&fs>11){fs--;c.font=`${fs}px ${DISPLAY}`}
+    const lh=fs*1.2;lines.slice(0,4).forEach((l,k)=>c.fillText(l,CW/2,CH/2+(k-(Math.min(4,lines.length)-1)/2)*lh))}
   c.restore();c.strokeStyle='rgba(0,0,0,.35)';c.lineWidth=2;rr(c,1,1,CW-2,CH-2,9);c.stroke();
   b.card=cc;
 }
@@ -145,10 +153,10 @@ const LOOKS=[['#5b6f9a','#3f4f73'],['#7f9a7c','#566f55'],['#6d8f96','#4b6a70'],[
 const HEIGHTS=[372,410,350,432,390,360,418,380,400,356,424,384];
 function hash(n){n=(n^61)^(n>>>16);n=n+(n<<3);n=n^(n>>>4);n=Math.imul(n,0x27d4eb2d);n=n^(n>>>15);return n>>>0}
 function makeBuilding(game,i){
-  const h=hash(game.appid>>>0||i+1),look=LOOKS[h%LOOKS.length],bh=HEIGHTS[(h>>>5)%HEIGHTS.length];
+  const h=hash(game.appid>>>0||i+1),look=LOOKS[h%LOOKS.length],bh=Math.max(HEIGHTS[(h>>>5)%HEIGHTS.length],CH+158+(cardStyle==='capsule'?52:40));
   const g={t:game.name,g:game.sign,c:look[0],tr:look[1],roof:(h>>>9)%3,bh};
-  const b={i,g,game,appid:game.appid,bh,cx:i*SP,st:game.status,p:game.progress||0,door:0,doorTarget:0,light:game.status==='recent'?1:0,playing:false,hours:game.hours||0,cele:0,neon:NEON[h%NEON.length],img:null,imgTried:0,card:null,fac:null};
-  const cardY=bh-292;
+  const b={i,g,game,appid:game.appid,bh,cx:i*SP,st:game.status,p:game.progress||0,door:0,doorTarget:0,light:0,playing:false,hours:game.hours||0,cele:0,neon:NEON[h%NEON.length],img:null,imgTried:0,card:null,fac:null};
+  const cardY=bh-158-CH;
   b.L={card:{x:(BW-CW)/2,y:cardY},door:{x:BW/2-38,y:bh-114,w:76,h:114},awn:{x:18,y:bh-142,w:BW-36,h:22},
     wins:[{x:26,y:bh-102,w:64,h:58},{x:BW-90,y:bh-102,w:64,h:58}],up:[]};
   if(cardY>=104){const n=3;for(let k=0;k<n;k++)b.L.up.push({x:44+k*((BW-88-46)/(n-1)),y:34,w:46,h:Math.min(52,cardY-62)})}
@@ -256,9 +264,9 @@ function update(dt){
   camX+= (tx-camX)*(1-Math.exp(-dt*6.5));camKick*=Math.exp(-dt*10);
   if(shakeT>0)shakeT-=dt;
   const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*Math.PI/180;
-  // downloads
+  // doors ease open/closed; lights come on when you pick the building
   {const ci=Math.round(camX/SP),bi0=Math.max(0,ci-5),bi1=Math.min(B.length-1,ci+5);for(let i=bi0;i<=bi1;i++){const b=B[i];
-   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));const lt=(b.st==='recent'||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*4));if(b.cele>0)b.cele-=dt}}
+   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));const lt=(b.i===sel||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*(lt?5:3)));if(b.cele>0)b.cele-=dt}}
   // mood regen
   if(T-lastBother>5&&mood<70){mood=Math.min(70,mood+dt*1.1)}
   // timers
@@ -417,7 +425,7 @@ function drawGround(sk){
   const s0=Math.floor((camX-1100)/64)*64;for(let x=s0;x<camX+1100;x+=64){ctx.beginPath();ctx.moveTo(x+off,SIDE);ctx.lineTo(x+off,SIDE+62);ctx.stroke()}
   ctx.fillStyle=night?'#6b6878':'#e3ddd4';ctx.fillRect(-400,SIDE+60,W+800,10);
   ctx.fillStyle=night?'#22222c':'#4b4a52';ctx.fillRect(-400,SIDE+70,W+800,700);
-  ctx.fillStyle=night?'rgba(255,240,190,.55)':'rgba(255,255,255,.8)';const d0=Math.floor((camX-1100)/120)*120;for(let x=d0;x<camX+1100;x+=120)ctx.fillRect(x+off,SIDE+128,60,6);
+  ctx.fillStyle=night?'rgba(255,240,190,.55)':'rgba(255,255,255,.8)';const d0=Math.floor((camX-1100)/120)*120;for(let x=d0;x<camX+1100;x+=120)ctx.fillRect(x+off,SIDE+88,60,5);
 }
 /* ---- neon rain city ---- */
 const skyFar=(()=>{const r=srand(11),a=[];let x=0;while(x<SKY_P){const w=60+r()*80,h=200+r()*260;a.push({x,w,h,s:r()});x+=w+r()*20}return a})();
@@ -443,7 +451,7 @@ function drawGroundNeon(ox){
   ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=2;const s0=Math.floor((camX-1100)/64)*64;for(let x=s0;x<camX+1100;x+=64){ctx.beginPath();ctx.moveTo(x+off,SIDE);ctx.lineTo(x+off,SIDE+62);ctx.stroke()}
   ctx.fillStyle='#2c2838';ctx.fillRect(-400,SIDE+60,W+800,10);
   ctx.fillStyle='#0d0c14';ctx.fillRect(-400,SIDE+70,W+800,700);
-  ctx.fillStyle='rgba(255,63,164,.45)';const d0=Math.floor((camX-1100)/120)*120;for(let x=d0;x<camX+1100;x+=120)ctx.fillRect(x+off,SIDE+128,60,4);
+  ctx.fillStyle='rgba(255,63,164,.45)';const d0=Math.floor((camX-1100)/120)*120;for(let x=d0;x<camX+1100;x+=120)ctx.fillRect(x+off,SIDE+88,60,4);
   // wet-street reflections of each storefront's neon
   ctx.save();ctx.globalCompositeOperation='lighter';
   B.forEach(b=>{const x=b.cx+ox;if(x<-300||x>W+300)return;const a=(b.i===sel?.34:.22)*flick(b.i);
@@ -500,11 +508,11 @@ function drawBuilding(b,sk,ox){
     if(b.g.roof===1){ctx.fillStyle=`rgba(255,50,70,${Math.sin(T*4+b.i)>0?1:.25})`;ell(ctx,left+BW/2+42,top-34,3,3);ctx.fill()}}
   // windows
   const dusty=b.st==='dusty',closed=b.st==='closed';
-  const lit=b.light;const wins=L.wins.concat(L.up);
+  // a short flicker while the lights come on, like a switch being flipped
+  const lit=b.light*(b.i===sel&&b.light>.05&&b.light<.8&&Math.sin(T*53+b.i*3)<-.2?.35:1);const wins=L.wins.concat(L.up);
   wins.forEach((w,j)=>{const x=left+w.x,y=top+w.y;
     ctx.fillStyle=night?'#1d2235':dusk?'#3b3a55':'#33405a';ctx.fillRect(x,y,w.w,w.h);
     if(!night){ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(x,y+w.h*.7);ctx.lineTo(x+w.w*.6,y);ctx.lineTo(x+w.w*.85,y);ctx.lineTo(x,y+w.h);ctx.fill()}
-    if(Z&&lit<.5&&(j+b.i)%3===0){ctx.fillStyle=hexA(NEON[(j+b.i)%NEON.length],.28);ctx.fillRect(x,y,w.w,w.h)}
     if(lit>.02){let col=Z?(b.playing?(j%2?'rgba(63,240,255,':'rgba(255,63,164,'):'rgba(150,230,255,'):b.playing?(j%2?'rgba(140,200,255,':'rgba(255,214,140,'):'rgba(255,214,130,';ctx.fillStyle=col+(lit*(night?.95:.6))+')';ctx.fillRect(x,y,w.w,w.h);
       if(night){ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=col+(lit*.18)+')';ctx.fillRect(x-10,y-10,w.w+20,w.h+20);ctx.restore()}}
     if(closed){ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=2;for(let k=6;k<w.h;k+=7){ctx.beginPath();ctx.moveTo(x,y+k);ctx.lineTo(x+w.w,y+k);ctx.stroke()}}
@@ -927,10 +935,11 @@ function setTheme(t,talk){
   drawFrame();
 }
 function setSky(s){skyMode=s||'auto';drawFrame()}
+function setCardStyle(st){st=st==='capsule'?'capsule':'wide';if(st===cardStyle)return;cardStyle=st;CW=CARD[st][0];CH=CARD[st][1];setGames(B.map(b=>b.game),B[sel]?.appid)}
 function setActive(on){active=!!on;if(active){start()}else stop()}
 function destroy(){active=false;stop();clearTimeout(moodSaveT);try{host.saveMood(Math.round(mood))}catch(e){};listeners.forEach(([t,f])=>cv.removeEventListener(t,f));B=[]}
 setTimeout(()=>{if(mode==='browse')say('안녕!',1.6)},600);
-return {fit,setGames,patchGames,setTheme,setSky,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
+return {fit,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
   get selected(){return sel},get mode(){return mode},get mood(){return mood},set mood(v){mood=clamp(v,0,100);saveMood()},
   get debug(){return {m,B,camX}}};
 }

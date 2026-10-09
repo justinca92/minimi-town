@@ -36,7 +36,7 @@ function toTown(list: GameEntry[], t: Strings): TownGame[] {
     const { status, progress } = statusOf(g);
     const hours = Math.floor(overviewMinutes(g.overview) / 60);
     const label: Record<TownStatus, string> = { recent: t.stRecent, new: t.stNew, dusty: t.stDusty, closed: t.stClosed, downloading: t.stDownloading, ready: t.stReady };
-    return { appid: g.appid, name: g.name, status, progress, hours, sign: hours > 0 ? `${hours}h` : label[status], art: [...g.header, ...g.hero] };
+    return { appid: g.appid, name: g.name, status, progress, hours, sign: hours > 0 ? `${hours}h` : label[status], art: g.header, capsule: g.capsule };
   });
 }
 
@@ -73,6 +73,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       tiers: t.tiers,
       theme: s.theme,
       sky: s.sky,
+      cardStyle: s.cardStyle,
       mood: s.mood,
       sound: (kind) => {
         const st = getSettings();
@@ -144,6 +145,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   }, [games]);
   useEffect(() => engine.current?.setTheme(s.theme, true), [s.theme]);
   useEffect(() => engine.current?.setSky(s.sky), [s.sky]);
+  useEffect(() => engine.current?.setCardStyle(s.cardStyle), [s.cardStyle]);
 
   // Installs, downloads and playtime change under us: re-read now and then while shown.
   useEffect(() => {
@@ -290,15 +292,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       : t.neverPlayed
     : "";
   const neon = s.theme === "neon";
-  const accent = neon ? "#3ff0ff" : "#ffb938";
   const display = '"Jua","Motiva Sans","Noto Sans CJK KR",sans-serif';
-  const hint = (glyph: string, label: string, primary = false) => (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "8px 14px 8px 8px", borderRadius: 12, background: primary ? accent : "rgba(255,255,255,.1)", color: primary ? "#1b1420" : "#fff", fontFamily: display, fontSize: 19, whiteSpace: "nowrap" }}>
-      <span style={{ minWidth: 28, height: 28, padding: "0 6px", borderRadius: 14, display: "grid", placeItems: "center", background: primary ? "rgba(0,0,0,.22)" : "rgba(255,255,255,.16)", fontSize: 14, fontWeight: 700 }}>{glyph}</span>
-      {label}
-    </span>
-  );
-
   return (
     <Focusable
       // @ts-ignore autoFocus exists at runtime
@@ -324,25 +318,33 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
           <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#fff", fontFamily: display, fontSize: 22, padding: 40, textAlign: "center" }}>{t.empty}</div>
         ) : null}
         {tg ? (
+          // The selected game, written on the road under the street: plain text, no panel.
           <div
             style={{
-              position: "absolute", left: 24, right: 24, bottom: 18, display: "flex", alignItems: "center", gap: 18, padding: "12px 16px 12px 22px", borderRadius: 18,
-              background: neon ? "rgba(10,8,20,.74)" : "rgba(22,17,30,.78)", border: neon ? "1px solid rgba(63,240,255,.28)" : "none",
-              boxShadow: neon ? "0 0 22px rgba(63,240,255,.12)" : "none", pointerEvents: "none", opacity: mode === "playing" ? 0 : 1, transition: "opacity .3s",
+              position: "absolute", left: 40, right: 40, bottom: 20, pointerEvents: "none",
+              opacity: mode === "playing" ? 0 : 1, transition: "opacity .3s",
             }}
           >
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{ fontFamily: display, fontSize: 30, color: "#fff", lineHeight: 1.1, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{tg.name}</div>
-              <div style={{ display: "flex", gap: 10, alignItems: "center", marginTop: 5, fontSize: 15, color: "#b9adc2", fontFamily: "Motiva Sans, sans-serif", whiteSpace: "nowrap" }}>
-                <span style={{ fontWeight: 700, fontSize: 13, padding: "3px 10px", borderRadius: 7, color: "#1b1420", background: CHIP[tg.status] }}>
-                  {tg.status === "downloading" ? `${chipLabel.downloading} ${Math.floor(tg.progress)}%` : chipLabel[tg.status]}
-                </span>
-                <span>{tg.status === "closed" ? "" : lastLine}</span>
-                {tg.hours > 0 ? <span>· {t.hours(tg.hours)}{tierIdx ? ` · ${t.tiers[tierIdx]} ${[0, 100, 200, 500][tierIdx]}h+` : ""}</span> : null}
-              </div>
+            <div
+              style={{
+                fontFamily: display, fontSize: 40, lineHeight: 1.1, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+                textShadow: neon ? `0 0 8px ${CHIP[tg.status]}, 0 0 22px rgba(63,240,255,.55), 0 3px 0 rgba(0,0,0,.6)` : "0 3px 0 rgba(0,0,0,.55), 0 0 14px rgba(0,0,0,.55)",
+              }}
+            >
+              {tg.name}
             </div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {hint("A", tg.status === "closed" ? t.install : t.play, true)}
+            <div
+              style={{
+                display: "flex", gap: 12, alignItems: "baseline", marginTop: 6, fontSize: 18, fontWeight: 600, color: "rgba(255,255,255,.88)",
+                fontFamily: "Motiva Sans, sans-serif", whiteSpace: "nowrap", textShadow: "0 2px 0 rgba(0,0,0,.6), 0 0 10px rgba(0,0,0,.6)",
+              }}
+            >
+              <span style={{ color: CHIP[tg.status], fontWeight: 800 }}>
+                {tg.status === "downloading" ? `${chipLabel.downloading} ${Math.floor(tg.progress)}%` : chipLabel[tg.status]}
+              </span>
+              {tg.status === "closed" ? null : <span>{lastLine}</span>}
+              {tg.hours > 0 ? <span>· {t.hours(tg.hours)}</span> : null}
+              {tierIdx ? <span style={{ color: ["", "#e0a46a", "#dfe7f2", "#ffd24a"][tierIdx], fontWeight: 800 }}>· {t.tiers[tierIdx]} {[0, 100, 200, 500][tierIdx]}h+</span> : null}
             </div>
           </div>
         ) : null}

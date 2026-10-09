@@ -25,6 +25,7 @@ FLOW = """async () => {
   log.push(['HUD at start', hud()]);
   town().__props.onGamepadDirection(ev(12)); town().__props.onGamepadDirection(ev(12)); await sleep(300);
   log.push(['▶▶ HUD', hud()]);
+  const dn = ev(10); town().__props.onGamepadDirection(dn); await sleep(400); log.push(['▼ on street: no switch', !!dn.p, box.style.left]);
   const up = ev(9); town().__props.onGamepadDirection(up); log.push(['▲ on street consumed, no nav', !!up.p, window.__nav ?? 'none', box.style.left]);
   await sleep(600);
   const r1 = ev(6); town().__props.onButtonDown(r1); await sleep(400); log.push(['R1 does nothing now', box.style.left]);
@@ -33,6 +34,7 @@ FLOW = """async () => {
   const row2b = [...document.querySelectorAll('button')].find((b) => b.textContent === 'row2'); row2b.focus();
   const b1 = ev(2); sec.__props.onButtonDown(b1); await sleep(50); log.push(['Ⓑ deep → to top', document.activeElement?.textContent, 'consumed', !!b1.p, box.style.left]);
   const b2 = ev(2); sec.__props.onButtonDown(b2); log.push(['Ⓑ at top → Steam (not consumed)', !b2.p, box.style.left]);
+  const ups = ev(9); sec.__props.onGamepadDirection(ups); await sleep(500); log.push(['▲ at top of sections: stays', box.style.left, 'consumed', !!ups.p]);
   const l2 = ev(7); sec.__props.onButtonDown(l2); await sleep(500); log.push(['L2 → back to street', box.style.left, 'consumed', !!l2.p]);
   await sleep(700);
   await sleep(700);

@@ -1,5 +1,13 @@
 # Release notes
 
+## 0.1.3
+
+- D-pad ▲ / ▼ never switch between the street and the sections any more (only R2 / L2 do).
+- The sections page leaves Steam's top bar (profile, Wi-Fi, battery, clock) exactly as Steam paints it; the tab row sits below it.
+- The selected game is written on the road as plain text instead of a panel.
+- Lights: a building's windows are dark until you pick it, then the lights flicker on.
+- New panel option "Storefront screens": wide capsule (460×215) or tall capsule (600×900), always shown whole.
+
 ## 0.1.2
 
 - Triggers instead of bumpers: L2 = search, R2 = What's New / Friends / Recommended. L1 / R1 are left to Steam (they switch the tabs there).

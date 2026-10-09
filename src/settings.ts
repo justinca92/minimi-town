@@ -7,11 +7,13 @@ import { useEffect, useState } from "react";
 export type SortMode = "recent" | "alpha" | "playtime";
 export type Theme = "town" | "neon";
 export type SkyMode = "auto" | "day" | "dusk" | "night";
+export type CardStyle = "wide" | "capsule";
 
 export interface TownSettings {
   homeEnabled: boolean;   // replace the Steam home screen with the town
   theme: Theme;           // "town" = sunny street, "neon" = rainy neon city
   sky: SkyMode;           // town theme only: follow the clock or pin a sky
+  cardStyle: CardStyle;   // storefront screens: wide capsule (460×215) or tall capsule (600×900), shown whole
   library: string;        // "base:installed" / "base:all" or a Steam collection id
   sortMode: SortMode;
   soundEnabled: boolean;  // Steam's own UI sounds (step, door…)
@@ -26,6 +28,7 @@ export const DEFAULTS: TownSettings = {
   homeEnabled: true,
   theme: "town",
   sky: "auto",
+  cardStyle: "wide",
   library: "base:installed",
   sortMode: "recent",
   soundEnabled: true,
