@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.20
+
+- Ⓧ turns the picked shop's screen round to its info right away, and Ⓧ again turns it back (it then stays on the art while you rest there).
+
 ## 0.1.19
 
 - Rest on a shop for 3 seconds and its storefront screen turns round to show the game's info on the back: icon and name, playtime, last played, achievements (with a progress bar) and friends playing. Move on and it turns back. A cream card in Minimi Town, a neon CRT card in Neon Rain City; works with both wide and tall screens.

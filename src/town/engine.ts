@@ -346,7 +346,7 @@ function update(dt){
   const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*Math.PI/180;
   // doors ease open/closed; lights come on when you pick the building
   {const ci=Math.round(camX/SP),bi0=Math.max(0,ci-5),bi1=Math.min(B.length-1,ci+5);for(let i=bi0;i<=bi1;i++){const b=B[i];
-   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));const ft=b.i===sel&&restT>3&&mode==='browse'&&!rushNow&&!!b.game.info?1:0;b.flip=(b.flip||0)+Math.sign(ft-(b.flip||0))*Math.min(Math.abs(ft-(b.flip||0)),dt/(ft?.6:.35));
+   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));if(restT===0)flipPick=null;const ft=b.i===sel&&mode==='browse'&&!rushNow&&!!b.game.info&&(flipPick??restT>3)?1:0;b.flip=(b.flip||0)+Math.sign(ft-(b.flip||0))*Math.min(Math.abs(ft-(b.flip||0)),dt/(ft?.6:.35));
    const lt=((b.i===sel&&!rushing)||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*(lt?3:(rushing?12:2.5))));if(b.cele>0)b.cele-=dt}}
   // mood regen
   if(T-lastBother>5&&mood<70){mood=Math.min(70,mood+dt*1.1)}
@@ -615,7 +615,7 @@ function drawRain(){
 const LAMP_TOP=SIDE-196;
 // The lamp whose head leans over the picked shop burns full; the rest are dimmed.
 // Levels ease, so the light follows you along the street.
-let restT=0,selSeen=-1;
+let restT=0,selSeen=-1,flipPick=null; // flipPick: Ⓧ turned the screen by hand (true/false), null = automatic after a rest
 let LAMP_DIM=typeof host.lampDim==='number'?host.lampDim:.3;const lampLv=new Map();
 // How fast the light follows depends on how fast you browse: resting on a shop,
 // its lamp warms up slowly (~1 s); flicking through, the light keeps pace.
@@ -1145,6 +1145,8 @@ on('pointerup',endPointer);on('pointercancel',endPointer);
 
 
 /* ---------------- public API ---------------- */
+/** Ⓧ: turn the picked shop's screen round (info) or back (art). */
+function flipCard(){const b=B[sel];if(!b||mode!=='browse'||!b.game.info)return;flipPick=!((b.flip||0)>.5);sfx('tick')}
 function setGames(list,selAppid){
   const prevSel=B[sel]?.appid;
   B=list.map((g,i)=>makeBuilding(g,i));
@@ -1171,7 +1173,7 @@ function setCardStyle(st){st=st==='capsule'?'capsule':'wide';if(st===cardStyle)r
 function setActive(on){active=!!on;if(active){start()}else stop()}
 function destroy(){active=false;stop();clearTimeout(moodSaveT);try{host.saveMood(Math.round(mood))}catch(e){};listeners.forEach(([t,f])=>cv.removeEventListener(t,f));B=[]}
 setTimeout(()=>{if(mode==='browse')say('안녕!',1.6)},600);
-return {fit,emerge,poke,setLampDim,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
+return {fit,flipCard,emerge,poke,setLampDim,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
   get selected(){return sel},get mode(){return mode},get mood(){return mood},set mood(v){mood=clamp(v,0,100);saveMood()},
   get debug(){return {m,B,camX,lampLv,lampRate}}};
 }

@@ -322,6 +322,10 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       e.launch();
       setMode(e.mode);
     },
+    secondary: (ev: any) => {
+      consume(ev);
+      engine.current?.flipCard();
+    },
     options: (ev: any) => {
       consume(ev);
       engine.current?.shake();
@@ -333,7 +337,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   };
   const call = useMemo(() => {
     const f = (name: string) => (e: any) => latest.current[name]?.(e);
-    return { dir: f("dir"), down: f("down"), ok: f("ok"), options: f("options"), menu: f("menu") };
+    return { dir: f("dir"), down: f("down"), ok: f("ok"), secondary: f("secondary"), options: f("options"), menu: f("menu") };
   }, []);
 
   // ── The resting game's details (achievements, shortcut playtime) go onto its shop sign ──
@@ -363,6 +367,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       onButtonDown={call.down}
       onOKButton={call.ok}
       onOKActionDescription={tg?.status === "closed" ? t.install : t.play}
+      onSecondaryButton={call.secondary}
       onOptionsButton={call.options}
       onMenuButton={call.menu}
       onMenuActionDescription={t.menu}
