@@ -193,6 +193,7 @@ function setState(s){m.state=s;m.t=0}
 function standX(b){return b.cx+72*m.side}
 const GROUNDED=['idle','move','sit','sulk','cheer','goDoor','hesitate','react'];
 const BUSY=['brace','shoot','held','air','splatW','splatG','recover','trip','getup','dizzy','collapse','roll','cling','enter','inside','exit','yawn'];
+let rushNow=false;
 function navRate(){const now=T;navTimes=navTimes.filter(t=>now-t<1.3);return navTimes.length}
 function viewL(){return camX-640+34}function viewR(){return camX+640-34}
 
@@ -273,7 +274,7 @@ function update(dt){
   if(!B.length){T+=dt;return}
   T+=dt;
   // camera
-  restT=selSeen===sel?restT+dt:0;selSeen=sel;const rushing=navRate()>=2&&restT<.18; // flicking through the street
+  restT=selSeen===sel?restT+dt:0;selSeen=sel;const rushing=navRate()>=2&&restT<.18;rushNow=navRate()>=2; // flicking through the street
   const tx=cur().cx;if(!isFinite(camX))camX=tx;if(!isFinite(m.x)||!isFinite(m.y)){m.x=standX(cur());m.y=FEET;m.vx=0;m.vy=0}
   camX+= (tx-camX)*(1-Math.exp(-dt*(rushing?11:6.5))); // the camera keeps up when you rush, so the street doesn't smearcamKick*=Math.exp(-dt*10);
   if(shakeT>0)shakeT-=dt;
@@ -320,9 +321,9 @@ function update(dt){
       else m.vx+=(want-m.vx)*(1-Math.exp(-dt*(mode2==='sprint'?8:11)));
       m.dir=Math.sign(dist)||m.dir;
       if(s==='idle')setState('move');
-      if(mode2==='sprint'){m.sprintT+=dt;m.stamina-=dt*.45;if(Math.random()<dt*9)dust(m.x-m.dir*16,FEET,1,.7)}else m.sprintT=Math.max(0,m.sprintT-dt*.5);
+      if(mode2==='sprint'){m.sprintT+=dt;m.stamina-=dt*.45;if(!rushNow&&Math.random()<dt*9)dust(m.x-m.dir*16,FEET,1,.7)}else m.sprintT=Math.max(0,m.sprintT-dt*.5);
       const onScreen=m.x>viewL()-10&&m.x<viewR()+10;
-      if(mode2==='sprint'&&s!=='goDoor'&&m.tripCD<0&&onScreen&&((m.sprintT>1.25&&Math.random()<dt*1.8)||(m.stamina<.25&&ad>260))){setState('trip');m.tripCD=3.5;m.sprintT=0;m.stamina=.7;pop('철퍼덕!',m.x+m.dir*30,FEET-70,40);dust(m.x+m.dir*20,FEET,10,1.1);sfx('splat');buzz(25);return}
+      if(mode2==='sprint'&&s!=='goDoor'&&!rushNow&&m.tripCD<0&&onScreen&&((m.sprintT>1.25&&Math.random()<dt*1.8)||(m.stamina<.25&&ad>260))){setState('trip');m.tripCD=3.5;m.sprintT=0;m.stamina=.7;pop('철퍼덕!',m.x+m.dir*30,FEET-70,40);dust(m.x+m.dir*20,FEET,10,1.1);sfx('splat');buzz(25);return}
           }else{
       if(s==='move'||s==='goDoor'){m.x=target;m.vx=0}else{m.vx*=Math.exp(-dt*14);if(Math.abs(m.vx)<8)m.vx=0}
       if(s==='move'){
@@ -334,6 +335,8 @@ function update(dt){
       if(s==='idle'&&m.t>3.5&&mode==='browse')setState('sit');
     }
     m.x+=m.vx*dt;m.phase+=Math.abs(m.vx)*dt*.055;
+    if(rushNow&&(s==='move'||s==='idle')){const lo=camX-640+90,hi=camX+640-90; // keep up with the camera: never cling to the edge
+      if(m.x<lo){m.x=lo;if(m.vx<0)m.vx=0}else if(m.x>hi){m.x=hi;if(m.vx>0)m.vx=0}}
   }
   else if(s==='sit'){m.vx=0;m.lookUp=clamp((m.t-1.1)*2,0,1);if(Math.abs(standX(b)-m.x)>4)setState('move');if(m.t>12&&m.sleepyT<=0&&Math.random()<dt*.15)m.sleepyT=3}
   else if(s==='brace'){m.vx=0;m.dir=1;if(m.t>.6&&!m.braceOpen){m.braceOpen=true;b.doorTarget=1;sfx('door');shakeT=.12;buzz(25)}if(m.t>1.15){m.braceOpen=false;setState('enter')}}
@@ -359,7 +362,7 @@ function update(dt){
   else if(s==='splatW'){if(m.t>.55){m.y+=dt*110;if(m.y>=FEET){m.y=FEET;m.rot=0;setState('recover')}}}
   else if(s==='splatG'){if(m.t>.9){setState('recover')}}
   else if(s==='recover'){if(m.t>.9){m.rot=0;afterBother()}}
-  else if(s==='trip'){m.vx*=Math.exp(-dt*5);m.x+=m.vx*dt;if(m.t>.95)setState('getup')}
+  else if(s==='trip'){m.vx*=Math.exp(-dt*5);m.x+=m.vx*dt;if(m.x<viewL()-40||m.x>viewR()+40){m.x=clamp(m.x,viewL(),viewR());m.vx=0;setState('move');m.rot=0}else if(m.t>.95)setState('getup')}
   else if(s==='getup'){m.vx=0;if(m.t>.55){setState('move');if(Math.random()<.5)say('으… 기다려!',1.2)}}
   else if(s==='dizzy'){m.vx=Math.sin(m.t*6.5)*130;m.x+=m.vx*dt;m.x=clamp(m.x,viewL(),viewR());m.dir=Math.sign(m.vx)||1;m.phase+=dt*7;if(m.t>2.3){setState('collapse');dust(m.x,FEET,6,.8);sfx('splat')}}
   else if(s==='collapse'){if(m.t>1.4)setState('getup')}
@@ -387,7 +390,7 @@ function update(dt){
   if(m.queued&&mode==='browse'&&GROUNDED.includes(m.state)&&m.state!=='goDoor'){m.queued=false;launch()}
   // left behind off-screen (you browsed faster than it can run): after a moment it pops in at the
   // edge already running, so it's never gone for more than a fraction of a second
-  {const L=camX-640,Rr=camX+640,off=m.x<L-30||m.x>Rr+30,can=['idle','move','sit','sulk','react','cheer','goDoor'].includes(m.state)&&!m.behind;
+  {const L=camX-640,Rr=camX+640,off=m.x<L-30||m.x>Rr+30,can=['idle','move','sit','sulk','react','cheer','goDoor','trip','getup'].includes(m.state)&&!m.behind;
    m.offT=off&&can?(m.offT||0)+dt:0;
    if(m.offT>.3){const side=m.x<camX?-1:1;m.x=camX+side*(640+28);m.y=FEET;m.rot=0;m.alpha=1;m.scale=1;m.dir=-side;m.fdir=-side;m.vx=-side*760;m.sprintT=0;m.stamina=1;m.tripCD=Math.max(m.tripCD,2);m.offT=0;
      if(m.state==='sulk'||m.state==='sit'||m.state==='react'||m.state==='cheer'){m.y=FEET;setState('move')}}}
@@ -600,16 +603,17 @@ function drawBuilding(b,sk,ox){
   wins.forEach((w,j)=>{const x=left+w.x,y=top+w.y;
     ctx.fillStyle=night?'#1d2235':dusk?'#3b3a55':'#33405a';ctx.fillRect(x,y,w.w,w.h);
     if(!night){ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(x,y+w.h*.7);ctx.lineTo(x+w.w*.6,y);ctx.lineTo(x+w.w*.85,y);ctx.lineTo(x,y+w.h);ctx.fill()}
-    if(lit>.02){let col=Z?(b.playing?(j%2?'rgba(63,240,255,':'rgba(255,63,164,'):'rgba(150,230,255,'):b.playing?(j%2?'rgba(140,200,255,':'rgba(255,214,140,'):'rgba(255,214,130,';ctx.fillStyle=col+(lit*(night?.95:.6))+')';ctx.fillRect(x,y,w.w,w.h);
+    if(lit>.02){const day=!Z&&!night&&!dusk; // neon: warm amber interiors (magenta in a playing shop); town by day: cool blue, at dusk/night: warm
+      let col=Z?(b.playing?(j%2?'rgba(255,190,60,':'rgba(255,63,164,'):'rgba(255,184,56,'):day?(b.playing?(j%2?'rgba(90,185,255,':'rgba(150,220,255,'):'rgba(110,200,255,'):b.playing?(j%2?'rgba(140,200,255,':'rgba(255,214,140,'):'rgba(255,214,130,';ctx.fillStyle=col+(lit*(night?.95:day?.9:.6))+')';ctx.fillRect(x,y,w.w,w.h);if(Z){const g2=ctx.createLinearGradient(0,y,0,y+w.h);g2.addColorStop(0,'rgba(255,90,40,0)');g2.addColorStop(1,`rgba(255,60,120,${lit*.35})`);ctx.fillStyle=g2;ctx.fillRect(x,y,w.w,w.h)}
       if(night){ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=col+(lit*.18)+')';ctx.fillRect(x-10,y-10,w.w+20,w.h+20);ctx.restore()}}
     if(closed){ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=2;for(let k=6;k<w.h;k+=7){ctx.beginPath();ctx.moveTo(x,y+k);ctx.lineTo(x+w.w,y+k);ctx.stroke()}}
     ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+w.w/2,y);ctx.lineTo(x+w.w/2,y+w.h);ctx.stroke()});
   // door
   const d=L.door,dx=left+d.x,dy=top+d.y;
   ctx.fillStyle=lit>.5||b.door>.05?'#3a2a20':'#1f1a22';ctx.fillRect(dx,dy,d.w,d.h);
-  if(b.door>.05){let g=ctx.createLinearGradient(0,dy,0,dy+d.h);g.addColorStop(0,Z?'rgba(120,245,255,.9)':'rgba(255,214,140,.9)');g.addColorStop(1,Z?hexA(b.neon,.55):'rgba(255,180,100,.5)');ctx.fillStyle=g;ctx.globalAlpha=b.door;ctx.fillRect(dx+3,dy+3,d.w-6,d.h-3);ctx.globalAlpha=1}
+  if(b.door>.05){let g=ctx.createLinearGradient(0,dy,0,dy+d.h);g.addColorStop(0,Z?'rgba(255,200,90,.9)':(!night&&!dusk)?'rgba(170,225,255,.9)':'rgba(255,214,140,.9)');g.addColorStop(1,Z?hexA(b.neon,.55):'rgba(255,180,100,.5)');ctx.fillStyle=g;ctx.globalAlpha=b.door;ctx.fillRect(dx+3,dy+3,d.w-6,d.h-3);ctx.globalAlpha=1}
   const pw=d.w*(1-b.door*.82);ctx.fillStyle=Z?'#26232f':shade(b.g.tr,.15);ctx.fillRect(dx,dy,pw,d.h);ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(dx+pw-3,dy,3,d.h);
-  if(pw>20){ctx.fillStyle=night?'#2a3045':'#465673';ctx.fillRect(dx+pw*.2,dy+12,pw*.6,d.h*.4);if(lit>.05){ctx.fillStyle=`rgba(255,214,130,${lit*.8})`;ctx.fillRect(dx+pw*.2,dy+12,pw*.6,d.h*.4)}ctx.fillStyle='#e8c46a';ell(ctx,dx+pw-10,dy+d.h*.58,3.5,3.5);ctx.fill()}
+  if(pw>20){ctx.fillStyle=night?'#2a3045':'#465673';ctx.fillRect(dx+pw*.2,dy+12,pw*.6,d.h*.4);if(lit>.05){ctx.fillStyle=Z?`rgba(255,196,72,${lit*.8})`:(!night&&!dusk)?`rgba(150,215,255,${lit*.8})`:`rgba(255,214,130,${lit*.8})`;ctx.fillRect(dx+pw*.2,dy+12,pw*.6,d.h*.4)}ctx.fillStyle='#e8c46a';ell(ctx,dx+pw-10,dy+d.h*.58,3.5,3.5);ctx.fill()}
   premiumBack(b,left,top,sk);
   // card (the readable part)
   const cs=isSel?1.05:1,cxp=left+L.card.x+CW/2,cyp=top+L.card.y+CH/2;

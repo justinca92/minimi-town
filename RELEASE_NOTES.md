@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.15
+
+- Flicking fast through the street (50 or 100 games in a row) no longer leaves a penguin trail: while you rush it stays inside the frame running alongside, doesn't trip, and kicks up no dust. A tumble that slides off-screen ends right away.
+- Shop interior lights: Neon Rain City shops glow warm amber with a magenta falloff; Minimi Town shops are lit cool blue by day and stay warm at dusk and night.
+
 ## 0.1.14
 
 - If the penguin falls behind off-screen (you browsed faster than it can run, or it was sulking at a shop you left), it pops back in at the screen edge already running within a third of a second.
