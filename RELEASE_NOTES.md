@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.35
+
+- Achievement medals: a game's storefront screen wears a medal on its top-right corner once you've unlocked 50% of its achievements (bronze), 80% (silver) or all of them (gold, with a laurel, a PERFECT ribbon and sparkles). Neon Rain City gets neon-rimmed medals. Playtime tiers still decide how grand the building itself is. The medal is pinned to the screen's frame, so it turns with the screen when you press Ⓧ, and on the back the achievement row takes the medal's colour. It swings harder when you shake the street (Ⓨ).
+- Trackpad poke: a short click (under 0.2 s) pokes the penguin with a finger, just like tapping the touchscreen (poke it too much and it gets angry; in Neon Rain City it shoots). Click and hold, or click and move, still picks it up.
+
 ## 0.1.34
 
 - Browsing with the left stick (or the D-pad) no longer buzzes the trackpads. The trackpad mode the penguin's hand needs (Steam's keyboard action set) adds pad haptics to stick movement, so it steps aside while you browse and comes back about a second after the stick rests.

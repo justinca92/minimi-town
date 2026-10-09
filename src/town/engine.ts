@@ -147,7 +147,7 @@ function renderBack(b){
   y=wide?y+Math.max(isz,lines.length*lh)+8:y+isz+6+lines.length*lh+6;
   c.fillStyle=hexA(Z?b.neon:'#3a3036',.25);c.fillRect(pad,y,CW-2*pad,1.5);y+=6;
   // rows: one font size for all, as large as lets every item show in full
-  const rows=[];if(i.play)rows.push(['clock',i.play,ink]);if(i.last)rows.push(['recent',i.last,ink]);if(i.ach)rows.push(['trophy',i.ach[0]+'/'+i.ach[1],ink,i.ach[0]/i.ach[1]]);if(i.friends)rows.push(['friends',i.friends,fr]);
+  const rows=[];if(i.play)rows.push(['clock',i.play,ink]);if(i.last)rows.push(['recent',i.last,ink]);if(i.ach){const at=achTier(b),mc=at?(Z?ACH_TIER[at].n:['','#b8692e','#7f8ba0','#c98f0a'][at]):ink;rows.push(['trophy',i.ach[0]+'/'+i.ach[1],mc,i.ach[0]/i.ach[1],at])}if(i.friends)rows.push(['friends',i.friends,fr]);
   const avail=CW-2*pad-4,room=CH-y-6;let fsz=wide?15:15,rh,ww,cols;
   for(;;fsz--){c.font=`700 ${fsz}px ${INFO_FONT}`;const barW=Math.round(fsz*2.2);ww=rows.map(([,t,,pr])=>fsz*1.2+5+c.measureText(t).width+(pr!==undefined?barW+6:0));rh=Math.round(fsz*1.62);
     if(wide){const c0=Math.max(ww[0]||0,ww[2]||0),c1=Math.max(ww[1]||0,ww[3]||0);cols=[c0,c1];if((c0+(c1?14+c1:0)<=avail&&Math.ceil(rows.length/2)*rh<=room)||fsz<=8)break}
@@ -155,8 +155,8 @@ function renderBack(b){
   const barW=Math.round(fsz*2.2),isz2=fsz*1.2;c.font=`700 ${fsz}px ${INFO_FONT}`;c.textAlign='left';
   const gapC=wide?Math.max(14,(avail-cols[0]-cols[1])/2):0;
   rows.forEach(([ic,t,col,pr],k)=>{const x=wide?pad+2+(k%2?cols[0]+gapC:0):pad+2,cy=y+rh/2+(wide?Math.floor(k/2):k)*rh;
-    infoIcon(c,ic,x,cy,isz2,Z?sub:col===fr?fr:sub);c.fillStyle=col;c.fillText(t,x+isz2+5,cy+1);
-    if(pr!==undefined){const bx=x+isz2+5+c.measureText(t).width+6;c.fillStyle=hexA(Z?'#ffffff':'#3a3036',.18);rr(c,bx,cy-2.5,barW,5,2.5);c.fill();c.fillStyle=acc;rr(c,bx,cy-2.5,Math.max(5,barW*pr),5,2.5);c.fill()}});
+    infoIcon(c,ic,x,cy,isz2,ic==='trophy'&&rows[k][4]?col:Z?sub:col===fr?fr:sub);c.fillStyle=col;c.fillText(t,x+isz2+5,cy+1);
+    if(pr!==undefined){const bx=x+isz2+5+c.measureText(t).width+6;c.fillStyle=hexA(Z?'#ffffff':'#3a3036',.18);rr(c,bx,cy-2.5,barW,5,2.5);c.fill();c.fillStyle=rows[k][4]?col:acc;rr(c,bx,cy-2.5,Math.max(5,barW*pr),5,2.5);c.fill()}});
   if(!rows.length){c.fillStyle=sub;c.textAlign='center';c.fillText('—',CW/2,y+12)}
   b.back=cc;b.backKey=infoKey(b);
 }
@@ -788,7 +788,7 @@ function drawBuilding(b,sk,ox){
       ctx.fillStyle='#c8323c';ctx.font='14px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('OPEN',0,26);ctx.restore()}
     const px=dx-22,py=SIDE;ctx.fillStyle='#a5583c';ctx.beginPath();ctx.moveTo(px-12,py-22);ctx.lineTo(px+12,py-22);ctx.lineTo(px+9,py);ctx.lineTo(px-9,py);ctx.fill();
     ctx.fillStyle='#4f9a5a';[[-8,-34,-.5],[0,-40,0],[8,-34,.5]].forEach(([a,bq,r])=>{ctx.save();ctx.translate(px+a,py+bq+Math.sin(T*2+a)*1);ctx.rotate(r);ell(ctx,0,0,5,11);ctx.fill();ctx.restore()})}
-  premiumFront(b,left,top);
+  premiumFront(b,left,top);drawAchMedal(b,left,top);
   }
 /* ---- playtime tiers: 100h / 200h / 500h storefronts get fancier, per theme ---- */
 const TIER=[null,{n:host.tiers[1],h:'100h+',c:'#d79a5b'},{n:host.tiers[2],h:'200h+',c:'#cfd8e6'},{n:host.tiers[3],h:'500h+',c:'#ffd24a'}];
@@ -841,6 +841,40 @@ function premiumBack(b,left,top,sk){
       carpet(dx,d,'#3a0f2a');ctx.save();ctx.strokeStyle='#ffe14d';ctx.shadowColor='#ffe14d';ctx.shadowBlur=10;ctx.lineWidth=2;ctx.stroke();ctx.restore();
       for(let k=0;k<5;k++){const u=(k/5+T*.6)%1;ctx.fillStyle=hexA('#ffe14d',.8*(1-u));ell(ctx,dx+d.w/2,SIDE+u*52,lerp(10,26,u),2);ctx.fill()}}
   }
+}
+/** Achievements as a medal pinned to the screen's top-right corner: bronze 50%+, silver 80%+, gold 100%
+ *  (with a laurel and a PERFECT ribbon). Playtime tiers stay the building's own look. */
+const ACH_TIER=[null,{c1:'#e3a16a',c2:'#9a5a2c',n:'#ff9a4a'},{c1:'#f4f7fb',c2:'#9aa6b8',n:'#bfe6ff'},{c1:'#fff1a8',c2:'#d39a16',n:'#ffe14d'}];
+function achTier(b){const a=b.game.info&&b.game.info.ach;if(!a||!a[1])return 0;const p=a[0]/a[1];return p>=1?3:p>=.8?2:p>=.5?1:0}
+function drawAchMedal(b,left,top){
+  const t=achTier(b);if(!t)return;const L=b.L,M=ACH_TIER[t],a=b.game.info.ach,pct=Math.floor(a[0]/a[1]*100);
+  // pinned to the screen's frame: it turns with the screen (Ⓧ) and is out of sight on the back
+  const fx=Math.cos((b.flip||0)*Math.PI);if(fx<=.03)return;
+  const cxp=left+L.card.x+CW/2,x=cxp+(left+L.card.x+CW-6-cxp)*fx,y=top+L.card.y-4,r=t===3?19:t===2?17:15,sw=Math.sin(T*1.7+b.i)*(.06+shakeT*1.2);
+  ctx.save();ctx.translate(x,y);ctx.rotate(sw);ctx.scale(fx,1);
+  // ribbon straps
+  const rib=Z?['#1a0f24','#2a1636']:t===3?['#c8323c','#a0242c']:t===2?['#3a6fd0','#2a52a0']:['#3f8f5a','#2c6a42'];
+  ctx.fillStyle=rib[0];ctx.beginPath();ctx.moveTo(-9,-18);ctx.lineTo(-1,-18);ctx.lineTo(4,8);ctx.lineTo(-4,8);ctx.closePath();ctx.fill();
+  ctx.fillStyle=rib[1];ctx.beginPath();ctx.moveTo(1,-18);ctx.lineTo(9,-18);ctx.lineTo(4,8);ctx.lineTo(-4,8);ctx.closePath();ctx.fill();
+  if(Z){ctx.strokeStyle=M.n;ctx.lineWidth=1;ctx.shadowColor=M.n;ctx.shadowBlur=6;ctx.beginPath();ctx.moveTo(-9,-18);ctx.lineTo(-4,8);ctx.moveTo(9,-18);ctx.lineTo(4,8);ctx.stroke();ctx.shadowBlur=0}
+  ctx.translate(0,8+r);
+  if(t===3){ // laurel
+    ctx.fillStyle=Z?M.n:'#5f9a3a';if(Z){ctx.shadowColor=M.n;ctx.shadowBlur=8}
+    for(const sd of [-1,1])for(let k=0;k<6;k++){const an=Math.PI*(.62+k*.11)*sd+(sd<0?Math.PI:0),lx=Math.cos(an)*(r+5),ly=Math.sin(an)*(r+5)*-1+4;ctx.save();ctx.translate(sd*Math.abs(lx),ly);ctx.rotate(sd*(.9+k*.22));ell(ctx,0,0,3,6.5);ctx.fill();ctx.restore()}
+    ctx.shadowBlur=0}
+  // the disc
+  if(Z){ctx.fillStyle='#0d0b16';ell(ctx,0,0,r,r);ctx.fill();ctx.strokeStyle=M.n;ctx.lineWidth=2.6;ctx.shadowColor=M.n;ctx.shadowBlur=t===3?14+Math.sin(T*4)*5:9;ell(ctx,0,0,r,r);ctx.stroke();ell(ctx,0,0,r-5,r-5);ctx.lineWidth=1;ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle=M.n}
+  else{const g=ctx.createRadialGradient(-r*.35,-r*.4,2,0,0,r);g.addColorStop(0,M.c1);g.addColorStop(1,M.c2);ctx.fillStyle=g;ell(ctx,0,0,r,r);ctx.fill();ctx.strokeStyle=shade(M.c2,-.25);ctx.lineWidth=1.6;ctx.stroke();ell(ctx,0,0,r-4,r-4);ctx.strokeStyle='rgba(255,255,255,.45)';ctx.lineWidth=1;ctx.stroke();ctx.fillStyle=shade(M.c2,-.45)}
+  ctx.font=(t===3?'12px ':'11px ')+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t===3?'100%':pct+'%',0,1);
+  if(!Z){ // a glint sweeping across now and then
+    const ph=(T*.45+b.i*.3)%1;if(ph<.25){ctx.save();ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.clip();const gx=-r+ph/.25*2*r;ctx.fillStyle='rgba(255,255,255,.55)';ctx.beginPath();ctx.moveTo(gx-4,-r);ctx.lineTo(gx+3,-r);ctx.lineTo(gx-6,r);ctx.lineTo(gx-13,r);ctx.fill();ctx.restore()}}
+  if(t===3){ // PERFECT ribbon under the medal
+    ctx.translate(0,r+8);const w=58;ctx.fillStyle=Z?'#16081a':'#c8323c';
+    ctx.beginPath();ctx.moveTo(-w/2-8,-6);ctx.lineTo(-w/2,-6);ctx.lineTo(-w/2,6);ctx.lineTo(-w/2-8,6);ctx.lineTo(-w/2-4,0);ctx.closePath();ctx.moveTo(w/2+8,-6);ctx.lineTo(w/2,-6);ctx.lineTo(w/2,6);ctx.lineTo(w/2+8,6);ctx.lineTo(w/2+4,0);ctx.closePath();ctx.fill();
+    ctx.fillStyle=Z?'#16081a':'#e0414b';rr(ctx,-w/2,-7,w,14,3);ctx.fill();if(Z){ctx.strokeStyle=M.n;ctx.lineWidth=1.2;ctx.shadowColor=M.n;ctx.shadowBlur=8;rr(ctx,-w/2,-7,w,14,3);ctx.stroke()}
+    ctx.fillStyle=Z?M.n:'#fff6d8';ctx.font='10px '+HEAVY;ctx.fillText('PERFECT',0,1);ctx.shadowBlur=0}
+  ctx.restore();
+  if(t===3&&fx>.9){for(let k=0;k<4;k++){const ph=(T*.9+k*.25+b.i*.1)%1;ctx.globalAlpha=Math.sin(ph*Math.PI);star(x+Math.cos(k*1.7+b.i)*30,y+18+Math.sin(k*2.3)*26,3+ph*4,Z?'#ffe14d':'#fff6c8')}ctx.globalAlpha=1}
 }
 function premiumFront(b,left,top){
   const t=tierOf(b);if(!t)return;const L=b.L,ti=TIER[t];
@@ -1324,13 +1358,14 @@ on('pointerup',endPointer);on('pointercancel',endPointer);
 function flipCard(){const b=B[sel];if(!b||mode!=='browse'||!b.game.info)return;flipPick=!((b.flip||0)>.5);sfx('tick')}
 /* ---------------- the left trackpad as a hand ---------------- */
 // Rub (no click) to pet; click to grab, keep the thumb on the pad to carry, flick and lift it to throw.
-const pad={touch:false,click:false,x:0,y:0,px:0,py:0},hand={a:0,x:0,y:0,grip:false,ax:0,ay:0,bx:0,by:0,hist:[],wig:0,pat:0,patting:false,patAt:0,px:null,py:null};
+const pad={touch:false,click:false,x:0,y:0,px:0,py:0},hand={pending:null,poke:-9,pokeSide:1,a:0,x:0,y:0,grip:false,ax:0,ay:0,bx:0,by:0,hist:[],wig:0,pat:0,patting:false,patAt:0,px:null,py:null};
 const HAND_OFF=['enter','inside','exit','air','splatW','splatG','shoot','brace','roll'];
 function padInput(st){
   const wasClick=pad.click;pad.touch=!!st.touch;pad.click=!!st.click;if(pad.touch){pad.x=st.x;pad.y=st.y}
-  if(pad.click&&!wasClick&&!hand.grip&&pad.touch&&(mode==='browse'||mode==='launching')&&!HAND_OFF.includes(m.state)&&!P){ // grab
-    cancelLaunch();m.behind=false;m.react=null;setState('held');m.grab='lift';hand.grip=true;
-    hand.bx=m.x;hand.by=Math.min(FEET,m.y)-34;hand.ax=pad.x;hand.ay=pad.y;hand.hist=[];say('으앗?',1);sfx('boing');buzz(25)}
+  // a click: short = a poke (like tapping the screen), held or dragged = pick the penguin up
+  if(pad.click&&!wasClick&&!hand.grip&&pad.touch&&(mode==='browse'||mode==='launching')&&!HAND_OFF.includes(m.state)&&!P)hand.pending={t:T,x:pad.x,y:pad.y};
+  if(hand.pending&&pad.click&&(T-hand.pending.t>.2||Math.hypot(pad.x-hand.pending.x,pad.y-hand.pending.y)>.08))padGrab();
+  if(hand.pending&&!pad.click){hand.pending=null;hand.poke=T;poke()}
   // let go of the click mid-flick: throw right away (a still thumb keeps holding)
   if(wasClick&&!pad.click&&hand.grip&&padSpeed()>520)padRelease();
   if(!pad.touch&&hand.grip)padRelease();
@@ -1345,6 +1380,11 @@ function padVel(){
   const vx=(end.x-a.x)/span,vy=(end.y-a.y)/span;return{vx,vy,sp:Math.hypot(vx,vy)};
 }
 const padSpeed=()=>padVel().sp;
+function padGrab(){
+  hand.pending=null;if(HAND_OFF.includes(m.state)||!(mode==='browse'||mode==='launching'))return;
+  cancelLaunch();m.behind=false;m.react=null;setState('held');m.grab='lift';hand.grip=true;
+  hand.bx=m.x;hand.by=Math.min(FEET,m.y)-34;hand.ax=pad.x;hand.ay=pad.y;hand.hist=[];say('으앗?',1);sfx('boing');buzz(25);
+}
 function padRelease(){
   hand.grip=false;if(m.state!=='held'||m.grab!=='lift')return;
   let {vx,vy,sp}=padVel();if(sp>1800){vx*=1800/sp;vy*=1800/sp}
@@ -1352,6 +1392,7 @@ function padRelease(){
   m.grab=null;
 }
 function handTick(dt){
+  if(hand.pending&&pad.click&&T-hand.pending.t>.2)padGrab();
   const on=pad.touch&&(mode==='browse'||mode==='launching'||hand.grip)&&(hand.grip||!HAND_OFF.includes(m.state));
   hand.a+=((on?1:0)-hand.a)*(1-Math.exp(-dt*(on?14:8)));
   if(hand.grip&&m.state==='held'&&m.grab==='lift'){
@@ -1366,7 +1407,9 @@ function handTick(dt){
   const near=overMinimi({x:px,y:py},16);
   hand.patting=near&&(mv>.6||(hand.patting&&T-(hand.patAt||0)<.35));if(near&&mv>.6)hand.patAt=T;
   hand.pat+=mv*.09;
-  const head=m.y-1.9*R*m.scale,tx=hand.patting?clamp(px,m.x-R*.7,m.x+R*.7):px,ty=hand.patting?head-Math.abs(Math.sin(hand.pat))*9:py;
+  const poking=T-(hand.poke||-9)<.32,head=m.y-1.9*R*m.scale;
+  if(poking){const side=px>=m.x?1:-1,jab=Math.sin(clamp((T-hand.poke)/.32,0,1)*Math.PI);hand.pokeSide=side;hand.x=m.x+side*(R+22-jab*12);hand.y=m.y-R*1.25;hand.patting=false;return}
+  const tx=hand.patting?clamp(px,m.x-R*.7,m.x+R*.7):px,ty=hand.patting?head-Math.abs(Math.sin(hand.pat))*9:py;
   if(hand.a<.05){hand.x=tx;hand.y=ty}
   hand.x+=(tx-hand.x)*(1-Math.exp(-dt*22));hand.y+=(ty-hand.y)*(1-Math.exp(-dt*(hand.patting?40:22)));
   if(near&&mv>.6){pet(mv*1.4);if(m.state==='sit')m.lookUp=0}
@@ -1382,7 +1425,15 @@ function drawHand(ox){
   // a finger as a soft tube: dark outline, then the glove over it
   const tube=(pts,w)=>{const path=()=>{ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);if(pts.length===3)ctx.quadraticCurveTo(pts[1][0],pts[1][1],pts[2][0],pts[2][1]);else pts.slice(1).forEach(q=>ctx.lineTo(q[0],q[1]))};
     ctx.save();ctx.lineCap='round';ctx.strokeStyle=line;ctx.lineWidth=w+4.4;path();ctx.stroke();ctx.strokeStyle=fill;ctx.lineWidth=w;path();ctx.stroke();ctx.restore()};
-  if(hand.grip){
+  if(T-(hand.poke||-9)<.32){
+    // the poke: index finger out toward the penguin, the rest curled
+    ctx.scale(-hand.pokeSide,1);glow();
+    rr(ctx,-2,-12,22,20,8);ctx.fill();ctx.stroke();noGlow(); // fist
+    tube([[2,-6],[-16,-6]],7.5); // index finger
+    ctx.fillStyle=shade2;[-4,2,8].forEach(k=>{ell(ctx,4,k,3,2.4);ctx.fill()}); // curled fingers
+    ctx.fillStyle=fill;rr(ctx,18,-10,12,16,4);ctx.fill();ctx.stroke(); // cuff
+    ctx.strokeStyle=hexA(Z?'#ff3fa4':'#ffb938',.9);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-24,-14);ctx.lineTo(-29,-18);ctx.moveTo(-25,-6);ctx.lineTo(-31,-6);ctx.moveTo(-24,2);ctx.lineTo(-29,6);ctx.stroke();
+  }else if(hand.grip){
     // pinch: the hand above, thumb and index closing on the top of the head, the other fingers curled
     glow();ctx.fillStyle=fill;rr(ctx,-4,-46,30,22,10);ctx.fill();ctx.stroke();noGlow(); // back of the hand
     tube([[22,-30],[30,-22],[24,-16]],7);tube([[15,-27],[21,-17],[15,-14]],7); // curled fingers

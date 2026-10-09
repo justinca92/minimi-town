@@ -9,6 +9,7 @@
 - **A street instead of a row of tiles.** Each game gets its own building (same building every time), with the game's art on its screen.
 - **The name is on the shop.** Each storefront's sign carries the game's name. Press Ⓧ and the shop's screen turns round to show the game's icon, playtime, last played, achievements and friends playing.
 - **Buildings tell you what's going on.** Recently played (an OPEN sign and a plant by the door), new (GRAND OPENING: a ribbon banner, flower stands and balloons), not installed (shutter and CLOSED sign), downloading (scaffolding with a progress banner), not played for months (dust and cobwebs; in Neon Rain City a run-down shop with cracked, boarded windows and a dying neon tube).
+- **Achievement medals.** 50% bronze, 80% silver, 100% gold (with a PERFECT ribbon) on the storefront screen's corner.
 - **Playtime tiers.** 100 h+ *Regular*, 200 h+ *Landmark* and 500 h+ *Legend* storefronts get fancier: gold trim and flower boxes, string lights, flags and searchlights, then a golden dome and a red carpet. Each theme has its own version.
 - **Two themes.** *Minimi Town*, a sunny street whose sky follows the clock, and *Neon Rain City*, always a rainy night, with wet-street reflections, neon signs and CRT storefront screens.
 - **A penguin with moods.** It follows you along the street, sprints if you rush, trips sometimes, and arrives out of breath. Poke it, fling it into a wall, or pet it with the touchscreen. Bother it too much and it sulks in an alley until you cheer it up.
@@ -26,7 +27,7 @@
 | Ⓧ | Turn the shop's screen round: game info on the back (Ⓧ again turns it back) |
 | ≡ | Steam's game menu (Play, Properties, …) |
 | Ⓨ | Shake the street |
-| Left trackpad | The penguin's hand: rub to pet, click to grab, flick and let go to throw (works without a touchscreen, e.g. Steam Machine) |
+| Left trackpad | The penguin's hand: rub to pet, quick click to poke, click and hold to grab, flick and let go to throw (works without a touchscreen, e.g. Steam Machine) |
 | Touchscreen | Swipe to move, double-tap to play, grab / poke / pet the penguin |
 
 D-pad ▲ ▼ do nothing on the street. Settings live in Quick Access (…) → Minimi Town: home toggle, theme, sky, which games, sort, sounds, haptics and language.
