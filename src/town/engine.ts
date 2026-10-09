@@ -608,10 +608,46 @@ function drawGroundNeon(ox){
   ctx.fillStyle='#2c2838';ctx.fillRect(-400,SIDE+60,W+800,10);
   ctx.fillStyle='#0d0c14';ctx.fillRect(-400,SIDE+70,W+800,700);
   ctx.fillStyle='rgba(255,63,164,.45)';const d0=Math.floor((camX-1100)/120)*120;for(let x=d0;x<camX+1100;x+=120)ctx.fillRect(x+off,SIDE+128,60,4);
-  // wet-street reflections of each storefront's neon
-  ctx.save();ctx.globalCompositeOperation='lighter';
-  B.forEach(b=>{const x=b.cx+ox;if(x<-300||x>W+300)return;const a=(b.i===sel?.34:.22)*flick(b.i);
-    for(let k=0;k<10;k++){const y=SIDE+4+k*21,w=BW*(.96-k*.07),wob=Math.sin(T*2.2+k*1.3+b.i)*6;ctx.fillStyle=hexA(b.neon,a*(1-k/10));ctx.fillRect(x-w/2+wob,y,w,11)}});
+  drawWetReflection(ox);
+}
+// Wet asphalt: the street above (last frame's picture of it) mirrored at the kerb, stretched
+// down the way light smears on wet ground, softened, and rippled by the rain. Only the bright
+// parts show (added light), so the neon, windows and lamps reflect and the dark walls don't.
+// Puddles here and there hold a sharper mirror. Cheap: a quarter-size copy and a few dozen strips.
+const REFL_H=360,REFL_Q=4;let reflBuf=null,reflCtx=null,reflReady=false;
+function grabReflection(){
+  if(!Z)return;
+  const bw=Math.round(W/REFL_Q),bh=Math.round(REFL_H/REFL_Q);
+  if(!reflBuf){reflBuf=view.document.createElement('canvas');reflBuf.width=bw;reflBuf.height=bh;reflCtx=reflBuf.getContext('2d')}
+  try{reflCtx.setTransform(1,0,0,-1,0,bh);reflCtx.clearRect(0,0,bw,bh);reflCtx.drawImage(cv,0,(SIDE-REFL_H)*K,W*K,REFL_H*K,0,0,bw,bh);reflReady=true}catch(e){reflReady=false}
+}
+let reflOut=null,reflOutCtx=null;
+function drawWetReflection(ox){
+  if(!reflReady)return;
+  const D=H-SIDE+40,stretch=.62,strip=2,bw=reflBuf.width,Q=2; // the mirror is foreshortened seen from above
+  if(!reflOut){reflOut=view.document.createElement('canvas');reflOut.width=W/Q;reflOut.height=Math.ceil(D/Q);reflOutCtx=reflOut.getContext('2d')}
+  const c=reflOutCtx;c.setTransform(1/Q,0,0,1/Q,0,0);c.globalCompositeOperation='source-over';c.globalAlpha=1;c.clearRect(0,0,W,D);c.imageSmoothingEnabled=true;
+  // rippled strips, drawn opaque on their own layer (no seams where they overlap)
+  for(let d=0;d<D;d+=strip){const v=d/stretch;if(v>=REFL_H)break;const amp=d<62?2.6:1.5;
+    const wob=(Math.sin(d*.085+T*2.4)*1.6+Math.sin(d*.29-T*3.7)*.9)*amp*(1+d*.012);
+    c.drawImage(reflBuf,0,v/REFL_Q,bw,Math.max(.5,strip/stretch/REFL_Q),wob,d,W,strip+1)}
+  // the long vertical smear bright lights leave on a wet road
+  c.globalCompositeOperation='lighter';c.globalAlpha=.28;c.drawImage(reflBuf,0,0,bw,reflBuf.height*.5,0,70,W,D*1.1);
+  c.globalAlpha=.14;c.drawImage(reflBuf,0,0,bw,reflBuf.height*.28,0,70,W,D*1.6);
+  // how strongly it shows: the rough sidewalk a little, the wet road a lot, fading with distance
+  c.globalCompositeOperation='destination-in';c.globalAlpha=1;const g=c.createLinearGradient(0,0,0,D);
+  g.addColorStop(0,'rgba(0,0,0,.42)');g.addColorStop(60/D,'rgba(0,0,0,.36)');g.addColorStop(64/D,'rgba(0,0,0,.05)');g.addColorStop(72/D,'rgba(0,0,0,.8)');g.addColorStop(1,'rgba(0,0,0,.18)');
+  c.fillStyle=g;c.fillRect(0,0,W,D);
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.drawImage(reflOut,0,SIDE,W,D);
+  // puddles: a sharper, brighter mirror in a few ragged pools, anchored to the street
+  const p0=Math.floor((camX-900)/230);
+  for(let k=p0;k<p0+9;k++){const h=hash(k*7919+13),px=k*230+(h%120)+ox,py=SIDE+86+((h>>>8)%70),rx=50+((h>>>4)%60),ry=9+((h>>>12)%7);
+    if(px<-rx||px>W+rx||(h>>>20)%3===0)continue;
+    ctx.save();ctx.beginPath();ctx.ellipse(px,py,rx,ry,0,0,Math.PI*2);ctx.ellipse(px+rx*.45,py+ry*.5,rx*.5,ry*.7,0,0,Math.PI*2);ctx.clip();
+    ctx.globalCompositeOperation='source-over';ctx.globalAlpha=.5;ctx.fillStyle='#07060c';ctx.fillRect(px-rx-30,py-ry-10,rx*2+60,ry*3+20); // the water is darker than the asphalt
+    ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.75;ctx.drawImage(reflOut,0,(py-SIDE-ry*2)/Q,W/Q,ry*4/Q,Math.sin(T*3+k)*.6,py-ry*2,W,ry*4);ctx.drawImage(reflOut,0,(py-SIDE-ry*2)/Q,W/Q,ry*4/Q,0,py-ry*2,W,ry*4);
+    ctx.restore();
+    ctx.globalAlpha=.25;ctx.strokeStyle='rgba(190,225,255,.5)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(px,py,rx,ry,0,Math.PI*1.05,Math.PI*1.95);ctx.stroke()}
   ctx.restore();
 }
 const rain=[],splash=[];
@@ -1175,6 +1211,7 @@ function drawBubble(sx){
   ctx.fillStyle='#2f2236';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(bb.text,x,y);ctx.restore();
 }
 function drawFrame(){
+  grabReflection(); // last frame's street, for the wet-ground mirror
   ctx.setTransform(K,0,0,K,0,0);
   const sk=Z?'night':skyNow();Z?drawSkyNeon():drawSky(sk);
   const tilt=(tiltSensor!==null?tiltSensor:tiltDeg);

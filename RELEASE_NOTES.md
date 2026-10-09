@@ -3,6 +3,7 @@
 ## 0.1.34
 
 - Browsing with the left stick (or the D-pad) no longer buzzes the trackpads. The trackpad mode the penguin's hand needs (Steam's keyboard action set) adds pad haptics to stick movement, so it steps aside while you browse and comes back about a second after the stick rests.
+- Neon Rain City's wet street really reflects now: the street above (windows, name signs, storefront screens, lamps, the penguin) mirrored on the ground, foreshortened, smeared down the way lights streak on wet asphalt, and rippling in the rain. The rough sidewalk shows a little, the road a lot, a few puddles hold a sharper mirror, and only the bright parts reflect.
 
 ## 0.1.33
 
