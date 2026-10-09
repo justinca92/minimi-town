@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.2.2
+
+- New 100h and 150h upgrades, so every tier changes the building. Minimi Town: a chalkboard sign by the door at 100h (단골 / Regular, a coffee-cup doodle), then striped awnings over the ground-floor windows and hanging flower baskets by the door at 150h. Neon Rain City: a glowing drinks vending machine on the pavement at 100h, then a water tank, an antenna with a blinking warning light and an AC unit puffing steam on the roof at 150h.
+
 ## 0.2.1
 
 - Removed the chasing light bulbs round the storefront screen (Neon Rain City) and round the name sign (150h and up, both themes).
