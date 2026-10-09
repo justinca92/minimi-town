@@ -22,6 +22,7 @@ export interface TownHost {
   theme: "town" | "neon";
   sky: "auto" | "day" | "dusk" | "night";
   cardStyle: "wide" | "capsule";
+  lampDim?: number;    // brightness of the lamps away from the picked shop (0–1)
   mood: number;
   sound(kind: string): void;      // tick, door, boing, splat, poke, pet, angry, yawn, bang
   haptic(strength: number): void;
@@ -526,6 +527,10 @@ function drawRain(){
 // a bit lower than the shop roofs. Lit (night, dusk, or the neon city), each
 // throws a cone of light down onto the shop front and a pool on the pavement.
 const LAMP_TOP=SIDE-196;
+// The lamp whose head leans over the picked shop burns full; the rest are dimmed.
+// Levels ease, so the light follows you along the street.
+let LAMP_DIM=typeof host.lampDim==='number'?host.lampDim:.3;const lampLv=new Map();
+function lampLevel(i,dt){const want=i===sel-1?1:LAMP_DIM;let v=lampLv.get(i);if(v===undefined)v=want;v+=(want-v)*(1-Math.exp(-dt*3.5));lampLv.set(i,v);return v}
 function drawLamp(x,sk,front,i=0){
   const lit=Z||sk!=='day',lc=Z?(i%2?'#ff3fa4':'#3ff0ff'):'#ffd98a',pole=Z?'#0c0b12':'#2f2a36';
   const hx=x+24,hy=LAMP_TOP-8;
@@ -536,7 +541,7 @@ function drawLamp(x,sk,front,i=0){
     ctx.fillStyle=lit?(Z?lc:'#fff1b8'):'#e8e2d0';ctx.fillRect(x+15,LAMP_TOP-9,18,4);
     return}
   if(!lit)return;
-  const k=Z?1:sk==='night'?1:.55;
+  const k=(Z?1:sk==='night'?1:.55)*(lampLv.get(i)??LAMP_DIM);
   ctx.save();ctx.globalCompositeOperation='lighter';
   // the cone, falling on the shop front and the pavement
   const cg=ctx.createLinearGradient(0,hy,0,SIDE+40);cg.addColorStop(0,hexA(lc,.26*k));cg.addColorStop(.75,hexA(lc,.08*k));cg.addColorStop(1,hexA(lc,0));
@@ -905,7 +910,7 @@ function drawFrame(){
   const vis=x=>x+ox>-420&&x+ox<W+420;
   {const bi0=Math.max(0,Math.floor((camX-1100)/SP)),bi1=Math.min(B.length-1,Math.ceil((camX+1100)/SP));for(let i=bi0;i<=bi1;i++){try{drawBuilding(B[i],sk,ox)}catch(err){if(!drawErr){drawErr=true;console.debug('[MinimiTown:draw] building failed',B[i]?.appid,err)}}}}
   lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,false,i+li0)}); // in front of the shops
-  lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,true,i+li0)});
+  lampXs.forEach((x,i)=>{lampLevel(i+li0,frameDt);if(vis(x))drawLamp(x+ox,sk,true,i+li0)});
   if(sk==='night'){ctx.fillStyle=Z?'rgba(20,6,40,.12)':'rgba(10,12,40,.18)';ctx.fillRect(-300,-300,W+600,H+600)}
   if(!m.behind&&m.state!=='inside')drawMinimi(m.x+ox,f);
   drawParts(ox);
@@ -919,11 +924,11 @@ function drawFrame(){
 
 
 /* ---------------- loop ---------------- */
-let last=0,raf=0,frozen=false,active=false,trimT=0;var drawErr=false;
+let last=0,raf=0,frozen=false,active=false,trimT=0,frameDt=0;var drawErr=false;
 function loop(ts){
   raf=0;if(!cv.isConnected)return; // a detached copy: stop (setActive restarts it)
   let dt=(ts-last)/1000;if(!(dt>0))dt=0.016;dt=Math.min(.05,dt);last=ts;
-  update(dt);updRain(dt);updHoles(dt);
+  frameDt=dt;update(dt);updRain(dt);updHoles(dt);
   if(!frozen)drawFrame();
   trimT+=dt;if(trimT>2){trimT=0;trimCaches()}
   if(active&&!frozen)raf=view.requestAnimationFrame(loop);
@@ -1016,11 +1021,12 @@ function setTheme(t,talk){
   drawFrame();
 }
 function setSky(s){skyMode=s||'auto';drawFrame()}
+function setLampDim(v){LAMP_DIM=clamp(Number(v)||0,0,1);drawFrame()}
 function setCardStyle(st){st=st==='capsule'?'capsule':'wide';if(st===cardStyle)return;cardStyle=st;CW=CARD[st][0];CH=CARD[st][1];setGames(B.map(b=>b.game),B[sel]?.appid)}
 function setActive(on){active=!!on;if(active){start()}else stop()}
 function destroy(){active=false;stop();clearTimeout(moodSaveT);try{host.saveMood(Math.round(mood))}catch(e){};listeners.forEach(([t,f])=>cv.removeEventListener(t,f));B=[]}
 setTimeout(()=>{if(mode==='browse')say('안녕!',1.6)},600);
-return {fit,emerge,poke,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
+return {fit,emerge,poke,setLampDim,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
   get selected(){return sel},get mode(){return mode},get mood(){return mood},set mood(v){mood=clamp(v,0,100);saveMood()},
   get debug(){return {m,B,camX}}};
 }
