@@ -855,7 +855,7 @@ function premiumBack(b,left,top,sk){
 /** The big, visible step of each tier (on top of the smaller trims):
  *  200h a rooftop garden (hologram koi in the neon city), 350h a floor taller (makeBuilding), 500h gilded. */
 function tierUpgrades(b,left,top,t,night){
-  const L=b.L,a=L.awn;
+  const L=b.L,a=L.awn;tierStreet(b,left,top,t,night,false);
   if(t>=3&&Z){ // neon frames on every window, and a pair of hologram koi circling over the roof
     const nc=t>=5?'#ffe14d':b.neon;ctx.save();ctx.strokeStyle=nc;ctx.shadowColor=nc;ctx.lineWidth=2;
     L.wins.concat(L.up).forEach((w,j)=>{const on=flick(b.i*3+j)>.5;ctx.globalAlpha=on?.95:.25;ctx.shadowBlur=on?10:0;rr(ctx,left+w.x-5,top+w.y-5,w.w+10,w.h+10,4);ctx.stroke()});
@@ -895,6 +895,50 @@ function tierUpgrades(b,left,top,t,night){
     ctx.save();ctx.strokeStyle='#e6b23a';ctx.lineWidth=4;ctx.strokeRect(left-1,top-1,BW+2,b.bh+1);ctx.restore();
     ctx.fillStyle='rgba(255,214,90,.10)';ctx.fillRect(left,top,BW,b.bh)}
 }
+/** 100h and 150h: Minimi Town gets a chalkboard sign by the door, then striped awnings and
+ *  hanging baskets; Neon Rain City gets a glowing vending machine, then a water tank, an antenna
+ *  with a blinking warning light and an AC unit puffing steam on the roof. */
+function tierStreet(b,left,top,t,night,front){
+  const L=b.L,d=L.door,dx=left+d.x,dy=top+d.y;
+  if(!Z){
+    if(t>=2&&!front){ // striped awnings over the ground-floor windows, baskets beside the door
+      L.wins.forEach(w=>{const x=left+w.x-6,y=top+w.y-16,ww=w.w+12,n=6;
+        for(let k=0;k<n;k++){ctx.fillStyle=k%2?'#ffffff':(t>=5?'#e6b23a':'#e5484d');ctx.beginPath();ctx.moveTo(x+k*ww/n,y);ctx.lineTo(x+(k+1)*ww/n,y);ctx.lineTo(x+(k+1)*ww/n+3,y+14);ctx.lineTo(x+k*ww/n+3,y+14);ctx.closePath();ctx.fill()}
+        for(let k=0;k<n;k++){ctx.fillStyle=k%2?'#ffffff':(t>=5?'#e6b23a':'#e5484d');ctx.beginPath();ctx.arc(x+3+(k+.5)*ww/n,y+14,ww/n/2,0,Math.PI);ctx.fill()}
+        ctx.fillStyle='rgba(0,0,0,.12)';ctx.fillRect(x+3,y+14,ww,3)});
+      [dx-14,dx+d.w+14].forEach((bx,q)=>{const sw=Math.sin(T*1.4+q+b.i)*.06;ctx.save();ctx.translate(bx,dy+6);ctx.rotate(sw);
+        ctx.strokeStyle='#6a5a48';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-7,16);ctx.moveTo(0,0);ctx.lineTo(7,16);ctx.stroke();
+        ctx.fillStyle='#a8743a';ctx.beginPath();ctx.moveTo(-9,16);ctx.lineTo(9,16);ctx.lineTo(6,25);ctx.lineTo(-6,25);ctx.closePath();ctx.fill();
+        ctx.fillStyle='#4f9a5a';ell(ctx,0,15,10,4);ctx.fill();['#ff8fa8','#fff2a8','#c79bff','#ff8fa8'].forEach((c,k)=>{ctx.fillStyle=c;ell(ctx,-7+k*4.6,13+(k%2)*2,2.6,2.6);ctx.fill()});
+        ctx.strokeStyle='#4f9a5a';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-6,22);ctx.quadraticCurveTo(-9,30,-6,34);ctx.moveTo(5,22);ctx.quadraticCurveTo(9,31,6,36);ctx.stroke();ctx.restore()})}
+    if(t>=1&&front&&b.st!=='new'){ // the chalkboard sign by the door
+      const cx=dx+d.w+34,by=SIDE+2;ctx.fillStyle='#8a5e3a';ctx.save();ctx.translate(cx,by);ctx.scale(1.45,1.45);
+      ctx.beginPath();ctx.moveTo(-15,0);ctx.lineTo(-11,-44);ctx.lineTo(11,-44);ctx.lineTo(15,0);ctx.lineTo(12,0);ctx.lineTo(9,-41);ctx.lineTo(-9,-41);ctx.lineTo(-12,0);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#2f4a3a';ctx.beginPath();ctx.moveTo(-12,-6);ctx.lineTo(-9,-40);ctx.lineTo(9,-40);ctx.lineTo(12,-6);ctx.closePath();ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,.88)';ctx.font='9px '+DISPLAY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(TIER[1].n,0,-31);
+      ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(-5,-22);ctx.lineTo(-4,-15);ctx.lineTo(3,-15);ctx.lineTo(4,-22);ctx.closePath();ctx.stroke();ctx.beginPath();ctx.arc(5,-19,2.2,-1.4,1.4);ctx.stroke(); // a cup
+      ctx.beginPath();ctx.moveTo(-2,-26);ctx.quadraticCurveTo(-3,-28,-1,-30);ctx.moveTo(1,-26);ctx.quadraticCurveTo(0,-28,2,-30);ctx.stroke(); // steam
+      ctx.fillStyle='#ff8fa8';ctx.font='8px '+DISPLAY;ctx.fillText('♥',-7,-11);ctx.restore()}
+  }else{
+    if(t>=2&&!front){ // the roof: water tank, antenna with a warning light, AC unit with steam
+      const ry=top,tx=left+BW-64;
+      ctx.strokeStyle='#2a2636';ctx.lineWidth=3;ctx.beginPath();[-12,12].forEach(o=>{ctx.moveTo(tx+o,ry);ctx.lineTo(tx+o*.8,ry-18)});ctx.moveTo(tx-12,ry-8);ctx.lineTo(tx+12,ry-8);ctx.stroke();
+      ctx.fillStyle='#1c1a26';rr(ctx,tx-17,ry-46,34,30,4);ctx.fill();ctx.save();ctx.strokeStyle=b.neon;ctx.shadowColor=b.neon;ctx.shadowBlur=8;ctx.lineWidth=1.4;ctx.globalAlpha=.75;rr(ctx,tx-17,ry-46,34,30,4);ctx.stroke();ctx.fillStyle=b.neon;ctx.font='9px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('水',tx,ry-31);ctx.restore();ctx.fillStyle='#262236';ctx.beginPath();ctx.moveTo(tx-19,ry-46);ctx.lineTo(tx,ry-56);ctx.lineTo(tx+19,ry-46);ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;for(let y=ry-42;y<ry-18;y+=6){ctx.beginPath();ctx.moveTo(tx-17,y);ctx.lineTo(tx+17,y);ctx.stroke()}
+      const ax=left+40;ctx.strokeStyle='#4a4458';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(ax,ry);ctx.lineTo(ax,ry-70);ctx.moveTo(ax-10,ry-50);ctx.lineTo(ax+10,ry-50);ctx.moveTo(ax-7,ry-60);ctx.lineTo(ax+7,ry-60);ctx.stroke();
+      const on=Math.sin(T*3+b.i)>.2;ctx.fillStyle=on?'#ff3b4a':'#4a1a20';if(on){ctx.shadowColor='#ff3b4a';ctx.shadowBlur=12}ell(ctx,ax,ry-72,3,3);ctx.fill();ctx.shadowBlur=0;
+      const ux=left+78;ctx.fillStyle='#24202f';rr(ctx,ux-14,ry-16,28,16,2);ctx.fill();ctx.strokeStyle='rgba(180,200,230,.35)';ctx.lineWidth=1;rr(ctx,ux-14,ry-16,28,16,2);ctx.stroke();ctx.strokeStyle='#3a3448';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(ux-4,ry-8,5,0,Math.PI*2);ctx.stroke();
+      ctx.beginPath();const sp=T*12;ctx.moveTo(ux-4+Math.cos(sp)*4,ry-8+Math.sin(sp)*4);ctx.lineTo(ux-4-Math.cos(sp)*4,ry-8-Math.sin(sp)*4);ctx.stroke();
+      for(let k=0;k<3;k++){const ph=(T*.5+k/3+b.i*.1)%1;ctx.fillStyle=`rgba(200,210,230,${.22*(1-ph)})`;ell(ctx,ux+6+ph*6,ry-18-ph*26,4+ph*8,3+ph*6);ctx.fill()}}
+    if(t>=1&&front&&b.st!=='new'){ // a glowing vending machine on the pavement
+      const vw=46,vh=88,vx=left+BW-vw-14,vy=SIDE-vh+2;
+      ctx.fillStyle='#1a1826';rr(ctx,vx,vy,vw,vh,3);ctx.fill();
+      const glow=ctx.createLinearGradient(0,vy,0,vy+52);glow.addColorStop(0,'#e9f6ff');glow.addColorStop(1,'#9fd8ff');ctx.fillStyle=glow;rr(ctx,vx+3,vy+5,vw-6,48,2);ctx.fill();
+      const cols=['#ff3fa4','#3ff0ff','#ffe14d','#4dff9a','#b26bff','#ff7a3f'];for(let r=0;r<4;r++)for(let k=0;k<5;k++){ctx.fillStyle=cols[(r*5+k+b.i)%6];rr(ctx,vx+6+k*7.2,vy+9+r*11,4.5,8,1.5);ctx.fill()}
+      ctx.fillStyle='#ff3b4a';ctx.shadowColor='#ff3b4a';ctx.shadowBlur=8;ctx.fillRect(vx+3,vy+56,vw-6,5);ctx.shadowBlur=0;ctx.fillStyle='#0d0b12';ctx.fillRect(vx+6,vy+70,vw-12,10);ctx.fillStyle='#3a3448';ctx.fillRect(vx+vw-10,vy+62,4,6);
+      ctx.save();ctx.globalCompositeOperation='lighter';const hg=ctx.createRadialGradient(vx+vw/2,vy+22,4,vx+vw/2,vy+30,70);hg.addColorStop(0,'rgba(160,220,255,.28)');hg.addColorStop(1,'rgba(160,220,255,0)');ctx.fillStyle=hg;ctx.fillRect(vx-60,vy-40,vw+120,vh+70);ctx.restore()}
+  }
+}
 /** Achievements as a medal pinned to the screen's top-right corner: bronze 50%+, silver 80%+, gold 100%
  *  (with a laurel and a PERFECT ribbon). Playtime tiers stay the building's own look. */
 const ACH_TIER=[null,{c1:'#e3a16a',c2:'#9a5a2c',n:'#ff9a4a'},{c1:'#f4f7fb',c2:'#9aa6b8',n:'#bfe6ff'},{c1:'#fff1a8',c2:'#d39a16',n:'#ffe14d'}];
@@ -930,7 +974,7 @@ function drawAchMedal(b,left,top){
   if(t===3&&fx>.9){for(let k=0;k<4;k++){const ph=(T*.9+k*.25+b.i*.1)%1;ctx.globalAlpha=Math.sin(ph*Math.PI);star(x+Math.cos(k*1.7+b.i)*30,y+18+Math.sin(k*2.3)*26,3+ph*4,Z?'#ffe14d':'#fff6c8')}ctx.globalAlpha=1}
 }
 function premiumFront(b,left,top){
-  const t=tierOf(b);if(!t)return;const L=b.L,ti=TIER[t];
+  const t=tierOf(b);if(!t)return;const L=b.L,ti=TIER[t];tierStreet(b,left,top,t,skyNow()!=='day',true);
   if(t>=3&&b.i!==sel){ctx.save();ctx.strokeStyle=Z?(t>=5?'#ffe14d':b.neon):(t>=5?'#f0c24a':'#d8dee8');if(Z){ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=10}ctx.lineWidth=3;rr(ctx,left+L.card.x-4,top+L.card.y-4,CW+8,CH+8,12);ctx.stroke();ctx.restore()}
   ctx.save();ctx.translate(left+L.card.x-8,top+L.card.y-12);ctx.rotate(-.1);ctx.font='13px '+HEAVY;const txt=`${ti.n} ${ti.h}`,w=ctx.measureText(txt).width+18;
   if(Z){const c=t>=5?'#ffe14d':t>=3?b.neon:ti.c;ctx.fillStyle='rgba(10,8,20,.92)';rr(ctx,0,-11,w,22,6);ctx.fill();ctx.strokeStyle=c;ctx.shadowColor=c;ctx.shadowBlur=8;ctx.lineWidth=1.6;ctx.stroke();ctx.shadowBlur=0;ctx.fillStyle=c}
