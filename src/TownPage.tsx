@@ -220,8 +220,8 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
 
   // ── Steam's search box (opened with L2) ──
   // Gamepad input goes to the focused search box there, not to the street, so
-  // it is caught at the document: L2 / R2 bring you back to the street, and Ⓑ
-  // leaves the box and opens Steam's menu, like Ⓑ on the stock home.
+  // it is caught at the document: R2 leaves the box for the street; Ⓑ opens
+  // Steam's menu and the box stays where it is (L2 does nothing there).
   useEffect(() => {
     if (!active) return;
     const doc = boxRef.current?.ownerDocument;
@@ -230,26 +230,23 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       const el = doc.activeElement as HTMLElement | null;
       return !!el && el.tagName === "INPUT" && !boxRef.current?.closest("[data-minimi-root]")?.contains(el);
     };
-    const backToStreet = () => {
-      (doc.activeElement as HTMLElement | null)?.blur?.();
-      focusFirstIn(boxRef.current?.closest("[data-minimi-town]"));
-    };
     const onBtn = (e: any) => {
       const b = e?.detail?.button;
       if (!boxRef.current?.isConnected || !inSearch()) return;
-      if (b === GamepadButton.TRIGGER_LEFT || b === GamepadButton.TRIGGER_RIGHT) {
+      if (b === GamepadButton.TRIGGER_RIGHT) {
         consume(e);
-        if (!e.detail.is_repeat) backToStreet();
+        if (e.detail.is_repeat) return;
+        (doc.activeElement as HTMLElement | null)?.blur?.();
+        focusFirstIn(boxRef.current?.closest("[data-minimi-town]"));
+      } else if (b === GamepadButton.TRIGGER_LEFT) {
+        consume(e);
       } else if (b === GamepadButton.CANCEL) {
         consume(e);
-        backToStreet();
-        setTimeout(() => {
-          try {
-            Navigation.OpenMainMenu?.();
-          } catch {
-            /* this client has no such call: Ⓑ just leaves the box */
-          }
-        }, 60);
+        try {
+          Navigation.OpenMainMenu?.();
+        } catch {
+          /* this client has no such call */
+        }
       }
     };
     doc.addEventListener("vgp_onbuttondown", onBtn, true);

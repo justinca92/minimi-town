@@ -45,7 +45,9 @@ FLOW = """async () => {
   await sleep(700);
   log.push(['R2 in search → back to street', vgp(document.activeElement, 8), document.activeElement?.closest('[data-minimi-town]') ? 'street' : document.activeElement?.tagName]);
   await sleep(600); town().__props.onButtonDown(ev(7)); await sleep(50);
-  log.push(['Ⓑ in search → Steam menu', vgp(document.activeElement, 2), document.activeElement?.closest('[data-minimi-town]') ? 'street' : document.activeElement?.tagName]);
+  log.push(['L2 in search: stays', vgp(document.activeElement, 7), document.activeElement?.tagName]);
+  log.push(['Ⓑ in search → Steam menu, box stays', vgp(document.activeElement, 2), document.activeElement?.tagName]);
+  vgp(document.activeElement, 8); await sleep(50); log.push(['  then R2 → street', document.activeElement?.closest('[data-minimi-town]') ? 'street' : document.activeElement?.tagName]);
   await sleep(150); log.push(['  main menu opened', window.__mainMenu ?? 0]);
   // Ⓐ: the penguin walks in, then the game's page opens (nothing starts by itself)
   window.__nav = null;

@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.7
+
+- Only the lamp over the picked shop burns full; the others are dimmed to 30%, and the light follows you along the street.
+- Steam's search box: R2 takes you back to the street; Ⓑ opens Steam's menu and leaves you in the search box; L2 does nothing there.
+
 ## 0.1.6
 
 - What's New / Friends / Recommended: the tab row and Steam's top bar share one opaque background again, exactly like Spindeck.
