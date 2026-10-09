@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.17
+
+- Neon Rain City's blade signs are now small squares that fit the game's icon (no extra tubes or dots), each hung at its own height, always above the street lamps so a lamp never covers the icon.
+- Going into a shop no longer switches its windows to pink: the light stays one steady colour while the penguin is inside (in both themes).
+
 ## 0.1.16
 
 - Every shop now carries its own game info on its sign, with Spindeck's icons (playtime · last played · achievements · friends playing): a neon tube sign in Neon Rain City, a painted signboard under the storefront screen in Minimi Town. Items that don't fit are left off.

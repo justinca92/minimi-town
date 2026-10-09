@@ -629,13 +629,13 @@ function drawBuilding(b,sk,ox){
     ctx.lineCap='round';ctx.beginPath();for(let k=0;k<=40;k++){const u=k/40;ctx.lineTo(left+22+u*(BW-44),top+26+Math.sin(u*Math.PI*4+b.i)*4)}ctx.stroke();
     ctx.lineWidth=2;rr(ctx,left+a.x+6,top+a.y-1,a.w-12,a.h+2,11);ctx.stroke();
     // vertical blade sign hanging off the right edge
-    const sw=42,sh=94,sx=left+BW+4,sy=SIDE-250;ctx.save();ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.fillStyle='#0c0b12';ctx.fillRect(left+BW-4,sy+12,10,4);ctx.fillRect(left+BW-4,sy+sh-16,10,4);rr(ctx,sx,sy,sw,sh,9);ctx.fill();ctx.restore();
-    rr(ctx,sx+2,sy+2,sw-4,sh-4,8);ctx.stroke();
-    const is=28,ix=sx+(sw-is)/2,iy=sy+(sh-is)/2;if(!b.icon)loadIcon(b);
+    // square blade sign with the game's icon, hung at a height of its own (always above the lamp heads)
+    const ss=46,is=32,sx=left+BW+5,lo=LAMP_TOP-64-ss,hi=Math.max(top+30,SIDE-440),sy=Math.round(hi+(lo-hi)*(((hash(b.appid>>>0)>>>11)%1000)/1000));
+    ctx.save();ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.fillStyle='#0c0b12';ctx.fillRect(left+BW-4,sy+ss/2-3,10,6);rr(ctx,sx,sy,ss,ss,8);ctx.fill();ctx.restore();
+    const ix=sx+(ss-is)/2,iy=sy+(ss-is)/2;if(!b.icon)loadIcon(b);
     if(b.icon){ctx.save();ctx.shadowBlur=0;ctx.globalAlpha=(isSel?1:.72)*(.55+.45*fl);rr(ctx,ix,iy,is,is,5);ctx.clip();ctx.drawImage(b.icon,ix,iy,is,is);ctx.restore()}
-    else{const ch=[...b.g.t.replace(/[^가-힣A-Za-z0-9]/g,'')][0]||'?';ctx.font='20px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ch,sx+sw/2,sy+sh/2+1)}
-    ctx.lineWidth=2.5;rr(ctx,ix-4,iy-4,is+8,is+8,8);ctx.stroke(); // neon tube around the icon
-    ell(ctx,sx+sw/2,sy+12,2.6,2.6);ctx.fill();ell(ctx,sx+sw/2,sy+sh-12,2.6,2.6);ctx.fill();
+    else{const ch=[...b.g.t.replace(/[^가-힣A-Za-z0-9]/g,'')][0]||'?';ctx.font='22px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ch,sx+ss/2,sy+ss/2+1)}
+    ctx.lineWidth=2.5;rr(ctx,ix-3.5,iy-3.5,is+7,is+7,8);ctx.stroke(); // the neon tube, hugging the icon
     // horizontal sign: the info icons, in neon
     if(!(b.game.info&&drawInfo(ctx,b.game.info,left+BW/2,top+a.y+a.h/2+1,a.w-22,14,nc,'#4dff9a'))){ctx.font='17px '+DISPLAY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(b.g.g,left+BW/2,top+a.y+a.h/2+1)}
     ctx.restore();
@@ -647,14 +647,14 @@ function drawBuilding(b,sk,ox){
     ctx.fillStyle=night?'#1d2235':dusk?'#3b3a55':'#33405a';ctx.fillRect(x,y,w.w,w.h);
     if(!night){ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(x,y+w.h*.7);ctx.lineTo(x+w.w*.6,y);ctx.lineTo(x+w.w*.85,y);ctx.lineTo(x,y+w.h);ctx.fill()}
     if(lit>.02){const day=!Z&&!night&&!dusk; // neon: warm amber interiors (magenta in a playing shop); town by day: cool blue, at dusk/night: warm
-      let col=Z?(b.playing?(j%2?'rgba(255,190,60,':'rgba(255,63,164,'):'rgba(255,184,56,'):day?(b.playing?(j%2?'rgba(90,185,255,':'rgba(150,220,255,'):'rgba(110,200,255,'):b.playing?(j%2?'rgba(140,200,255,':'rgba(255,214,140,'):'rgba(255,214,130,';ctx.fillStyle=col+(lit*(night?.95:day?.9:.6))+')';ctx.fillRect(x,y,w.w,w.h);if(Z){const g2=ctx.createLinearGradient(0,y,0,y+w.h);g2.addColorStop(0,'rgba(255,90,40,0)');g2.addColorStop(1,`rgba(255,60,120,${lit*.35})`);ctx.fillStyle=g2;ctx.fillRect(x,y,w.w,w.h)}
+      let col=Z?'rgba(255,184,56,':day?'rgba(110,200,255,':'rgba(255,214,130,'; /* one steady colour, also while the penguin is inside */ctx.fillStyle=col+(lit*(night?.95:day?.9:.6))+')';ctx.fillRect(x,y,w.w,w.h);if(Z){const g2=ctx.createLinearGradient(0,y,0,y+w.h);g2.addColorStop(0,'rgba(255,90,40,0)');g2.addColorStop(1,`rgba(255,60,120,${lit*.35})`);ctx.fillStyle=g2;ctx.fillRect(x,y,w.w,w.h)}
       if(night){ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=col+(lit*.18)+')';ctx.fillRect(x-10,y-10,w.w+20,w.h+20);ctx.restore()}}
     if(closed){ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=2;for(let k=6;k<w.h;k+=7){ctx.beginPath();ctx.moveTo(x,y+k);ctx.lineTo(x+w.w,y+k);ctx.stroke()}}
     ctx.strokeStyle='rgba(0,0,0,.3)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x+w.w/2,y);ctx.lineTo(x+w.w/2,y+w.h);ctx.stroke()});
   // door
   const d=L.door,dx=left+d.x,dy=top+d.y;
   ctx.fillStyle=lit>.5||b.door>.05?'#3a2a20':'#1f1a22';ctx.fillRect(dx,dy,d.w,d.h);
-  if(b.door>.05){let g=ctx.createLinearGradient(0,dy,0,dy+d.h);g.addColorStop(0,Z?'rgba(255,200,90,.9)':(!night&&!dusk)?'rgba(170,225,255,.9)':'rgba(255,214,140,.9)');g.addColorStop(1,Z?hexA(b.neon,.55):'rgba(255,180,100,.5)');ctx.fillStyle=g;ctx.globalAlpha=b.door;ctx.fillRect(dx+3,dy+3,d.w-6,d.h-3);ctx.globalAlpha=1}
+  if(b.door>.05){let g=ctx.createLinearGradient(0,dy,0,dy+d.h);g.addColorStop(0,Z?'rgba(255,200,90,.9)':(!night&&!dusk)?'rgba(170,225,255,.9)':'rgba(255,214,140,.9)');g.addColorStop(1,Z?'rgba(255,150,50,.55)':'rgba(255,180,100,.5)');ctx.fillStyle=g;ctx.globalAlpha=b.door;ctx.fillRect(dx+3,dy+3,d.w-6,d.h-3);ctx.globalAlpha=1}
   const pw=d.w*(1-b.door*.82);ctx.fillStyle=Z?'#26232f':shade(b.g.tr,.15);ctx.fillRect(dx,dy,pw,d.h);ctx.fillStyle='rgba(0,0,0,.18)';ctx.fillRect(dx+pw-3,dy,3,d.h);
   if(pw>20){ctx.fillStyle=night?'#2a3045':'#465673';ctx.fillRect(dx+pw*.2,dy+12,pw*.6,d.h*.4);if(lit>.05){ctx.fillStyle=Z?`rgba(255,196,72,${lit*.8})`:(!night&&!dusk)?`rgba(150,215,255,${lit*.8})`:`rgba(255,214,130,${lit*.8})`;ctx.fillRect(dx+pw*.2,dy+12,pw*.6,d.h*.4)}ctx.fillStyle='#e8c46a';ell(ctx,dx+pw-10,dy+d.h*.58,3.5,3.5);ctx.fill()}
   premiumBack(b,left,top,sk);
