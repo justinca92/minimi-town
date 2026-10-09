@@ -33,6 +33,9 @@ export function createTown(cv: HTMLCanvasElement, host: TownHost) {
 'use strict';
 const W=1280,H=800,SIDE=588,FEET=626,SP=360,R=30;
 const view=cv.ownerDocument?.defaultView||window;
+// Timestamps must come from the window that draws: Steam runs plugin code in a
+// separate (SharedJSContext) window whose performance.now() has another origin.
+const now=()=>view.performance.now();
 const ctx=cv.getContext('2d');
 const DISPLAY='"Jua","Motiva Sans","Noto Sans CJK KR","Noto Sans KR",sans-serif';
 const HEAVY='"Black Han Sans","Motiva Sans","Noto Sans CJK KR",sans-serif';
@@ -206,12 +209,12 @@ function launch(){
   if(m.x<eL-20||m.x>eR+20){const side=m.x<b.cx?-1:1;m.x=b.cx+side*(640+40);m.y=FEET;m.rot=0;m.alpha=1;m.scale=1;
     m.dir=-side;m.vx=-side*700;m.rush=true;m.sprintT=0;m.stamina=1;say(Math.random()<.5?'잠깐만~!':'같이 가아~!',1.3);sfx('boing')}
 }
-function enterDone(){const b=cur();mode='playing';b.playing=true;playStart=performance.now();host.onEntered(sel)}
+function enterDone(){const b=cur();mode='playing';b.playing=true;playStart=now();host.onEntered(sel)}
 /** The game ended (or never started): the penguin comes back out, sleepy if it was long. */
 function goBack(){
   if(mode!=='playing'&&mode!=='launching')return;
   if(mode==='launching'){cancelLaunch();return}
-  const b=cur();longPlay=performance.now()-playStart>45*60000;mode='exiting';b.playing=false;b.doorTarget=1;
+  const b=cur();longPlay=now()-playStart>45*60000;mode='exiting';b.playing=false;b.doorTarget=1;
   frozen=false;
   m.x=b.cx;m.y=SIDE+4;m.alpha=0;m.scale=.82;setState('exit');start();
 }
@@ -249,7 +252,8 @@ function update(dt){
   if(!B.length){T+=dt;return}
   T+=dt;
   // camera
-  const tx=cur().cx;camX+= (tx-camX)*(1-Math.exp(-dt*6.5));camKick*=Math.exp(-dt*10);
+  const tx=cur().cx;if(!isFinite(camX))camX=tx;if(!isFinite(m.x)||!isFinite(m.y)){m.x=standX(cur());m.y=FEET;m.vx=0;m.vy=0}
+  camX+= (tx-camX)*(1-Math.exp(-dt*6.5));camKick*=Math.exp(-dt*10);
   if(shakeT>0)shakeT-=dt;
   const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*Math.PI/180;
   // downloads
@@ -813,7 +817,7 @@ function drawFrame(){
   const lampXs=[];const li0=Math.max(-1,Math.floor((camX-900)/SP)),li1=Math.min(B.length-1,Math.ceil((camX+900)/SP));for(let i=li0;i<=li1;i++)lampXs.push(i*SP+SP/2);
   const vis=x=>x+ox>-420&&x+ox<W+420;
   lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,false,i+li0)});
-  {const bi0=Math.max(0,Math.floor((camX-1100)/SP)),bi1=Math.min(B.length-1,Math.ceil((camX+1100)/SP));for(let i=bi0;i<=bi1;i++)drawBuilding(B[i],sk,ox)}
+  {const bi0=Math.max(0,Math.floor((camX-1100)/SP)),bi1=Math.min(B.length-1,Math.ceil((camX+1100)/SP));for(let i=bi0;i<=bi1;i++){try{drawBuilding(B[i],sk,ox)}catch(err){if(!drawErr){drawErr=true;console.debug('[MinimiTown:draw] building failed',B[i]?.appid,err)}}}}
   if(sk!=='day')lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,true,i+li0)});
   if(sk==='night'){ctx.fillStyle=Z?'rgba(20,6,40,.12)':'rgba(10,12,40,.18)';ctx.fillRect(-300,-300,W+600,H+600)}
   if(!m.behind&&m.state!=='inside')drawMinimi(m.x+ox,f);
@@ -827,15 +831,15 @@ function drawFrame(){
 
 
 /* ---------------- loop ---------------- */
-let last=0,raf=0,frozen=false,active=false,trimT=0;
+let last=0,raf=0,frozen=false,active=false,trimT=0;var drawErr=false;
 function loop(ts){
-  raf=0;const dt=Math.min(.05,(ts-last)/1000||0.016);last=ts;
+  raf=0;let dt=(ts-last)/1000;if(!(dt>0))dt=0.016;dt=Math.min(.05,dt);last=ts;
   update(dt);updRain(dt);
   if(!frozen)drawFrame();
   trimT+=dt;if(trimT>2){trimT=0;trimCaches()}
   if(active&&!frozen)raf=view.requestAnimationFrame(loop);
 }
-function start(){if(!raf&&active&&!frozen){last=performance.now();raf=view.requestAnimationFrame(loop)}}
+function start(){if(!raf&&active&&!frozen){last=now();raf=view.requestAnimationFrame(loop)}}
 function stop(){if(raf){view.cancelAnimationFrame(raf);raf=0}}
 function freeze(){frozen=true;drawFrame();stop()}
 const listeners=[];
@@ -848,13 +852,13 @@ function toWorld(p){const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*.5*Math.PI
 function overMinimi(w,pad=0){if(['inside','enter','exit'].includes(m.state)||m.alpha<.5)return false;const cy=m.y-R*1.15*m.scale;return Math.hypot(w.x-m.x,(w.y-cy)*.75)<R*1.5+pad+(m.behind?14:0)}
 on('pointerdown',e=>{
   if(mode==='playing'){return}
-  cv.setPointerCapture(e.pointerId);const p=stagePt(e),w=toWorld(p),now=performance.now();
+  cv.setPointerCapture(e.pointerId);const p=stagePt(e),w=toWorld(p),now=view.performance.now();
   P={id:e.pointerId,sx:p.x,sy:p.y,x:p.x,y:p.y,t0:now,hist:[{x:p.x,y:p.y,t:now}],moved:0,rub:0,scrub:0};
   if(overMinimi(w,8)&&!['air','splatW','splatG'].includes(m.state)){P.kind='mm';P.lp=setTimeout(()=>{if(P&&P.kind==='mm'&&P.moved<12&&P.rub<20)grab('lift',toWorld({x:P.x,y:P.y}))},420)}
   else P.kind='street';
 });
 on('pointermove',e=>{
-  const p=stagePt(e),w=toWorld(p),now=performance.now();
+  const p=stagePt(e),w=toWorld(p),now=view.performance.now();
   if(!P||P.id!==e.pointerId){ // mouse hover rubbing counts as petting
     if(e.pointerType==='mouse'&&e.buttons===0&&mode==='browse'){if(overMinimi(w)){const dd=Math.hypot(e.movementX||0,e.movementY||0)*W/cv.getBoundingClientRect().width;if(dd<30)pet(dd)}}
     return}
@@ -879,7 +883,7 @@ function grab(kind,w){
   if(kind==='lift'){say('으앗?',1);sfx('boing');m.x=w.x;m.y=Math.min(FEET,w.y+2*R+14)}else{say('으아앗!',1)}
 }
 function endPointer(e){
-  if(!P||P.id!==e.pointerId)return;clearTimeout(P.lp);const now=performance.now(),p=stagePt(e),dt=now-P.t0;
+  if(!P||P.id!==e.pointerId)return;clearTimeout(P.lp);const now=view.performance.now(),p=stagePt(e),dt=now-P.t0;
   if(P.kind==='mm'){if(dt<320&&P.moved<14&&P.rub<40)poke()}
   else if(P.kind==='held'){
     cv.classList.remove('held');const h=P.hist.filter(q=>now-q.t<90),a=h[0]||P.hist[0];const span=Math.max(16,now-a.t);

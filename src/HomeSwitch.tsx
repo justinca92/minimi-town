@@ -30,9 +30,9 @@ import {
  *     "wheel":    the town street (replaces the original recent-games area)
  *     "sections": the original home's lower sections (What's New, Friends, Recommended…)
  *   (the screen is still called "wheel" internally; the switching code is shared with Spindeck)
- *   wheel    → R1 (TownPage) or swipe up                          → sections
- *   sections → ▲ from the top row, or swipe down at the top         → wheel
- *   sections → Ⓑ: to the top of the sections; at the top, Steam's own Ⓑ (Steam menu)
+ *   wheel    → R1 (TownPage): the sections slide in from the right → sections
+ *   sections → Ⓑ, ▲ from the top row, or a swipe to the right       → wheel
+ *   (a popup Steam opens inside the sections keeps Steam's own Ⓑ)
  */
 export function HomeSwitch({ original }: { original: ReactNode }) {
   // Other plugins patch the home route too, and some of them (SteamGridDB's
@@ -483,14 +483,13 @@ function WheelHome({ original }: { original: ReactNode }) {
     else toSections();
   };
 
-  /** Ⓑ like the stock home: first to the top of the sections, then Steam's own Ⓑ. */
+  /** Ⓑ on the sections screen: back to the street (it opened like a page to the right). */
   const onSectionsButton = (e: any) => {
     if (e?.detail?.button !== GamepadButton.CANCEL || screenRef.current !== "sections") return;
     if (focusInOverlay(sections.current)) return; // popup open: Ⓑ closes it (Steam)
-    if (atTopOfSections(sections.current)) return; // at the top: Steam's turn (Steam menu)
     e.preventDefault?.();
     e.stopPropagation?.();
-    revealSections(sections.current);
+    toWheel();
   };
 
   // Touch swipes (the container itself never scrolls).
@@ -509,9 +508,9 @@ function WheelHome({ original }: { original: ReactNode }) {
     const onEnd = (e: TouchEvent) => {
       const dy = e.changedTouches[0].clientY - startY;
       const dx = e.changedTouches[0].clientX - startX;
-      if (Math.abs(dy) < 60 || Math.abs(dy) < Math.abs(dx) * 1.5) return; // not a vertical swipe
-      if (screenRef.current === "wheel" && dy < 0) toSections();
-      else if (screenRef.current === "sections" && dy > 0 && sectionsAtTop) toWheel();
+      // The street uses horizontal swipes itself; on the sections a swipe to the right goes back.
+      void sectionsAtTop;
+      if (screenRef.current === "sections" && dx > 90 && Math.abs(dx) > Math.abs(dy) * 1.5) toWheel();
     };
     el.addEventListener("touchstart", onStart, { passive: true });
     el.addEventListener("touchend", onEnd, { passive: true });
@@ -623,26 +622,26 @@ function WheelHome({ original }: { original: ReactNode }) {
       <div
         style={{
           position: "absolute",
-          left: 0,
-          right: 0,
-          // Slide with `top`, not `transform`: a transformed ancestor becomes the
+          top: 0,
+          bottom: 0,
+          // Slide with `left`, not `transform`: a transformed ancestor becomes the
           // containing block for position:fixed children, which trapped Steam's
           // own popups (What's New event details) off-screen inside this box.
-          top: screen === "wheel" ? "0%" : "-100%",
-          height: "200%",
-          transition: `top ${SLIDE_MS}ms ease-out`,
+          left: screen === "wheel" ? "0%" : "-100%",
+          width: "200%",
+          transition: `left ${SLIDE_MS}ms ease-out`,
         }}
       >
-        <Focusable flow-children="column" style={{ height: "100%", display: "flex", flexDirection: "column" }}>
-          <div ref={wheelBox} data-minimi-town="" style={{ height: "50%", position: "relative", flexShrink: 0 }}>
+        <Focusable flow-children="row" style={{ height: "100%", display: "flex", flexDirection: "row" }}>
+          <div ref={wheelBox} data-minimi-town="" style={{ width: "50%", height: "100%", position: "relative", flexShrink: 0 }}>
             <TownPage key={`${wheelGen}:${lang}`} onTownFocus={onWheelGotFocus} onRequestSections={toSections} active={screen === "wheel"} />
           </div>
           {/* position:relative: overlays Steam opens inside the home with
               position:absolute (e.g. What's New event details) are placed
-              against this screen-sized box, not the 200%-tall slider above
-              (whose top half is the wheel, off-screen on this screen). */}
+              against this screen-sized box, not the 200%-wide slider above
+              (whose left half is the street, off-screen on this screen). */}
           <Focusable
-            style={{ height: "50%", flexShrink: 0, overflow: "hidden", position: "relative" }}
+            style={{ width: "50%", height: "100%", flexShrink: 0, overflow: "hidden", position: "relative" }}
             onButtonDown={onSectionsButton}
             onGamepadDirection={onUp}
           >

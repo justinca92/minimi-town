@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.1.1
+
+- Fixed: the street could show only the sky and the road, with no buildings and no penguin. Steam runs plugin code in a separate window with its own clock; the first frame got a huge negative time step and threw the camera away. The street now uses the clock of the window it draws in, and a bad frame can no longer move the camera or the penguin off to infinity.
+- R1 now opens What's New / Friends / Recommended as a page that slides in from the right. Ⓑ (or a swipe to the right) goes back to the street.
+- The bottom bar shows only the Ⓐ hint.
+
 ## 0.1.0
 
 First test build.

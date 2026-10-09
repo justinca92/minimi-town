@@ -114,12 +114,15 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       if (box) e.fit(box.clientWidth, box.clientHeight);
     };
     fit();
+    // Steam lays the route out late at boot: measure again a few times.
+    const refits = [100, 400, 1200, 3000].map((ms) => setTimeout(fit, ms));
     const RO = view.ResizeObserver;
     const ro = RO ? new RO(fit) : null;
     if (boxRef.current) ro?.observe(boxRef.current);
     const unregister = onTeardown(() => e.destroy());
     return () => {
       unregister();
+      refits.forEach(clearTimeout);
       ro?.disconnect();
       stopWatch();
       e.destroy();
@@ -339,9 +342,6 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
               </div>
             </div>
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              {hint("L1", t.search)}
-              {hint("R1", t.news.split(" · ")[0])}
-              {hint("≡", t.menu)}
               {hint("A", tg.status === "closed" ? t.install : t.play, true)}
             </div>
           </div>

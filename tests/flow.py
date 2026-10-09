@@ -25,11 +25,11 @@ FLOW = """async () => {
   log.push(['HUD at start', hud()]);
   town().__props.onGamepadDirection(ev(12)); town().__props.onGamepadDirection(ev(12)); await sleep(300);
   log.push(['▶▶ HUD', hud()]);
-  const up = ev(9); town().__props.onGamepadDirection(up); log.push(['▲ on street consumed, no nav', !!up.p, window.__nav ?? 'none', box.style.top]);
+  const up = ev(9); town().__props.onGamepadDirection(up); log.push(['▲ on street consumed, no nav', !!up.p, window.__nav ?? 'none', box.style.left]);
   await sleep(600);
-  town().__props.onButtonDown(ev(6)); await sleep(500); log.push(['R1 → sections', box.style.top]);
+  town().__props.onButtonDown(ev(6)); await sleep(500); log.push(['R1 → sections slide in from the right (left)', box.style.left, 'top stays', box.style.top]);
   await sleep(900);
-  sec.__props.onGamepadDirection(ev(9)); await sleep(500); log.push(['▲ at top → town', box.style.top]);
+  const bb = ev(2); sec.__props.onButtonDown(bb); await sleep(500); log.push(['Ⓑ → back to street', box.style.left, 'consumed', !!bb.p]);
   await sleep(700);
   document.activeElement?.blur?.();
   town().__props.onButtonDown(ev(5)); await sleep(50); log.push(['L1 → search focused', document.activeElement?.tagName]);
@@ -47,9 +47,11 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch()
         errs = []
-        for theme in ["town", "neon"]:
+        for theme in ["town", "neon", "skew"]:
             pg = await b.new_page(viewport={"width": 1280, "height": 800})
             pg.on("pageerror", lambda e: errs.append(str(e)))
+            if theme == "skew":
+                await pg.add_init_script("{const pn=performance.now.bind(performance);performance.now=()=>pn()+5e6}")
             await pg.goto(f"http://127.0.0.1:8771/#{theme}")
             await pg.wait_for_function("window.__start")
             await pg.evaluate("window.__start()")
