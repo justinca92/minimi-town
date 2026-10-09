@@ -49,6 +49,17 @@ FLOW = """async () => {
   log.push(['Ⓑ in search → Steam menu, box stays', vgp(document.activeElement, 2), document.activeElement?.tagName]);
   vgp(document.activeElement, 8); await sleep(50); log.push(['  then R2 → street', document.activeElement?.closest('[data-minimi-town]') ? 'street' : document.activeElement?.tagName]);
   await sleep(150); log.push(['  main menu opened', window.__mainMenu ?? 0]);
+  // left trackpad: a pad click (arrives as a D-pad press too) doesn't move along the street
+  const pkt = (b, x = 0, y = 0) => window.__pad?.([{ ulButtons: b, sLeftPadX: x, sLeftPadY: y }]);
+  log.push(['pad feed registered while shown', window.__padRegs, 'streets in DOM', document.querySelectorAll('[data-minimi-town]').length, 'canvases', document.querySelectorAll('[data-minimi-town] canvas').length]);
+  const selBefore = document.querySelector('[data-minimi-sel]').dataset.minimiSel;
+  pkt((1 << 19) | (1 << 17), 30000, 0); const pd = ev(12); town().__props.onGamepadDirection(pd); await sleep(300);
+  log.push(['pad click ▶: consumed, no move', !!pd.p, document.querySelector('[data-minimi-sel]').dataset.minimiSel === selBefore]);
+  pkt(0); await sleep(50); log.push(['  after a touch, listeners left (stale copy let go)', window.__padRegs]);
+  await sleep(1150);
+  const dd = ev(12); town().__props.onGamepadDirection(dd); await sleep(300);
+  log.push(['real D-pad ▶ still moves', document.querySelector('[data-minimi-sel]').dataset.minimiSel !== selBefore]);
+  town().__props.onGamepadDirection(ev(13)); await sleep(1500);
   // Ⓐ: the penguin walks in, then the game's page opens (nothing starts by itself)
   window.__nav = null;
   town().__props.onOKButton(); await sleep(4500);

@@ -100,6 +100,7 @@ const ko = {
     ["Ⓧ", "게임 정보 (화면이 뒤집혀요)"],
     ["≡", "게임 메뉴"],
     ["Ⓨ", "흔들기"],
+    ["왼쪽 트랙패드", "문지르면 쓰다듬기 · 클릭하면 잡기 · 튕기고 손 떼면 던지기"],
     ["터치", "펭귄 잡아 던지기 · 콕콕 · 쓰다듬기"],
   ] as [string, string][],
 };
@@ -194,6 +195,7 @@ const en: Strings = {
     ["Ⓧ", "Game info (the screen turns round)"],
     ["≡", "Game menu"],
     ["Ⓨ", "Shake"],
+    ["Left trackpad", "Rub to pet · click to grab · flick and let go to throw"],
     ["Touch", "Grab & fling, poke, pet the penguin"],
   ],
 };

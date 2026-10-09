@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createTown, TownGame, TownStatus } from "./town/engine";
 import { AppExtra, cachedAchievements, downloadProgress, GameEntry, loadLibrary, openGamePage, overviewMinutes, subscribeAppExtra } from "./games";
 import { friendsPlayingMap } from "./friends";
+import { padRecentlyTouched, subscribeLeftPad } from "./padInput";
 import { openNativeGameMenu } from "./nativeMenu";
 import { findHeaderSearch, focusFirstIn } from "./steamDom";
 import { getSettings, updateSettings, useSettings } from "./settings";
@@ -211,6 +212,23 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
     };
   }, []);
   useEffect(() => engine.current?.setActive(active && winFocused), [active, winFocused]);
+  // The left trackpad is the penguin's hand (rub to pet, click to grab, flick to throw), only while the street is shown.
+  useEffect(() => {
+    if (!active || !winFocused || !boxRef.current?.isConnected) return; // a detached copy of the home doesn't listen
+    let off = () => {};
+    let gone = false;
+    off = subscribeLeftPad((st) => {
+      if (boxRef.current?.isConnected) return engine.current?.padInput(st);
+      if (!gone) {
+        gone = true; // this copy of the home was taken out of the page: stop listening
+        setTimeout(() => off(), 0);
+      }
+    });
+    return () => {
+      off();
+      engine.current?.padInput({ touch: false, click: false, x: 0, y: 0 });
+    };
+  }, [active, winFocused]);
 
   // ── Back from the game page while this home stayed mounted ──
   // Seen as the street going out of view (the page covers it) and coming back.
@@ -296,6 +314,8 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   latest.current = {
     dir: (e: any) => {
       const b = e?.detail?.button;
+      // A left-trackpad click arrives as a D-pad press too: the pad is the hand now, not a way to move.
+      if (padRecentlyTouched() && (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT || b === GamepadButton.DIR_UP || b === GamepadButton.DIR_DOWN)) return consume(e);
       if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT) {
         engine.current?.nav(b === GamepadButton.DIR_RIGHT ? 1 : -1);
         return consume(e);

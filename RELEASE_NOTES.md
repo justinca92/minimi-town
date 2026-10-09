@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.1.29
+
+- The left trackpad is the penguin's hand now (Steam Deck, Steam Controller, Steam Machine): a cartoon glove appears while your thumb is on the pad. Rub without clicking to pet it (it cheers up); click to grab it, keep your thumb on the pad to carry it around, then flick and lift your thumb to throw it (lift slowly to just put it down). Left-pad clicks no longer move along the street; the D-pad still does.
+- Street lamps in Neon Rain City also only throw their light down now (no round glow at the bulb or on the wall), like Minimi Town.
+- The "퍽!" when the penguin hits a screen wall shows up beside it, on the inner side, and pop-up words never run off the screen edge.
+
 ## 0.1.28
 
 - Neon Rain City's LED ticker pillars scroll just the words (GRAND OPENING, 축 개업 / GRATZ), no star marks.

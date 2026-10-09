@@ -529,7 +529,7 @@ function drawGun(glow){
 function afterBother(){if(mood<22)startSulk();else setState('idle')}
 function startSulk(){m.sulkKind='back';m.sulkIdx=sel;setState('sulk');say('흥.',1.4);
   if(m.sulkKind==='hide'){const b=cur();m.side=(m.x>b.cx)?1:-1}}
-function splatWall(side){setState('splatW');m.vx=0;m.vy=0;m.side2=side;m.rot=0;pop('퍽!',m.x+side*10,m.y-40,56);dust(m.x+side*20,m.y-30,8,1);bother(8);sfx('splat');buzz(40);shakeT=.25}
+function splatWall(side){setState('splatW');m.vx=0;m.vy=0;m.side2=side;m.rot=0;pop('퍽!',m.x-side*(R+62),m.y-70,56);dust(m.x+side*20,m.y-30,8,1);bother(8);sfx('splat');buzz(40);shakeT=.25}
 function splatGround(){setState('splatG');m.vx=0;m.vy=0;m.rot=0;pop('퍽!',m.x,FEET-60,56);dust(m.x,FEET,12,1.3);bother(9);sfx('splat');buzz(50);shakeT=.3}
 function poke(){
   const recent=(m.pokes=(m.pokes||[]).filter(t=>T-t<2.4));recent.push(T);const n=recent.length;
@@ -655,11 +655,7 @@ function drawLamp(x,sk,front,i=0){
   // the cone, falling on the shop front and the pavement
   const cg=ctx.createLinearGradient(0,hy,0,SIDE+40);cg.addColorStop(0,hexA(lc,.26*k));cg.addColorStop(.75,hexA(lc,.08*k));cg.addColorStop(1,hexA(lc,0));
   ctx.fillStyle=cg;ctx.beginPath();ctx.moveTo(hx-9,hy);ctx.lineTo(hx+9,hy);ctx.lineTo(hx+100,SIDE+40);ctx.lineTo(hx-100,SIDE+40);ctx.closePath();ctx.fill();
-  let g;
-  if(Z){ // a soft wash on the wall behind
-  g=ctx.createRadialGradient(hx,SIDE-70,10,hx,SIDE-70,150);g.addColorStop(0,hexA(lc,.10*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.fillRect(hx-150,SIDE-220,300,300);
-  // the bulb
-  g=ctx.createRadialGradient(hx,hy,2,hx,hy,46);g.addColorStop(0,hexA(lc,.6*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.fillRect(hx-46,hy-46,92,92)}
+  let g; // only the light falling down: no round glow at the bulb or on the wall (both themes)
   // the pool on the pavement
   g=ctx.createRadialGradient(hx,SIDE+34,4,hx,SIDE+34,130);g.addColorStop(0,hexA(lc,.3*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(hx,SIDE+34,140,34,0,0,Math.PI*2);ctx.fill();
   ctx.restore();
@@ -1164,7 +1160,7 @@ function drawParts(ox){
     else if(p.k==='steam'){ctx.fillStyle=`rgba(255,255,255,${a*.85})`;ell(ctx,x,p.y,p.r*(1+p.life),p.r*(1+p.life));ctx.fill()}
     else if(p.k==='heart'){ctx.fillStyle=`rgba(255,110,140,${a})`;const r=p.r;ctx.beginPath();ctx.moveTo(x,p.y+r*.9);ctx.bezierCurveTo(x-r*1.4,p.y-r*.2,x-r*.6,p.y-r*1.2,x,p.y-r*.4);ctx.bezierCurveTo(x+r*.6,p.y-r*1.2,x+r*1.4,p.y-r*.2,x,p.y+r*.9);ctx.fill()}
     else if(p.k==='conf'){ctx.save();ctx.translate(x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=a;ctx.fillStyle=p.col;ctx.fillRect(-4,-2,8,4);ctx.restore()}
-    else if(p.k==='text'){const k=Math.min(1,p.life*8),sc=k<1?.5+k*.7:1.2-(p.life-.125)*.25;ctx.save();ctx.translate(x,p.y);ctx.rotate(p.rot);ctx.scale(sc,sc);ctx.globalAlpha=Math.min(1,a*2);ctx.font=`${p.size}px ${DISPLAY}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=8;ctx.strokeStyle='#2f2236';ctx.strokeText(p.text,0,0);ctx.fillStyle=p.col;ctx.fillText(p.text,0,0);ctx.restore()}
+    else if(p.k==='text'){const k=Math.min(1,p.life*8),sc=k<1?.5+k*.7:1.2-(p.life-.125)*.25;ctx.font=`${p.size}px ${DISPLAY}`;const hw=(ctx.measureText(p.text).width/2+10)*1.25,xc=clamp(x,hw,W-hw); /* keep the whole word on screen (e.g. splatting into a wall) */ctx.save();ctx.translate(xc,p.y);ctx.rotate(p.rot);ctx.scale(sc,sc);ctx.globalAlpha=Math.min(1,a*2);ctx.font=`${p.size}px ${DISPLAY}`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=8;ctx.strokeStyle='#2f2236';ctx.strokeText(p.text,0,0);ctx.fillStyle=p.col;ctx.fillText(p.text,0,0);ctx.restore()}
   });ctx.globalAlpha=1;
 }
 function drawBubble(sx){
@@ -1195,6 +1191,7 @@ function drawFrame(){
   lampTick(frameDt);lampXs.forEach((x,i)=>{lampLevel(i+li0,frameDt);if(vis(x))drawLamp(x+ox,sk,true,i+li0)});
   if(sk==='night'){ctx.fillStyle=Z?'rgba(20,6,40,.12)':'rgba(10,12,40,.18)';ctx.fillRect(-300,-300,W+600,H+600)}
   if(!m.behind&&m.state!=='inside')drawMinimi(m.x+ox,f);
+  drawHand(ox);
   drawParts(ox);
   if(Z)drawRain();
   if(m.state!=='inside')drawBubble(m.x+ox);
@@ -1210,7 +1207,7 @@ let last=0,raf=0,frozen=false,active=false,trimT=0,frameDt=0;var drawErr=false;
 function loop(ts){
   raf=0;if(!cv.isConnected)return; // a detached copy: stop (setActive restarts it)
   let dt=(ts-last)/1000;if(!(dt>0))dt=0.016;dt=Math.min(.05,dt);last=ts;
-  frameDt=dt;update(dt);updRain(dt);updHoles(dt);
+  frameDt=dt;update(dt);if(B.length)handTick(dt);updRain(dt);updHoles(dt);
   if(!frozen)drawFrame();
   trimT+=dt;if(trimT>2){trimT=0;trimCaches()}
   if(active&&!frozen)raf=view.requestAnimationFrame(loop);
@@ -1284,6 +1281,56 @@ on('pointerup',endPointer);on('pointercancel',endPointer);
 /* ---------------- public API ---------------- */
 /** Ⓧ: turn the picked shop's screen round (info) or back (art). */
 function flipCard(){const b=B[sel];if(!b||mode!=='browse'||!b.game.info)return;flipPick=!((b.flip||0)>.5);sfx('tick')}
+/* ---------------- the left trackpad as a hand ---------------- */
+// Rub (no click) to pet; click to grab, keep the thumb on the pad to carry, flick and lift it to throw.
+const pad={touch:false,click:false,x:0,y:0,px:0,py:0},hand={a:0,x:0,y:0,grip:false,ax:0,ay:0,bx:0,by:0,hist:[],wig:0};
+const HAND_OFF=['enter','inside','exit','air','splatW','splatG','shoot','brace','roll'];
+function padInput(st){
+  const wasClick=pad.click;pad.touch=!!st.touch;pad.click=!!st.click;if(pad.touch){pad.x=st.x;pad.y=st.y}
+  if(pad.click&&!wasClick&&!hand.grip&&pad.touch&&(mode==='browse'||mode==='launching')&&!HAND_OFF.includes(m.state)&&!P){ // grab
+    cancelLaunch();m.behind=false;m.react=null;setState('held');m.grab='lift';hand.grip=true;
+    hand.bx=m.x;hand.by=Math.min(FEET,m.y)-34;hand.ax=pad.x;hand.ay=pad.y;hand.hist=[];say('으앗?',1);sfx('boing');buzz(25)}
+  if(!pad.touch&&hand.grip)padRelease();
+}
+function padRelease(){
+  hand.grip=false;if(m.state!=='held'||m.grab!=='lift')return;
+  const h=hand.hist.filter(q=>T-q.t<.09),a=h[0]||{t:T-.016,x:m.x,y:m.y},span=Math.max(.016,T-a.t);
+  let vx=(m.x-a.x)/span,vy=(m.y-a.y)/span;const sp=Math.hypot(vx,vy);if(sp>1800){vx*=1800/sp;vy*=1800/sp}
+  if(sp>380){m.vx=vx*1.15;m.vy=vy*1.15;setState('air');bother(3);sfx('boing')}else{m.vx=0;m.vy=60;setState('air');bother(1)}
+  m.grab=null;
+}
+function handTick(dt){
+  const on=pad.touch&&(mode==='browse'||mode==='launching'||hand.grip)&&(hand.grip||!HAND_OFF.includes(m.state));
+  hand.a+=((on?1:0)-hand.a)*(1-Math.exp(-dt*(on?14:8)));
+  if(hand.grip&&m.state==='held'&&m.grab==='lift'){
+    const prev=m.x;m.x=clamp(hand.bx+(pad.x-hand.ax)*520,viewL(),viewR());m.y=clamp(hand.by-(pad.y-hand.ay)*380,140,FEET);m.vx=(m.x-prev)/Math.max(dt,.001);
+    hand.hist.push({t:T,x:m.x,y:m.y});while(hand.hist.length>12)hand.hist.shift();
+    hand.x=m.x;hand.y=m.y-2.2*R*m.scale;return}
+  if(hand.grip&&m.state!=='held')hand.grip=false;
+  if(!on)return;
+  const tx=m.x+pad.x*120,ty=m.y-R*1.3-pad.y*90;
+  if(hand.a<.05){hand.x=tx;hand.y=ty}
+  const ox2=hand.x,oy2=hand.y;hand.x+=(tx-hand.x)*(1-Math.exp(-dt*22));hand.y+=(ty-hand.y)*(1-Math.exp(-dt*22));
+  const step=Math.hypot(hand.x-ox2,hand.y-oy2);hand.wig+=step*.08;
+  if(step>.6&&overMinimi({x:hand.x,y:hand.y},10)){pet(step);if(m.state==='sit')m.lookUp=0}
+}
+/** A cartoon glove: open while it hovers or rubs, a fist while it carries the penguin. */
+function drawHand(ox){
+  if(hand.a<.02)return;const x=hand.x+ox,y=hand.y,g=hand.grip;
+  ctx.save();ctx.globalAlpha=hand.a;ctx.translate(x,y);ctx.rotate(g?0:Math.sin(hand.wig)*.25);
+  const fill=Z?'#e9f6ff':'#ffffff',line=Z?'#3ff0ff':'#3a3036';ctx.lineWidth=2.2;ctx.strokeStyle=line;ctx.fillStyle=fill;if(Z){ctx.shadowColor='#3ff0ff';ctx.shadowBlur=8}
+  if(g){ // fist holding on to the top of the head
+    rr(ctx,-17,-12,34,22,10);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+    ctx.beginPath();[-8,0,8].forEach(k=>{ctx.moveTo(k,-12);ctx.lineTo(k,-3)});ctx.stroke();
+    ctx.fillStyle=fill;rr(ctx,-11,-24,22,13,5);ctx.fill();ctx.stroke(); // cuff
+  }else{ // open hand, fingers down
+    [-10,-3.5,3.5,10].forEach((fx,k)=>{rr(ctx,fx-3.6,2,7.2,15-(k===0||k===3?3:0),3.6);ctx.fill();ctx.stroke()});
+    ell(ctx,0,-1,14,11);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
+    ctx.save();ctx.translate(-14,-2);ctx.rotate(-.7);rr(ctx,-3.5,-1,7,13,3.5);ctx.fill();ctx.stroke();ctx.restore();
+    ctx.fillStyle=fill;rr(ctx,-10,-19,20,10,4);ctx.fill();ctx.stroke(); // cuff
+  }
+  ctx.restore();
+}
 function setGames(list,selAppid){
   const prevSel=B[sel]?.appid;
   B=list.map((g,i)=>makeBuilding(g,i));
@@ -1310,7 +1357,7 @@ function setCardStyle(st){st=st==='capsule'?'capsule':'wide';if(st===cardStyle)r
 function setActive(on){active=!!on;if(active){start()}else stop()}
 function destroy(){active=false;stop();clearTimeout(moodSaveT);try{host.saveMood(Math.round(mood))}catch(e){};listeners.forEach(([t,f])=>cv.removeEventListener(t,f));B=[]}
 setTimeout(()=>{if(mode==='browse')say('안녕!',1.6)},600);
-return {fit,flipCard,emerge,poke,setLampDim,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
+return {fit,flipCard,padInput,emerge,poke,setLampDim,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
   get selected(){return sel},get mode(){return mode},get mood(){return mood},set mood(v){mood=clamp(v,0,100);saveMood()},
   get debug(){return {m,B,camX,camKick,lampLv,lampRate}}};
 }
