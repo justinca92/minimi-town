@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.32
+
+- Trackpad flicks throw properly. The throw speed is now taken from the last moment your thumb actually moved (the pad only reports a lift after a short silence, which used to read as "standing still" and just dropped the penguin), and a pad touch-up lets go at once.
+- Two ways to throw: flick and lift your thumb, or swipe while holding the click and let go of the click mid-swipe. A still thumb keeps holding; lift it slowly to put the penguin down.
+
 ## 0.1.31
 
 - Left trackpad, done the way Spindeck's trackpad wheel does it (confirmed on device there): while the street has focus, the controller is put into Steam's keyboard action set with analog input on (as Steam's radial menu does, refreshed every second), so the left pad reports your thumb's position without a click (message type 48). Its touch and click reach the street as pad buttons, and the click grabs the penguin. The pad no longer moves along the street.

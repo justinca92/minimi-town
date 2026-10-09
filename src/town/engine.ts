@@ -1290,12 +1290,23 @@ function padInput(st){
   if(pad.click&&!wasClick&&!hand.grip&&pad.touch&&(mode==='browse'||mode==='launching')&&!HAND_OFF.includes(m.state)&&!P){ // grab
     cancelLaunch();m.behind=false;m.react=null;setState('held');m.grab='lift';hand.grip=true;
     hand.bx=m.x;hand.by=Math.min(FEET,m.y)-34;hand.ax=pad.x;hand.ay=pad.y;hand.hist=[];say('으앗?',1);sfx('boing');buzz(25)}
+  // let go of the click mid-flick: throw right away (a still thumb keeps holding)
+  if(wasClick&&!pad.click&&hand.grip&&padSpeed()>520)padRelease();
   if(!pad.touch&&hand.grip)padRelease();
 }
+/** How fast the carried penguin was moving at the end of the gesture (world px/s), ignoring the
+ *  still moment after the thumb stops (the pad only reports a lift after a short silence). */
+function padVel(){
+  const h=hand.hist;if(h.length<2)return{vx:0,vy:0,sp:0};
+  let k=h.length-1;while(k>0&&Math.hypot(h[k].x-h[k-1].x,h[k].y-h[k-1].y)<.5)k--; // last sample that moved
+  const end=h[k],stale=T-end.t>.3;if(stale||k===0)return{vx:0,vy:0,sp:0};
+  let j=k;while(j>0&&end.t-h[j-1].t<=.1)j--;const a=h[j],span=Math.max(.016,end.t-a.t);
+  const vx=(end.x-a.x)/span,vy=(end.y-a.y)/span;return{vx,vy,sp:Math.hypot(vx,vy)};
+}
+const padSpeed=()=>padVel().sp;
 function padRelease(){
   hand.grip=false;if(m.state!=='held'||m.grab!=='lift')return;
-  const h=hand.hist.filter(q=>T-q.t<.09),a=h[0]||{t:T-.016,x:m.x,y:m.y},span=Math.max(.016,T-a.t);
-  let vx=(m.x-a.x)/span,vy=(m.y-a.y)/span;const sp=Math.hypot(vx,vy);if(sp>1800){vx*=1800/sp;vy*=1800/sp}
+  let {vx,vy,sp}=padVel();if(sp>1800){vx*=1800/sp;vy*=1800/sp}
   if(sp>380){m.vx=vx*1.15;m.vy=vy*1.15;setState('air');bother(3);sfx('boing')}else{m.vx=0;m.vy=60;setState('air');bother(1)}
   m.grab=null;
 }
@@ -1304,7 +1315,7 @@ function handTick(dt){
   hand.a+=((on?1:0)-hand.a)*(1-Math.exp(-dt*(on?14:8)));
   if(hand.grip&&m.state==='held'&&m.grab==='lift'){
     const prev=m.x;m.x=clamp(hand.bx+(pad.x-hand.ax)*520,viewL(),viewR());m.y=clamp(hand.by-(pad.y-hand.ay)*380,140,FEET);m.vx=(m.x-prev)/Math.max(dt,.001);
-    hand.hist.push({t:T,x:m.x,y:m.y});while(hand.hist.length>12)hand.hist.shift();
+    hand.hist.push({t:T,x:m.x,y:m.y});while(hand.hist.length>40)hand.hist.shift();
     hand.x=m.x;hand.y=m.y-2.2*R*m.scale;return}
   if(hand.grip&&m.state!=='held')hand.grip=false;
   if(!on)return;

@@ -52,7 +52,14 @@ export function padButton(button: number, down: boolean): boolean {
   if (button !== GamepadButton.LPAD_TOUCH && button !== GamepadButton.LPAD_CLICK) return false;
   padDiag.ui++;
   padDiag.uiLast = `${button === GamepadButton.LPAD_TOUCH ? "touch" : "click"} ${down ? "down" : "up"}`;
-  if (button === GamepadButton.LPAD_TOUCH) uiTouch = down;
+  if (button === GamepadButton.LPAD_TOUCH) {
+    uiTouch = down;
+    // The thumb left the pad: don't wait for the analog messages to go quiet.
+    if (!down) {
+      analogTouch = false;
+      clearTimeout(gapT);
+    }
+  }
   else cur.click = down;
   if (down) lastTouchAt = Date.now();
   emit();
