@@ -1,8 +1,7 @@
 import { Focusable, GamepadButton, Navigation } from "@decky/ui";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createTown, TownGame, TownStatus } from "./town/engine";
-import { AppExtra, cachedAchievements, downloadProgress, GameEntry, loadLibrary, openGamePage, overviewMinutes, subscribeAppExtra } from "./games";
-import { friendsPlayingMap } from "./friends";
+import { AppExtra, downloadProgress, GameEntry, loadLibrary, openGamePage, overviewMinutes, subscribeAppExtra } from "./games";
 import { openNativeGameMenu } from "./nativeMenu";
 import { findHeaderSearch, focusFirstIn } from "./steamDom";
 import { getSettings, updateSettings, useSettings } from "./settings";
@@ -38,19 +37,12 @@ function statusOf(g: GameEntry): { status: TownStatus; progress: number } {
 }
 
 function toTown(list: GameEntry[], t: Strings): TownGame[] {
-  const friends = friendsPlayingMap();
-  const now = Date.now() / 1000;
   return list.map((g) => {
     const { status, progress } = statusOf(g);
     const ex = extraSeen.get(g.appid);
     const minutes = Math.max(overviewMinutes(g.overview), ex?.minutes ?? 0);
     const hours = Math.floor(minutes / 60);
     const label: Record<TownStatus, string> = { recent: t.stRecent, new: t.stNew, dusty: t.stDusty, closed: t.stClosed, downloading: t.stDownloading, ready: t.stReady };
-    // A non-Steam shortcut's playtime only comes with its details: until then show none rather than "not played".
-    const pending = !ex && g.overview?.app_type === APP_TYPE_SHORTCUT && minutes === 0;
-    const lastAt = Math.max(g.lastPlayed, ex?.lastPlayed ?? 0);
-    const ach = ex ? ex.ach : cachedAchievements(g.appid) ?? null;
-    const fr = friends?.get(g.appid) ?? 0;
     return {
       appid: g.appid,
       name: g.name,
@@ -61,12 +53,6 @@ function toTown(list: GameEntry[], t: Strings): TownGame[] {
       art: g.header,
       capsule: g.capsule,
       icon: g.icon,
-      info: {
-        play: pending ? "" : t.playtimeShort(minutes),
-        last: lastAt > STEAM_EPOCH ? t.ago(Math.floor((now - lastAt) / DAY)) : null,
-        ach: ach ? [ach.achieved, ach.total] : null,
-        friends: fr ? t.friendsPlaying(fr) : null,
-      },
     };
   });
 }

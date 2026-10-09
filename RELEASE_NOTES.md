@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.18
+
+- Shop signs show the game's name instead of the info icons (shrinks to fit, ends in "…" when it's very long): neon lettering in Neon Rain City, painted on the signboard in Minimi Town.
+
 ## 0.1.17
 
 - Neon Rain City's blade signs are now small squares that fit the game's icon (no extra tubes or dots), each hung at its own height, always above the street lamps so a lamp never covers the icon.
