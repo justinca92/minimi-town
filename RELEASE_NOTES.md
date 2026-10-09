@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.26
+
+- Neon Rain City has its own GRAND OPENING now: two delivery drones hang a blinking light string over the storefront screen, a glitchy hologram banner is projected over the door, and LED ticker pillars scroll GRAND OPENING ✦ 축 개업 (GRATZ in English) on both sides of the door. Balloons and flower stands stay in Minimi Town.
+- Neon Rain City shops you haven't played in months look run-down instead of cobwebbed: grime and rust streaks, cracked and boarded-up windows, torn posters and a spray tag by the door, litter on the pavement, and a neon tube that's mostly dead and only sputters now and then.
+
 ## 0.1.25
 
 - Fixed: after bumping into either end of the street, the whole picture stayed shifted to one side, so the invisible walls the penguin bounces off sat closer to one screen edge than the other. The bump now springs back and both walls sit at the same distance from the edges.

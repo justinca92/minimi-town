@@ -669,7 +669,7 @@ function drawBuilding(b,sk,ox){
   const left=b.cx-BW/2+ox,top=SIDE-b.bh,L=b.L,night=sk==='night',dusk=sk==='dusk',isSel=b.i===sel;
   premiumBeams(b,left,top,sk);
   ctx.drawImage(b.fac,left-b.facPad,top-b.facTop,BW+b.facPad*2,b.bh+b.facTop);
-  if(Z){const nc=b.neon,fl=flick(b.i),a=L.awn;ctx.save();ctx.strokeStyle=nc;ctx.fillStyle=nc;ctx.globalAlpha=.5+.5*fl;ctx.shadowColor=nc;ctx.shadowBlur=14;ctx.lineWidth=3;
+  if(Z){const nc=b.neon,fl=flick(b.i),a=L.awn;ctx.save();ctx.strokeStyle=nc;ctx.fillStyle=nc;ctx.globalAlpha=b.st==='dusty'?(Math.sin(T*9+b.i*5)*Math.sin(T*2.3+b.i)>.82?.9:.13):.5+.5*fl;ctx.shadowColor=nc;ctx.shadowBlur=14;ctx.lineWidth=3;
     // wavy tube under the cornice
     ctx.lineCap='round';ctx.beginPath();for(let k=0;k<=40;k++){const u=k/40;ctx.lineTo(left+22+u*(BW-44),top+26+Math.sin(u*Math.PI*4+b.i)*4)}ctx.stroke();
     ctx.lineWidth=2;rr(ctx,left+a.x+6,top+a.y-1,a.w-12,a.h+2,11);ctx.stroke();
@@ -728,7 +728,8 @@ function drawBuilding(b,sk,ox){
     ctx.fillStyle='#3a3036';signName(ctx,b.g.t,bx+bw2/2,by+bh2/2,bw2-34,18,DISPLAY); // the game's name
     if(night||dusk){ctx.fillStyle=`rgba(16,18,40,${(night?.42:.2)*(1-lit)})`;rr(ctx,bx,by,bw2,bh2,7);ctx.fill()}}
   // state dressing
-  if(dusty){ctx.fillStyle='rgba(150,142,132,.28)';ctx.fillRect(left,top,BW,b.bh);
+  if(dusty&&Z)drawDerelict(b,left,top,dx,dy,d);
+  else if(dusty){ctx.fillStyle='rgba(150,142,132,.28)';ctx.fillRect(left,top,BW,b.bh);
     ctx.strokeStyle='rgba(240,240,240,.7)';ctx.lineWidth=1.2;web(left+2,top+16,1,1,46);web(left+BW-2,top+16,-1,1,38);web(dx+d.w-2,dy+2,-1,1,26);
     ctx.fillStyle='rgba(220,210,200,.5)';for(let k=0;k<7;k++){const px=left+((k*53+b.i*31)%BW),py=top+30+((k*97)%(b.bh-60))+Math.sin(T+k)*4;ctx.fillRect(px,py,2,2)}}
   if(closed){ // shutter + sign
@@ -736,7 +737,7 @@ function drawBuilding(b,sk,ox){
     ctx.strokeStyle='#3a3036';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(dx+d.w/2-16,dy+sh-10);ctx.lineTo(dx+d.w/2,dy+sh-22);ctx.lineTo(dx+d.w/2+16,dy+sh-10);ctx.stroke();
     ctx.save();ctx.translate(dx+d.w/2,dy+sh-2);ctx.rotate(Math.sin(T*1.3+b.i)*.04);ctx.fillStyle='#f4ecdc';rr(ctx,-38,-12,76,26,5);ctx.fill();ctx.strokeStyle='#b8424a';ctx.lineWidth=2;ctx.stroke();ctx.fillStyle='#b8424a';ctx.font='15px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('CLOSED',0,1.5);ctx.restore()}
   if(b.st==='downloading')drawScaffold(b,left,top);
-  if(b.st==='new'||b.cele>0)drawBalloons(b,left,top);
+  if(b.st==='new'||b.cele>0){if(Z)drawNeonOpening(b,left,top);else drawBalloons(b,left,top)}
   if(b.st==='recent'){ // OPEN neon + plant
     if(Z){if(b.door<.3){ // the classic neon OPEN sign (blue tube frame, red letters), hung on the door glass
       const x=dx+d.w/2,y=dy+34,on=flick(b.i+3);ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
@@ -828,6 +829,74 @@ function drawScaffold(b,left,top){
   ctx.save();rr(ctx,bx+10,by+24,(bw-20)*b.p/100,9,4);ctx.clip();ctx.fillStyle='#ffb938';ctx.fillRect(bx+10,by+24,bw-20,9);ctx.fillStyle='#2b2018';for(let x=bx+10-20+(T*30%16);x<bx+bw;x+=16){ctx.beginPath();ctx.moveTo(x,by+33);ctx.lineTo(x+8,by+24);ctx.lineTo(x+14,by+24);ctx.lineTo(x+6,by+33);ctx.fill()}ctx.restore();
   // cone
   const cx=left+BW-30;ctx.fillStyle='#ff7a2f';ctx.beginPath();ctx.moveTo(cx-12,SIDE+26);ctx.lineTo(cx,SIDE-6);ctx.lineTo(cx+12,SIDE+26);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(cx-7,SIDE+8,14,5);ctx.fillStyle='#ff7a2f';ctx.fillRect(cx-16,SIDE+24,32,5);
+}
+/** Neon Rain City, a game you haven't played in months: a run-down shop. Grime, cracked and
+ *  boarded windows, torn posters, a tag on the wall (its tube sputters, see drawBuilding). */
+function drawDerelict(b,left,top,dx,dy,d){
+  const L=b.L,h=hash((b.appid>>>0)+7),wins=L.wins.concat(L.up);
+  ctx.save();
+  ctx.fillStyle='rgba(6,5,10,.38)';ctx.fillRect(left,top,BW,b.bh); // grime over everything
+  // rust / water streaks running down from the sills
+  wins.forEach((w,j)=>{const x=left+w.x+6+((h>>>j)%Math.max(1,w.w-12)),y=top+w.y+w.h+4,len=26+((h>>>(j+3))%40);
+    const g=ctx.createLinearGradient(0,y,0,y+len);g.addColorStop(0,'rgba(120,70,40,.45)');g.addColorStop(1,'rgba(120,70,40,0)');ctx.fillStyle=g;ctx.fillRect(x,y,4,len)});
+  // the windows: one boarded up, the others cracked, one with a shard missing
+  const board=(h>>>2)%wins.length;
+  wins.forEach((w,j)=>{const x=left+w.x,y=top+w.y;
+    if(j===board){ctx.fillStyle='#4a3a2c';[[0,.18],[0,.62]].forEach(([,v])=>{ctx.save();ctx.translate(x+w.w/2,y+w.h*v+6);ctx.rotate(((h>>>j)%2?1:-1)*.12);ctx.fillRect(-w.w/2-5,-6,w.w+10,12);ctx.fillStyle='#2e241b';ctx.fillRect(-w.w/2-2,-1,3,3);ctx.fillRect(w.w/2-1,-1,3,3);ctx.fillStyle='#4a3a2c';ctx.restore()});return}
+    const cx=x+w.w*(.25+((h>>>(j+5))%50)/100),cy=y+w.h*(.25+((h>>>(j+9))%50)/100);
+    if((h>>>(j+1))%3===0){ctx.fillStyle='#07060b';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x+w.w,y+w.h*.15);ctx.lineTo(x+w.w,y+w.h*.7);ctx.closePath();ctx.fill()}
+    ctx.strokeStyle='rgba(220,235,255,.55)';ctx.lineWidth=1;ctx.beginPath();
+    for(let r=0;r<7;r++){const a=r/7*Math.PI*2+j,l=10+((h>>>(r+j))%18);let px=cx,py=cy;ctx.moveTo(px,py);for(let s2=0;s2<3;s2++){px+=Math.cos(a+(s2-1)*.35)*l/3;py+=Math.sin(a+(s2-1)*.35)*l/3;ctx.lineTo(clamp(px,x,x+w.w),clamp(py,y,y+w.h))}}
+    ctx.stroke();ctx.strokeStyle='rgba(220,235,255,.35)';ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.stroke()});
+  // torn posters, half peeled off
+  [[dx-31,dy+18,'#ff3fa4'],[dx+d.w-9,dy+40,'#ffe14d']].forEach(([px,py,c],q)=>{ctx.save();ctx.translate(px+20,py+20);ctx.scale(.62,.62);ctx.rotate((q?-1:1)*(.06+((h>>>q)%10)/100));
+    ctx.fillStyle=hexA(c,.32);ctx.beginPath();ctx.moveTo(-18,-22);ctx.lineTo(18,-22);ctx.lineTo(18,6);ctx.lineTo(9,12);ctx.lineTo(4,4);ctx.lineTo(-5,16);ctx.lineTo(-18,10);ctx.closePath();ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(-13,-16,26,3);ctx.fillRect(-13,-10,18,2);ctx.restore()});
+  // a spray tag by the door
+  ctx.strokeStyle='rgba(77,255,154,.55)';ctx.lineWidth=2.4;ctx.lineCap='round';ctx.beginPath();const tx0=dx+d.w+6,ty0=dy+d.h-26;
+  ctx.moveTo(tx0,ty0);for(let k=1;k<9;k++)ctx.lineTo(tx0+k*5,ty0+Math.sin(k*1.7+h)*7-(k%2)*4);ctx.stroke();
+  ctx.fillStyle='rgba(77,255,154,.35)';ctx.fillRect(tx0+12,ty0+6,2,8);
+  // litter on the pavement
+  ctx.fillStyle='rgba(180,170,160,.35)';ell(ctx,dx-14,SIDE-3,7,2.5);ctx.fill();ctx.fillStyle='rgba(120,200,255,.25)';ctx.fillRect(dx+d.w+18,SIDE-6,8,5);
+  ctx.restore();
+}
+/** Neon Rain City's own grand opening: delivery drones hanging a light string over the screen,
+ *  a flickering hologram banner over the door, and LED ticker pillars scrolling the news. */
+function drawNeonOpening(b,left,top){
+  const L=b.L,d=L.door,isNew=b.st==='new';
+  ctx.save();
+  // drones + the light string they carry
+  const cy0=top+L.card.y-26,xL=left+L.card.x-6,xR=left+L.card.x+CW+6,bob=k=>Math.sin(T*2.4+k*1.9+b.i)*4;
+  const pL={x:xL,y:cy0+bob(0)},pR={x:xR,y:cy0+bob(1)};
+  ctx.strokeStyle='rgba(20,18,28,.9)';ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(pL.x,pL.y+8);ctx.quadraticCurveTo((pL.x+pR.x)/2,cy0+44,pR.x,pR.y+8);ctx.stroke();
+  const bulbs=['#ff3fa4','#3ff0ff','#ffe14d','#b26bff','#4dff9a'];
+  for(let k=1;k<16;k++){const t=k/16,x=(1-t)*(1-t)*pL.x+2*t*(1-t)*((pL.x+pR.x)/2)+t*t*pR.x,y=(1-t)*(1-t)*(pL.y+8)+2*t*(1-t)*(cy0+44)+t*t*(pR.y+8);
+    const on=((Math.floor(T*6)+k)%4)!==0,c=bulbs[k%5];ctx.fillStyle=on?c:hexA(c,.3);ctx.shadowColor=c;ctx.shadowBlur=on?10:0;ell(ctx,x,y+3,3,3.6);ctx.fill()}
+  ctx.shadowBlur=0;
+  [pL,pR].forEach((p,q)=>{ctx.fillStyle='#14121c';rr(ctx,p.x-13,p.y-4,26,9,4);ctx.fill();ctx.fillStyle='#2a2636';ctx.fillRect(p.x-20,p.y-7,40,2.5);
+    ctx.fillStyle='rgba(200,220,255,.35)';[-17,17].forEach(o=>{const w2=7+Math.sin(T*60+o)*2;ctx.fillRect(p.x+o-w2,p.y-9,w2*2,1.5)});
+    const blink=Math.sin(T*5+q*2)>.6;ctx.fillStyle=blink?(q?'#4dff9a':'#ff3b4a'):'#3a2a2a';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=blink?8:0;ell(ctx,p.x,p.y+2,2,2);ctx.fill();ctx.shadowBlur=0});
+  if(isNew){
+    // the hologram banner, projected down from a little emitter under the name sign
+    const ex=left+BW/2,ey=top+L.awn.y+L.awn.h+6,hy=ey+20,hw=BW-86,gl=Math.sin(T*13+b.i)>.94?rnd(-5,5):0,fl=.75+.25*Math.sin(T*31+b.i)*Math.sin(T*7);
+    ctx.fillStyle='#1a1724';rr(ctx,ex-9,ey-4,18,6,3);ctx.fill();ctx.fillStyle='#3ff0ff';ell(ctx,ex,ey+1,2.5,1.5);ctx.fill();
+    ctx.globalCompositeOperation='lighter';
+    const cg=ctx.createLinearGradient(0,ey,0,hy+12);cg.addColorStop(0,'rgba(63,240,255,.32)');cg.addColorStop(1,'rgba(63,240,255,.04)');ctx.fillStyle=cg;
+    ctx.beginPath();ctx.moveTo(ex-4,ey+2);ctx.lineTo(ex+4,ey+2);ctx.lineTo(ex+hw/2,hy+12);ctx.lineTo(ex-hw/2,hy+12);ctx.closePath();ctx.fill();
+    ctx.font='15px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.globalAlpha=fl*.55;ctx.fillStyle='#ff3fa4';ctx.fillText('GRAND OPENING',ex+gl-1.5,hy);
+    ctx.globalAlpha=fl;ctx.fillStyle='#8ff8ff';ctx.shadowColor='#3ff0ff';ctx.shadowBlur=12;ctx.fillText('GRAND OPENING',ex+gl+1,hy);ctx.shadowBlur=0;
+    ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle='rgba(7,6,12,.28)';for(let y=hy-9+((T*30)%3);y<hy+9;y+=3)ctx.fillRect(ex-hw/2,y,hw,1);
+    // LED ticker pillars on both sides of the door
+    const msg=(host.lang==='en'?'GRAND OPENING ✦ GRATZ ✦ ':'GRAND OPENING ✦ 축 개업 ✦ ');
+    [left+d.x-24,left+d.x+d.w+24].forEach((px,q)=>{const ph=78,pt=SIDE-ph,pw=18;
+      ctx.fillStyle='#0b0a10';rr(ctx,px-pw/2-2,pt-2,pw+4,ph+2,4);ctx.fill();ctx.strokeStyle='#ffb02e';ctx.lineWidth=1.5;ctx.shadowColor='#ffb02e';ctx.shadowBlur=6;rr(ctx,px-pw/2,pt,pw,ph-2,3);ctx.stroke();ctx.shadowBlur=0;
+      ctx.save();rr(ctx,px-pw/2+1,pt+1,pw-2,ph-4,3);ctx.clip();ctx.font='11px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';
+      const chars=[...msg],step=12,off=(T*26+q*60)%(chars.length*step);
+      for(let k=-1;k<ph/step+2;k++){const idx=((Math.floor(off/step)+k)%chars.length+chars.length)%chars.length,y=pt+6+k*step-(off%step);ctx.fillStyle=chars[idx]==='✦'?'#ff3fa4':'#ffc24a';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=6;ctx.fillText(chars[idx],px,y)}
+      ctx.restore();ctx.fillStyle='rgba(0,0,0,.35)';for(let y=pt+2;y<SIDE-2;y+=2)ctx.fillRect(px-pw/2+1,y,pw-2,.6)});
+  }
+  ctx.restore();
 }
 /** A new game's shop: a GRAND OPENING ribbon over the door and congratulation flower stands. */
 function drawGrandOpening(b,left,top){
