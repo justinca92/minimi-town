@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.40
+
+- Neon Rain City's 500h buildings no longer get the glowing gold outline round the whole building (Minimi Town keeps its gold edge); everything else of the Legend tier stays.
+
 ## 0.1.39
 
 - Neon Rain City's 200h upgrade is flashier: every window gets its own flickering neon frame, and a projector on the roof sends a pair of hologram koi circling over the building (around the crown from 350h, gold at 500h). The neon tubes down the walls are gone.

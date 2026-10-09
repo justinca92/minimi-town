@@ -892,10 +892,9 @@ function tierUpgrades(b,left,top,t,night){
       const on=(k+sh)%3!==0,col=Z?(t>=5?'#ffe14d':b.neon):(t>=5?'#ffe48a':'#fff3b0');
       ctx.fillStyle=on?col:(Z?'rgba(255,255,255,.12)':'#9a8a60');ell(ctx,x,y,on?3:2.4,on?3:2.4);ctx.fill();
       if(on&&(Z||night)){ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=hexA(col,.3);ell(ctx,x,y,8,8);ctx.fill();ctx.restore()}}}
-  if(t>=5){ // gilded: a gold edge round the whole building
-    ctx.save();ctx.strokeStyle=Z?'#ffe14d':'#e6b23a';ctx.lineWidth=Z?2.5:4;if(Z){ctx.shadowColor='#ffe14d';ctx.shadowBlur=14+Math.sin(T*3)*4}
-    ctx.strokeRect(left-1,top-1,BW+2,b.bh+1);ctx.restore();
-    if(!Z){ctx.fillStyle='rgba(255,214,90,.10)';ctx.fillRect(left,top,BW,b.bh)}}
+  if(t>=5&&!Z){ // gilded: a gold edge round the whole building (Minimi Town only)
+    ctx.save();ctx.strokeStyle='#e6b23a';ctx.lineWidth=4;ctx.strokeRect(left-1,top-1,BW+2,b.bh+1);ctx.restore();
+    ctx.fillStyle='rgba(255,214,90,.10)';ctx.fillRect(left,top,BW,b.bh)}
 }
 /** Achievements as a medal pinned to the screen's top-right corner: bronze 50%+, silver 80%+, gold 100%
  *  (with a laurel and a PERFECT ribbon). Playtime tiers stay the building's own look. */
