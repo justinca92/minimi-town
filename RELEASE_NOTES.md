@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.38
+
+- Minimi Town's 200h upgrade is a rooftop garden now (a railing, little trees in tubs and a striped parasol over a table) instead of the marble columns, which didn't suit the cute street. Neon Rain City keeps its chrome neon tubes.
+
 ## 0.1.37
 
 - Every playtime tier is a visible upgrade of the building itself now, on top of the smaller trims: 150h puts chasing marquee bulbs round the name sign, 200h adds columns on both sides of the facade (chrome neon tubes in Neon Rain City), 350h makes the building a whole floor taller with another row of windows, and 500h gilds it with a gold edge all round (glowing gold neon in Neon Rain City).

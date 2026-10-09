@@ -851,13 +851,23 @@ function premiumBack(b,left,top,sk){
  *  the name sign, 200h columns on both sides, 350h a floor taller (makeBuilding), 500h gilded all round. */
 function tierUpgrades(b,left,top,t,night){
   const L=b.L,a=L.awn;
-  if(t>=3){ // columns / chrome tubes framing the facade
-    [left+4,left+BW-18].forEach(x=>{
-      if(Z){ctx.save();ctx.strokeStyle=t>=5?'#ffe14d':b.neon;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=12;ctx.lineWidth=3;ctx.globalAlpha=.85;
-        ctx.beginPath();ctx.moveTo(x+4,top+30);ctx.lineTo(x+4,SIDE-4);ctx.moveTo(x+10,top+30);ctx.lineTo(x+10,SIDE-4);ctx.stroke();ctx.restore()}
-      else{const g=ctx.createLinearGradient(x,0,x+14,0);g.addColorStop(0,t>=5?'#f6dc8a':'#f1ece2');g.addColorStop(.5,'#ffffff');g.addColorStop(1,t>=5?'#c9982e':'#cfc6b8');
-        ctx.fillStyle=g;ctx.fillRect(x,top+22,14,b.bh-22);ctx.fillStyle='rgba(0,0,0,.08)';[3,7,11].forEach(o=>ctx.fillRect(x+o,top+30,1,b.bh-40));
-        ctx.fillStyle=t>=5?'#e6b23a':'#e9e2d4';ctx.fillRect(x-3,top+18,20,7);ctx.fillRect(x-3,SIDE-8,20,8)}})}
+  if(t>=3&&Z){ // chrome tubes framing the facade
+    [left+4,left+BW-18].forEach(x=>{ctx.save();ctx.strokeStyle=t>=5?'#ffe14d':b.neon;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=12;ctx.lineWidth=3;ctx.globalAlpha=.85;
+      ctx.beginPath();ctx.moveTo(x+4,top+30);ctx.lineTo(x+4,SIDE-4);ctx.moveTo(x+10,top+30);ctx.lineTo(x+10,SIDE-4);ctx.stroke();ctx.restore()})}
+  if(t>=3&&!Z){ // a rooftop garden: railing, little trees, a striped parasol
+    const ry=top-2;
+    ctx.strokeStyle=t>=5?'#c9982e':'#f4efe6';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(left+4,ry-20);ctx.lineTo(left+BW-4,ry-20);ctx.stroke();
+    ctx.lineWidth=1.6;ctx.beginPath();for(let x=left+8;x<left+BW-4;x+=12){ctx.moveTo(x,ry-20);ctx.lineTo(x,ry)}ctx.stroke();
+    // trees in tubs at both ends
+    [[left+22,0],[left+BW-58,1]].forEach(([tx,q])=>{const sway=Math.sin(T*1.3+q*2+b.i)*1.5;
+      ctx.fillStyle='#b0603a';ctx.fillRect(tx-9,ry-14,18,14);ctx.fillStyle='#8a4a2a';ctx.fillRect(tx-10,ry-15,20,3);
+      ctx.fillStyle='#6a4a30';ctx.fillRect(tx-1.5,ry-30,3,16);
+      ctx.fillStyle='#5aa05a';ell(ctx,tx+sway,ry-38,13,12);ctx.fill();ctx.fillStyle='#6fbf63';ell(ctx,tx-4+sway,ry-42,8,7);ctx.fill();
+      ctx.fillStyle=q?'#ff8fa8':'#fff2a8';[[-6,-34],[5,-40],[2,-31]].forEach(([fx,fy])=>{ell(ctx,tx+fx+sway,ry+fy,2.2,2.2);ctx.fill()})});
+    // the parasol over a little table
+    const px=left+74;ctx.fillStyle='#6a4a30';ctx.fillRect(px-1.2,ry-46,2.4,44);ctx.fillStyle='#f4efe6';ctx.fillRect(px-10,ry-12,20,3);
+    for(let k=0;k<6;k++){ctx.fillStyle=k%2?'#ffffff':(t>=5?'#e6b23a':'#e5484d');ctx.beginPath();ctx.moveTo(px,ry-52);ctx.lineTo(px-30+k*10,ry-38);ctx.lineTo(px-20+k*10,ry-38);ctx.closePath();ctx.fill()}
+    ctx.fillStyle=t>=5?'#e6b23a':'#e5484d';for(let k=0;k<6;k++){ctx.beginPath();ctx.arc(px-25+k*10,ry-38,5,0,Math.PI);ctx.fill()}}
   if(t>=2){ // marquee bulbs round the name sign
     const x0=left+a.x-8,y0=top+a.y-9,w=a.w+16,h=a.h+18,n=26,sh=Math.floor(T*6);
     for(let k=0;k<n;k++){const p=k/n*2*(w+h);let x,y;if(p<w){x=x0+p;y=y0}else if(p<w+h){x=x0+w;y=y0+p-w}else if(p<2*w+h){x=x0+w-(p-w-h);y=y0+h}else{x=x0;y=y0+h-(p-2*w-h)}
