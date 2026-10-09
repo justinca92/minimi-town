@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.12
+
+- Ⓐ always gets you in: a sulking or grumpy penguin grumbles ("Hmph… fine, I'm going.") but still walks in, and if it's mid-tumble (flung, dizzy, shooting) it goes as soon as it's back on its feet.
+
 ## 0.1.11
 
 - The street (shops, lamps, road) sits 40 px lower, leaving room above for the game's name.

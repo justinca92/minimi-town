@@ -53,7 +53,7 @@ function fit(w,h){
   cv.width=Math.round(W*K);cv.height=Math.round(H*K);
   drawFrame();
 }
-const EN={'퍽!':'Splat!','콩!':'Bonk!','철퍼덕!':'Oof!','건드리지 마!':"Don't touch me!",'왜…':'What…','그만해라':'Stop it','내려줘!!':'Put me down!!','잠깐만…':'Hang on…','으아악!':'Aaargh!','화났어!!':"I'm mad!!",'진짜!!':'Seriously!!','비다! 우비 입어야지':'Rain! Raincoat time','순찰 시작.':'On patrol.','출동.':'Moving out.','햇살 좋다!':'What a sunny day!','흥.':'Hmph.','흥. 안 가.':'Hmph. Not going.','헉… 헉…':'Huff… huff…','헉… 헉… 가자!':"Huff… let's go!",'하아아암~':'Yaaawn~','콜록… 들어가도 돼?':'Ahem… can I come in?','으앗?':'Whoa?','으아앗!':'Waaah!','으아아아':'Whoaaa','으… 기다려!':'Ugh… wait up!','어질어질…':'So dizzy…','안녕!':'Hi!','설치부터 할게!':"Let's install it!",'버텨…!':'Hold on…!','놓쳤다아':'Lost my grip','…헤헤':'…hehe','잠깐만~!':'Wait for me~!','같이 가아~!':'Coming~!','간다.':'Going in.','…들어간다.':'…going in.'};
+const EN={'퍽!':'Splat!','콩!':'Bonk!','철퍼덕!':'Oof!','건드리지 마!':"Don't touch me!",'왜…':'What…','그만해라':'Stop it','내려줘!!':'Put me down!!','잠깐만…':'Hang on…','으아악!':'Aaargh!','화났어!!':"I'm mad!!",'진짜!!':'Seriously!!','비다! 우비 입어야지':'Rain! Raincoat time','순찰 시작.':'On patrol.','출동.':'Moving out.','흥… 가면 되잖아.':'Hmph… fine, I\'m going.','…알았어, 간다고.':'…okay, okay, going.','햇살 좋다!':'What a sunny day!','흥.':'Hmph.','흥. 안 가.':'Hmph. Not going.','헉… 헉…':'Huff… huff…','헉… 헉… 가자!':"Huff… let's go!",'하아아암~':'Yaaawn~','콜록… 들어가도 돼?':'Ahem… can I come in?','으앗?':'Whoa?','으아앗!':'Waaah!','으아아아':'Whoaaa','으… 기다려!':'Ugh… wait up!','어질어질…':'So dizzy…','안녕!':'Hi!','설치부터 할게!':"Let's install it!",'버텨…!':'Hold on…!','놓쳤다아':'Lost my grip','…헤헤':'…hehe','잠깐만~!':'Wait for me~!','같이 가아~!':'Coming~!','간다.':'Going in.','…들어간다.':'…going in.'};
 const tx=s=>host.lang==='en'?(EN[s]??s):s;
 
 const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t, rnd=(a,b)=>a+Math.random()*(b-a);
@@ -199,7 +199,7 @@ function viewL(){return camX-640+34}function viewR(){return camX+640-34}
 /* ---------------- navigation / launch ---------------- */
 let camKick=0;
 function nav(d){
-  if(mode!=='browse'||!B.length)return;const n=clamp(sel+d,0,B.length-1);if(n===sel){camKick=d*26;return}
+  if(mode!=='browse'||!B.length)return;m.queued=false;const n=clamp(sel+d,0,B.length-1);if(n===sel){camKick=d*26;return}
   sel=n;navTimes.push(T);sfx('tick');
   m.side=(B[sel].cx>m.x)?-1:1;
   if(['idle','sit','react','cheer'].includes(m.state))setState('move');
@@ -211,9 +211,12 @@ function launch(){
   if(mode!=='browse'||!B.length)return;const b=cur();
   if(b.st==='closed'){say('설치부터 할게!');sfx('tick');host.onInstall(sel);return}
   if(b.st==='downloading'){say(host.lang==='en'?`Only ${Math.floor(b.p)}% so far…`:`아직 ${Math.floor(b.p)}%야…`);if(m.state==='idle')setState('sit');return}
-  if(BUSY.includes(m.state)){say(m.state==='held'?'내려줘!!':'잠깐만…',1);return}
-  if(m.state==='sulk'&&mood<40){say('흥. 안 가.',1.4);return}
-  mode='launching';m.behind=false;m.hes=false;m.rush=false;setState('goDoor');
+  // a bad mood or a tumble never cancels it: busy now → it goes as soon as it's back on its feet
+  if(['enter','inside','exit'].includes(m.state))return;
+  if(BUSY.includes(m.state)){m.queued=true;say(m.state==='held'?'내려줘!!':'잠깐만…',1);return}
+  const grumpy=m.state==='sulk'||mood<35;m.queued=false;
+  mode='launching';m.behind=false;m.y=FEET;m.hes=false;m.rush=false;setState('goDoor');
+  if(grumpy)say(Math.random()<.5?'흥… 가면 되잖아.':'…알았어, 간다고.',1.4);
   // late arrival: off-screen → pop in just past the screen edge and sprint to the door
   const eL=b.cx-640,eR=b.cx+640;
   if(m.x<eL-20||m.x>eR+20){const side=m.x<b.cx?-1:1;m.x=b.cx+side*(640+40);m.y=FEET;m.rot=0;m.alpha=1;m.scale=1;
@@ -380,6 +383,7 @@ function update(dt){
   }
   else if(s==='react'){if(m.t>.4)setState('idle')}
   else if(s==='cheer'){m.y=FEET-Math.abs(Math.sin(m.t*9))*22*(1-m.t/1.2);if(m.t>1.2){m.y=FEET;setState('idle')}}
+  if(m.queued&&mode==='browse'&&GROUNDED.includes(m.state)&&m.state!=='goDoor'){m.queued=false;launch()}
   // sulk check / unsulk
   if(m.state==='sulk'&&mood>=55){m.behind=false;m.y=FEET;setState('cheer');say('…헤헤',1.4);for(let i=0;i<5;i++)hearts(m.x,m.y-70)}
   if(m.pantT>0&&Math.random()<dt*3&&m.state==='idle')dust(m.x,FEET,1,.3);
