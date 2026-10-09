@@ -851,9 +851,27 @@ function premiumBack(b,left,top,sk){
  *  the name sign, 200h columns on both sides, 350h a floor taller (makeBuilding), 500h gilded all round. */
 function tierUpgrades(b,left,top,t,night){
   const L=b.L,a=L.awn;
-  if(t>=3&&Z){ // chrome tubes framing the facade
-    [left+4,left+BW-18].forEach(x=>{ctx.save();ctx.strokeStyle=t>=5?'#ffe14d':b.neon;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=12;ctx.lineWidth=3;ctx.globalAlpha=.85;
-      ctx.beginPath();ctx.moveTo(x+4,top+30);ctx.lineTo(x+4,SIDE-4);ctx.moveTo(x+10,top+30);ctx.lineTo(x+10,SIDE-4);ctx.stroke();ctx.restore()})}
+  if(t>=3&&Z){ // neon frames on every window, and a pair of hologram koi circling over the roof
+    const nc=t>=5?'#ffe14d':b.neon;ctx.save();ctx.strokeStyle=nc;ctx.shadowColor=nc;ctx.lineWidth=2;
+    L.wins.concat(L.up).forEach((w,j)=>{const on=flick(b.i*3+j)>.5;ctx.globalAlpha=on?.95:.25;ctx.shadowBlur=on?10:0;rr(ctx,left+w.x-5,top+w.y-5,w.w+10,w.h+10,4);ctx.stroke()});
+    ctx.restore();
+    const cx=left+BW/2,cy=top-58,pc=t>=5?'#ffe14d':'#3ff0ff';
+    // the projector and its faint beam
+    ctx.fillStyle='#14121c';rr(ctx,cx-12,top-8,24,8,3);ctx.fill();ctx.fillStyle=pc;ell(ctx,cx,top-8,4,1.6);ctx.fill();
+    ctx.save();ctx.globalCompositeOperation='lighter';const bg=ctx.createLinearGradient(0,top-8,0,cy-20);bg.addColorStop(0,hexA(pc,.22));bg.addColorStop(1,hexA(pc,0));ctx.fillStyle=bg;
+    ctx.beginPath();ctx.moveTo(cx-4,top-8);ctx.lineTo(cx+4,top-8);ctx.lineTo(cx+90,cy-10);ctx.lineTo(cx-90,cy-10);ctx.closePath();ctx.fill();
+    for(let k=0;k<2;k++){const th=T*.75+k*Math.PI+b.i,depth=Math.sin(th),x=cx+Math.cos(th)*92,y=cy+depth*14+Math.sin(T*2+k)*3,dir=-Math.sin(th)>=0?1:-1,sc=1.15+.35*(depth+1)/2;
+      const col=k?(t>=5?'#ffb02e':'#ff3fa4'):pc,gl=Math.sin(T*15+k*3)>.96?rnd(-4,4):0;
+      ctx.save();ctx.translate(x+gl,y);ctx.scale(dir*sc,sc);const sw=Math.sin(T*8+k)*.35;
+      ctx.globalAlpha=.45+.35*(depth+1)/2;ctx.shadowColor=col;ctx.shadowBlur=12;ctx.strokeStyle=col;ctx.fillStyle=hexA(col,.28);ctx.lineWidth=1.6;
+      ctx.beginPath();ctx.ellipse(0,0,17,7,0,0,Math.PI*2);ctx.fill();ctx.stroke(); // body
+      ctx.save();ctx.translate(-16,0);ctx.rotate(sw);ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-13,-9);ctx.quadraticCurveTo(-8,0,-13,9);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore(); // tail
+      ctx.beginPath();ctx.moveTo(2,-6);ctx.quadraticCurveTo(-4,-13,-9,-6);ctx.stroke(); // dorsal fin
+      ctx.beginPath();ctx.moveTo(4,5);ctx.lineTo(-1,11);ctx.lineTo(-3,5);ctx.stroke(); // side fin
+      ctx.fillStyle=col;ell(ctx,10,-1.5,1.6,1.6);ctx.fill(); // eye
+      ctx.globalAlpha*=.5;ctx.fillStyle='rgba(7,6,12,.6)';for(let yy=-7;yy<8;yy+=3)ctx.fillRect(-17,yy,34,1); // scanlines
+      ctx.restore()}
+    ctx.restore()}
   if(t>=3&&!Z){ // a rooftop garden: railing, little trees, a striped parasol
     const ry=top-2;
     ctx.strokeStyle=t>=5?'#c9982e':'#f4efe6';ctx.lineWidth=2.4;ctx.beginPath();ctx.moveTo(left+4,ry-20);ctx.lineTo(left+BW-4,ry-20);ctx.stroke();

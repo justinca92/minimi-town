@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.39
+
+- Neon Rain City's 200h upgrade is flashier: every window gets its own flickering neon frame, and a projector on the roof sends a pair of hologram koi circling over the building (around the crown from 350h, gold at 500h). The neon tubes down the walls are gone.
+
 ## 0.1.38
 
 - Minimi Town's 200h upgrade is a rooftop garden now (a railing, little trees in tubs and a striped parasol over a table) instead of the marble columns, which didn't suit the cute street. Neon Rain City keeps its chrome neon tubes.
