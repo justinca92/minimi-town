@@ -55,6 +55,8 @@ export function InfoRow({
   ach,
   friends,
   accent,
+  vertical = false,
+  size = 16,
   style,
 }: {
   playtime: string;
@@ -62,10 +64,12 @@ export function InfoRow({
   ach: AchievementProgress | null;
   friends: string | null;
   accent: string;
+  vertical?: boolean;
+  size?: number;
   style?: CSSProperties;
 }) {
   return (
-    <span style={{ display: "flex", alignItems: "center", gap: 20, fontSize: 16, fontWeight: 600, letterSpacing: "0.05em", fontFamily: "Motiva Sans, sans-serif", whiteSpace: "nowrap", ...style }}>
+    <span style={{ display: "flex", flexDirection: vertical ? "column" : "row", alignItems: vertical ? "flex-start" : "center", gap: vertical ? 7 : 20, fontSize: size, fontWeight: 600, letterSpacing: "0.05em", fontFamily: "Motiva Sans, sans-serif", whiteSpace: "nowrap", ...style }}>
       <Item icon="clock">{playtime}</Item>
       {lastPlayed && <Item icon="recent">{lastPlayed}</Item>}
       {ach && (

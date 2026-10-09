@@ -26,7 +26,7 @@ window.__routerHook = {
   addPatch(p, f) { if (!routerState._routePatches.has(p)) routerState._routePatches.set(p, new Set()); routerState._routePatches.get(p).add(f); patchFn = f; routerState.version++; routerState.bus.dispatchEvent(new Event("update")); return f; },
   removePatch(p, f) { routerState._routePatches.get(p)?.delete(f); routerState.version++; routerState.bus.dispatchEvent(new Event("update")); },
 };
-window.__DECKY_SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED_deckyLoaderAPIInit = { connect: () => ({ call: async (m) => (m === "get_settings" ? { ...(location.hash.endsWith("-off") ? { homeEnabled: false } : {}), ...(location.hash.startsWith("#bottom") ? { layout: "bottom", subtitleText: "Steam Deck OLED · 1TB" } : {}), ...(location.hash.includes("legacy") ? { heroV130: true } : {}), ...(location.hash.includes("qam-bottom") ? { layout: "bottom" } : {}), theme: location.hash.includes("neon") ? "neon" : "town", sky: "day", soundEnabled: false, funSounds: false, language: "ko" } : true), routerHook: window.__routerHook } ) };
+window.__DECKY_SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED_deckyLoaderAPIInit = { connect: () => ({ call: async (m) => (m === "get_settings" ? { ...(location.hash.endsWith("-off") ? { homeEnabled: false } : {}), ...(location.hash.startsWith("#bottom") ? { layout: "bottom", subtitleText: "Steam Deck OLED · 1TB" } : {}), ...(location.hash.includes("legacy") ? { heroV130: true } : {}), ...(location.hash.includes("qam-bottom") ? { layout: "bottom" } : {}), theme: location.hash.includes("neon") ? "neon" : "town", infoStyle: location.hash.includes("sign") ? "sign" : location.hash.includes("tag") ? "tag" : "top", sky: "day", soundEnabled: false, funSounds: false, language: "ko" } : true), routerHook: window.__routerHook } ) };
 const now = Math.floor(Date.now() / 1000), D = 86400;
 const names = ["Hades", "스타듀 밸리", "Celeste", "Elden Ring", "Hollow Knight", "Balatro", "디아블로 IV", "Vampire Survivors", "Portal 2", "Dead Cells", "Slay the Spire", "하데스 II"];
 const apps = Array.from({ length: 30 }, (_, i) => ({ appid: 100 + i, app_type: 1, display_name: names[i % 12] + (i >= 12 ? " " + i : ""),
@@ -35,7 +35,7 @@ const apps = Array.from({ length: 30 }, (_, i) => ({ appid: 100 + i, app_type: 1
 window.collectionStore = { GetCollection: () => ({ allApps: apps }), userCollections: [] };
 window.appStore = { GetCustomLandcapeImageURLs: (a) => ["/head" + (a.appid % 3) + ".png?" + a.appid], GetCustomHeroImageURLs: (a) => ["/hero" + (a.appid % 3) + ".png?" + a.appid] };
 window.__runs = [];
-window.appAchievementProgressCache = { mapCache: new Map(apps.map((a, i) => [a.appid, { total: 40, unlocked: (i * 7) % 41 }])) };
+window.appAchievementProgressCache = { mapCache: new Map(apps.map((a, i) => [a.appid, { total: 40, unlocked: (i * 7 + 23) % 41 }])) };
 window.friendStore = { allFriends: [{ persona: { m_unGamePlayedAppID: 100 } }, { persona: { m_unGamePlayedAppID: 100 } }, { persona: { m_unGamePlayedAppID: 112 } }] };
 window.__ks = [];
 window.__pulses = [];

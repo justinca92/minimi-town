@@ -59,6 +59,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   const boxRef = useRef<HTMLDivElement>(null);
   const cvRef = useRef<HTMLCanvasElement>(null);
   const engine = useRef<ReturnType<typeof createTown> | null>(null);
+  const followRef = useRef<HTMLDivElement>(null);
   const [libKey, setLibKey] = useState(0);
   const entries = useMemo(() => loadLibrary(s.library, s.sortMode), [s.library, s.sortMode, libKey]);
   const games = useMemo(() => toTown(entries, t), [entries, t]);
@@ -89,6 +90,14 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
         if (getSettings().hapticEnabled && ms >= 25) wheelTick(ms >= 45 ? "right" : "left", false, ms >= 45 ? 7 : 5);
       },
       saveMood: (mood) => updateSettings({ mood }),
+      onFrame: (b) => {
+        const el = followRef.current;
+        if (!el) return;
+        const st = getSettings().infoStyle;
+        const x = st === "sign" ? (b.x + 58) * b.S + b.offX : b.x * b.S + b.offX;
+        const y = st === "sign" ? (b.ground + 44) * b.S + b.offY : (b.cardBottom + 10) * b.S + b.offY;
+        el.style.transform = st === "sign" ? `translate(${x}px, ${y}px) translateY(-100%)` : `translate(${x}px, ${y}px) translateX(-50%)`;
+      },
       onSelect: (i) => {
         setSel(i);
         const g = live.current.games[i];
@@ -303,6 +312,90 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
     : null;
   const neon = s.theme === "neon";
   const display = '"Jua","Motiva Sans","Noto Sans CJK KR",sans-serif';
+  const info = (vertical: boolean, size: number) => (
+    <InfoRow
+      playtime={t.playtimeShort(minutes)}
+      lastPlayed={lastAt > STEAM_EPOCH ? t.ago(Math.floor((Date.now() / 1000 - lastAt) / DAY)) : null}
+      ach={ach}
+      friends={friends ? t.friendsPlaying(friends) : null}
+      accent={neon ? "#3ff0ff" : "#ffb938"}
+      vertical={vertical}
+      size={size}
+    />
+  );
+  const badges = (size: number) =>
+    tg && (statusWord || tierIdx) ? (
+      <span style={{ display: "flex", gap: 12, fontFamily: "Motiva Sans, sans-serif", fontSize: size, fontWeight: 800, letterSpacing: "0.05em", whiteSpace: "nowrap", textShadow: "0 2px 0 rgba(0,0,0,.65), 0 0 10px rgba(0,0,0,.6)" }}>
+        {statusWord ? <span style={{ color: CHIP[tg.status] }}>{statusWord}</span> : null}
+        {tierIdx ? <span style={{ color: ["", "#e0a46a", "#dfe7f2", "#ffd24a"][tierIdx] }}>{t.tiers[tierIdx]} {[0, 100, 200, 500][tierIdx]}h+</span> : null}
+      </span>
+    ) : null;
+  const fade = { opacity: mode === "playing" ? 0 : 1, transition: "opacity .3s" };
+  const titleShadow = neon ? "0 0 8px rgba(63,240,255,.7), 0 0 22px rgba(255,63,164,.45), 0 3px 0 rgba(0,0,0,.6)" : "0 3px 0 rgba(0,0,0,.45), 0 0 16px rgba(0,0,0,.35)";
+  /** Where the picked game's info lives (panel option while we try them out). */
+  const renderInfo = () => {
+    if (!tg) return null;
+    if (s.infoStyle === "top") {
+      // A · top-left, like a page title under Steam's bar
+      return (
+        <>
+        {/* a soft shade under Steam's bar so the title reads over a bright sky */}
+        <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: 170, pointerEvents: "none", background: neon ? "linear-gradient(to bottom, rgba(5,4,12,.55), rgba(5,4,12,0))" : "linear-gradient(to bottom, rgba(20,30,50,.42), rgba(20,30,50,0))" }} />
+        <div style={{ position: "absolute", left: 32, top: 54, right: 32, pointerEvents: "none", ...fade }}>
+          <div style={{ fontFamily: display, fontSize: 38, lineHeight: 1.1, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: titleShadow }}>{tg.name}</div>
+          <div style={{ display: "flex", gap: 20, alignItems: "center", marginTop: 8 }}>
+            {info(false, 15)}
+            {badges(14)}
+          </div>
+        </div>
+        </>
+      );
+    }
+    if (s.infoStyle === "sign") {
+      // B · a board standing on the sidewalk by the door (chalkboard / neon light box)
+      return (
+        <div ref={followRef} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none", ...fade }}>
+          <div
+            style={{
+              width: 232, padding: "12px 14px 14px", borderRadius: neon ? 10 : 6,
+              background: neon ? "rgba(8,6,16,.88)" : "#26332c",
+              border: neon ? "2px solid #3ff0ff" : "5px solid #8a5a34",
+              boxShadow: neon ? "0 0 14px rgba(63,240,255,.55), inset 0 0 18px rgba(63,240,255,.12)" : "0 6px 0 rgba(0,0,0,.25), inset 0 0 22px rgba(0,0,0,.35)",
+            }}
+          >
+            <div style={{ fontFamily: display, fontSize: 22, lineHeight: 1.15, color: neon ? "#eafcff" : "#f4f1e6", marginBottom: 9, textShadow: neon ? "0 0 8px rgba(63,240,255,.8)" : "none", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>{tg.name}</div>
+            {info(true, 13)}
+            <div style={{ marginTop: 8 }}>{badges(12)}</div>
+          </div>
+          {neon ? null : (
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "0 26px" }}>
+              <span style={{ width: 6, height: 26, background: "#6b4426", transform: "skewX(12deg)" }} />
+              <span style={{ width: 6, height: 26, background: "#6b4426", transform: "skewX(-12deg)" }} />
+            </div>
+          )}
+        </div>
+      );
+    }
+    // C · a slim tag hanging under the picked building's screen
+    return (
+      <div ref={followRef} style={{ position: "absolute", left: 0, top: 0, pointerEvents: "none", ...fade }}>
+        <div style={{ width: 0, height: 0, margin: "0 auto", borderLeft: "8px solid transparent", borderRight: "8px solid transparent", borderBottom: neon ? "8px solid rgba(63,240,255,.9)" : "8px solid rgba(20,16,28,.82)" }} />
+        <div
+          style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "9px 16px 10px", borderRadius: 12, whiteSpace: "nowrap",
+            background: neon ? "rgba(8,6,16,.86)" : "rgba(20,16,28,.82)", border: neon ? "1.5px solid rgba(63,240,255,.9)" : "none",
+            boxShadow: neon ? "0 0 12px rgba(63,240,255,.45)" : "0 6px 18px rgba(0,0,0,.25)",
+          }}
+        >
+          <div style={{ fontFamily: display, fontSize: 21, color: "#fff", lineHeight: 1.1 }}>{tg.name}</div>
+          <div style={{ display: "flex", gap: 14, alignItems: "center" }}>
+            {info(false, 12)}
+            {badges(11)}
+          </div>
+        </div>
+      </div>
+    );
+  };
   return (
     <Focusable
       // @ts-ignore autoFocus exists at runtime
@@ -320,45 +413,14 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
     >
       <div ref={boxRef} style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
         <canvas ref={cvRef} style={{ position: "absolute", display: "block", touchAction: "none" }} />
-        <div style={{ position: "absolute", left: 24, top: 52, display: "flex", gap: 12, alignItems: "center", pointerEvents: "none", fontFamily: display }}>
+        <div style={{ position: "absolute", left: 24, top: 52, display: s.infoStyle === "top" ? "none" : "flex", gap: 12, alignItems: "center", pointerEvents: "none", fontFamily: display }}>
           <span style={{ fontSize: 26, color: "#fff", textShadow: neon ? "0 0 10px #ff3fa4, 0 0 22px rgba(255,63,164,.6)" : "0 2px 0 rgba(0,0,0,.35)" }}>{neon ? t.brandNeon : t.brandTown}</span>
           <span style={{ fontSize: 14, fontWeight: 600, padding: "4px 11px", borderRadius: 99, background: "rgba(20,16,28,.55)", color: "#fff", fontFamily: "Motiva Sans, sans-serif" }}>{t.games(games.length)}</span>
         </div>
         {games.length === 0 ? (
           <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#fff", fontFamily: display, fontSize: 22, padding: 40, textAlign: "center" }}>{t.empty}</div>
         ) : null}
-        {tg ? (
-          // The selected game, written on the road right under the street: no panel.
-          <div
-            style={{
-              position: "absolute", left: 40, right: 40, top: "83.5%", pointerEvents: "none",
-              display: "flex", flexWrap: "wrap", alignItems: "baseline", columnGap: 22, rowGap: 6,
-              opacity: mode === "playing" ? 0 : 1, transition: "opacity .3s",
-            }}
-          >
-            <div
-              style={{
-                fontFamily: display, fontSize: 36, lineHeight: 1.1, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%",
-                textShadow: neon ? "0 0 8px rgba(63,240,255,.7), 0 0 22px rgba(255,63,164,.45), 0 3px 0 rgba(0,0,0,.6)" : "0 3px 0 rgba(0,0,0,.55), 0 0 14px rgba(0,0,0,.5)",
-              }}
-            >
-              {tg.name}
-            </div>
-            <InfoRow
-              playtime={t.playtimeShort(minutes)}
-              lastPlayed={lastAt > STEAM_EPOCH ? t.ago(Math.floor((Date.now() / 1000 - lastAt) / DAY)) : null}
-              ach={ach}
-              friends={friends ? t.friendsPlaying(friends) : null}
-              accent={neon ? "#3ff0ff" : "#ffb938"}
-            />
-            {statusWord || tierIdx ? (
-              <span style={{ display: "flex", gap: 14, fontFamily: "Motiva Sans, sans-serif", fontSize: 15, fontWeight: 800, letterSpacing: "0.05em", whiteSpace: "nowrap", textShadow: "0 2px 0 rgba(0,0,0,.65), 0 0 10px rgba(0,0,0,.6)" }}>
-                {statusWord ? <span style={{ color: CHIP[tg.status] }}>{statusWord}</span> : null}
-                {tierIdx ? <span style={{ color: ["", "#e0a46a", "#dfe7f2", "#ffd24a"][tierIdx] }}>{t.tiers[tierIdx]} {[0, 100, 200, 500][tierIdx]}h+</span> : null}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
+        {tg ? renderInfo() : null}
       </div>
     </Focusable>
   );

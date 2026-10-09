@@ -28,7 +28,8 @@ export interface TownHost {
   saveMood(mood: number): void;
   onSelect(i: number): void;      // selection changed
   onInstall(i: number): void;     // Ⓐ on a game that isn't installed
-  onEntered(i: number): void;     // the penguin went through the door: launch now
+  onEntered(i: number): void;     // the penguin went through the door
+  onFrame?(box: any): void;       // every frame: the picked building's position (stage px)
 }
 
 export function createTown(cv: HTMLCanvasElement, host: TownHost) {
@@ -821,6 +822,8 @@ function drawFrame(){
   ctx.translate(640+shx,400+shy);ctx.rotate(tilt*.5*Math.PI/180);ctx.translate(-640,-400);
   Z?drawSkylineNeon():drawSkyline(sk);
   const ox=-camX+640+camKick;
+  // where the picked building is, for page overlays that follow it (stage px)
+  if(host.onFrame&&B.length){const b=cur(),top=SIDE-b.bh;host.onFrame({x:b.cx+ox,roof:top,cardTop:top+b.L.card.y,cardBottom:top+b.L.card.y+CH,awning:top+b.L.awn.y,door:top+b.L.door.y,ground:SIDE,S,offX:parseFloat(cv.style.left)||0,offY:parseFloat(cv.style.top)||0})}
   const f=faceFrom();
   if(m.behind){ctx.save();drawMinimi(m.x+ox+(m.sulkKind==='hide'?m.side*m.peek*16:0),f);ctx.restore()}
   Z?drawGroundNeon(ox):drawGround(sk);
