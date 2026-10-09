@@ -5,7 +5,7 @@ import { AppExtra, cachedAchievements, downloadProgress, GameEntry, loadLibrary,
 import { InfoRow } from "./InfoRow";
 import { friendsInGame } from "./friends";
 import { openNativeGameMenu } from "./nativeMenu";
-import { findHeaderSearch } from "./steamDom";
+import { findHeaderSearch, focusFirstIn } from "./steamDom";
 import { getSettings, updateSettings, useSettings } from "./settings";
 import { funSound, playUiSound } from "./sound";
 import { wheelTick } from "./haptics";
@@ -217,6 +217,44 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
     }, 4000);
     return () => clearTimeout(tm);
   }, [active, winFocused, mode]);
+
+  // ── Steam's search box (opened with L2) ──
+  // Gamepad input goes to the focused search box there, not to the street, so
+  // it is caught at the document: L2 / R2 bring you back to the street, and Ⓑ
+  // leaves the box and opens Steam's menu, like Ⓑ on the stock home.
+  useEffect(() => {
+    if (!active) return;
+    const doc = boxRef.current?.ownerDocument;
+    if (!doc) return;
+    const inSearch = () => {
+      const el = doc.activeElement as HTMLElement | null;
+      return !!el && el.tagName === "INPUT" && !boxRef.current?.closest("[data-minimi-root]")?.contains(el);
+    };
+    const backToStreet = () => {
+      (doc.activeElement as HTMLElement | null)?.blur?.();
+      focusFirstIn(boxRef.current?.closest("[data-minimi-town]"));
+    };
+    const onBtn = (e: any) => {
+      const b = e?.detail?.button;
+      if (!boxRef.current?.isConnected || !inSearch()) return;
+      if (b === GamepadButton.TRIGGER_LEFT || b === GamepadButton.TRIGGER_RIGHT) {
+        consume(e);
+        if (!e.detail.is_repeat) backToStreet();
+      } else if (b === GamepadButton.CANCEL) {
+        consume(e);
+        backToStreet();
+        setTimeout(() => {
+          try {
+            Navigation.OpenMainMenu?.();
+          } catch {
+            /* this client has no such call: Ⓑ just leaves the box */
+          }
+        }, 60);
+      }
+    };
+    doc.addEventListener("vgp_onbuttondown", onBtn, true);
+    return () => doc.removeEventListener("vgp_onbuttondown", onBtn, true);
+  }, [active]);
 
   // ── Input ──
   const activeSince = useRef(Date.now());

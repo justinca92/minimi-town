@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.1.6
+
+- What's New / Friends / Recommended: the tab row and Steam's top bar share one opaque background again, exactly like Spindeck.
+- Steam's search box (opened with L2): L2 or R2 brings you back to the street, and Ⓑ leaves the box and opens Steam's menu.
+- Fixed: a detached leftover copy of the home could keep Steam's top bar see-through on the sections page (and keep running in the background).
+
 ## 0.1.5
 
 - Street lamps stand in front of the shops, a little lower than the roofs. When they're lit (dusk, night, and always in Neon Rain City) each throws a cone of light down onto the shop front and a pool onto the pavement.

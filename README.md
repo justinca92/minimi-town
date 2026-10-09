@@ -18,7 +18,7 @@
 |---|---|
 | D-pad ◀ ▶ | Move along the street |
 | Ⓐ | The penguin goes in and the game's page opens (Play / Install are there) |
-| L2 | Search, like ▲ on the stock home |
+| L2 | Search, like ▲ on the stock home (L2 / R2 there: back to the street; Ⓑ there: Steam's menu) |
 | R2 | What's New / Friends / Recommended (Steam's own sections), sliding in from the right |
 | L2 there (or swipe right) | Back to the street |
 | Ⓑ there | To the top of the sections; at the top, Steam's menu (like the stock home) |

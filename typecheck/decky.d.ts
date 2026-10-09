@@ -6,7 +6,7 @@ declare module "@decky/ui" {
   export const ToggleField: C<{ onChange?: (v: boolean) => void }>;
   export const SliderField: C<{ onChange?: (v: number) => void }>;
   export const DropdownItem: C<{ onChange?: (o: { data: any; label: any }) => void }>;
-  export const Navigation: { Navigate(p: string): void; NavigateBack(): void; CloseSideMenus(): void; NavigateToExternalWeb(url: string): void };
+  export const Navigation: { Navigate(p: string): void; NavigateBack(): void; CloseSideMenus(): void; NavigateToExternalWeb(url: string): void; OpenMainMenu?(): void };
   export const staticClasses: any;
   export function showContextMenu(el: any, anchor?: any, opts?: any): void;
   export function showModal(el: any): any;

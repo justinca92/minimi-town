@@ -30,6 +30,7 @@ FLOW = """async () => {
   await sleep(600);
   const r1 = ev(6); town().__props.onButtonDown(r1); await sleep(400); log.push(['R1 does nothing now', box.style.left]);
   town().__props.onButtonDown(ev(8)); await sleep(500); log.push(['R2 → sections slide in from the right', box.style.left, 'top stays', box.style.top]);
+  await sleep(1200); log.push(['sections: tab row shares Steam bar look', (document.getElementById('tabs').style.background || 'none').slice(0, 40), document.getElementById('tabs').style.backdropFilter]);
   await sleep(900);
   const row2b = [...document.querySelectorAll('button')].find((b) => b.textContent === 'row2'); row2b.focus();
   const b1 = ev(2); sec.__props.onButtonDown(b1); await sleep(50); log.push(['Ⓑ deep → to top', document.activeElement?.textContent, 'consumed', !!b1.p, box.style.left]);
@@ -40,6 +41,12 @@ FLOW = """async () => {
   await sleep(700);
   document.activeElement?.blur?.();
   town().__props.onButtonDown(ev(7)); await sleep(50); log.push(['L2 → search focused', document.activeElement?.tagName]);
+  const vgp = (el, button) => { const e = new CustomEvent('vgp_onbuttondown', { bubbles: true, cancelable: true, detail: { button } }); el.dispatchEvent(e); return e.defaultPrevented; };
+  await sleep(700);
+  log.push(['R2 in search → back to street', vgp(document.activeElement, 8), document.activeElement?.closest('[data-minimi-town]') ? 'street' : document.activeElement?.tagName]);
+  await sleep(600); town().__props.onButtonDown(ev(7)); await sleep(50);
+  log.push(['Ⓑ in search → Steam menu', vgp(document.activeElement, 2), document.activeElement?.closest('[data-minimi-town]') ? 'street' : document.activeElement?.tagName]);
+  await sleep(150); log.push(['  main menu opened', window.__mainMenu ?? 0]);
   // Ⓐ: the penguin walks in, then the game's page opens (nothing starts by itself)
   window.__nav = null;
   town().__props.onOKButton(); await sleep(4500);

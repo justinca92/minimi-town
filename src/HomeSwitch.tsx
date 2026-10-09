@@ -3,11 +3,11 @@ import { memo, ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { TownPage } from "./TownPage";
 import { useLang } from "./locale";
 import { useWheelGeneration } from "./reset";
-import { getSettings, useSettings, useSettingsLoaded } from "./settings";
+import { getSettings, updateSettings, useSettings, useSettingsLoaded } from "./settings";
 import { playUiSound } from "./sound";
 import { onTeardown, SafeBoundary } from "./safety";
 import { debug } from "./log";
-import { CLEAR_CLASS, CLEAR_PROPS, ensureClearStyle, focusablesIn, focusFirstIn, headerStrips, removeInjectedStyles, seedBarLook, StyleKeeper, topBarBottom } from "./steamDom";
+import { BarLook, CLEAR_CLASS, CLEAR_PROPS, ensureClearStyle, learnBarLook, learnedBarLook, focusablesIn, focusFirstIn, headerStrips, removeInjectedStyles, seedBarLook, StyleKeeper, topBarBottom } from "./steamDom";
 import {
   HEADER_REAPPLY_MS,
   HEADER_RESCAN_MS,
@@ -254,18 +254,67 @@ function focusInOverlay(host: HTMLElement | null) {
 function syncHeader(keeper: StyleKeeper, doc: Document, screen: Screen, host: HTMLElement | null) {
   const strips = headerStrips(doc, HEADER_RESCAN_MS);
   ensureClearStyle(doc);
-  const row = homeParts(host)?.header ?? null;
-  if (row) rowExt.delete(row);
+  const releaseRow = (row: HTMLElement | null) => row && rowExt.delete(row);
+  const parts = homeParts(host);
+  const row = parts?.header ?? null;
   if (screen === "wheel") {
-    // Street: Steam's bar is see-through over the sky.
+    releaseRow(row);
     keeper.keepOnly(new Set(strips));
     for (const el of strips) keeper.set(el, CLEAR_PROPS, CLEAR_CLASS);
     return;
   }
-  // Sections: Steam's own top bar (profile, Wi-Fi, battery, clock) is left
-  // exactly as Steam paints it; nothing of ours is drawn into or behind it.
-  // Scrolled to the sections, Steam makes it opaque itself, like the stock page.
-  keeper.keepOnly(new Set());
+  const rect = row?.getBoundingClientRect();
+  const st = row ? rowExt.get(row) : undefined;
+  // Measured from the sections screen's top (not the viewport), so a sync
+  // during the slide sizes the band as it will be at rest.
+  const top0 = parts ? screenTop(parts) : 0;
+  const contentTop = rect ? rect.top - top0 + (st?.ext ?? 0) : -1; // where the row's own content starts
+  const rowVisible = !!rect && rect.bottom - top0 > 0;
+  // Learn Steam's opaque look once, from its own (uncleared) bar on the scrolled home.
+  if (!learnedBarLook()) {
+    releaseRow(row);
+    keeper.keepOnly(new Set());
+    const fresh = learnBarLook(strips);
+    if (fresh) saveBarLook(fresh);
+  }
+  const look = learnedBarLook();
+  if (!row || !rowVisible || !look) {
+    releaseRow(row);
+    keeper.keepOnly(new Set()); // tab row scrolled away / look not known yet: Steam's own bar
+    return;
+  }
+  // ONE element carries the band: the tab row, grown upward to the top of
+  // the screen (negative margin + equal extra padding, so its content and the
+  // layout around it don't move), with Steam's look — rgba(0,0,0,0.5) +
+  // blur(100px), confirmed on device. Steam's bar is cleared on top of it.
+  // Two separately blurred elements always showed a seam: each blurs a
+  // different backdrop (dark above, banner art below).
+  const bg = [look.image && look.image !== "none" ? look.image : "", look.color].filter(Boolean).join(", ");
+  const blur = look.backdrop && look.backdrop !== "none" ? look.backdrop : "none";
+  let base = st;
+  if (!base) {
+    const cs = doc.defaultView!.getComputedStyle(row);
+    base = { ext: 0, margin: parseFloat(cs.marginTop) || 0, pad: parseFloat(cs.paddingTop) || 0 };
+  }
+  const ext = Math.max(0, Math.round(contentTop));
+  rowExt.set(row, { ...base, ext });
+  keeper.keepOnly(new Set([row, ...strips]));
+  for (const el of strips) keeper.set(el, CLEAR_PROPS, CLEAR_CLASS);
+  keeper.set(row, {
+    background: bg,
+    "backdrop-filter": blur,
+    "-webkit-backdrop-filter": blur,
+    "box-shadow": "none",
+    "margin-top": `${base.margin - ext}px`,
+    "padding-top": `${base.pad + ext}px`,
+  });
+}
+
+
+
+/** Persist the learned look so the band is right from the first frame next time. */
+function saveBarLook(look: BarLook) {
+  updateSettings({ barLook: look });
 }
 
 // ───────────────────────── Component ─────────────────────────
@@ -329,6 +378,7 @@ function WheelHome({ original }: { original: ReactNode }) {
     const claim = (why: string) => {
       if (screenRef.current !== "wheel") return;
       const box = wheelBox.current;
+      if (!box?.isConnected) return; // a detached copy never steals focus
       const doc = box?.ownerDocument;
       if (!box || !doc) return;
       if (doc.visibilityState === "hidden" || !doc.hasFocus?.()) return; // a game or overlay is in front
@@ -506,7 +556,14 @@ function WheelHome({ original }: { original: ReactNode }) {
     if (!doc) return;
     let disposed = false;
     const sync = () => {
-      if (!disposed) syncHeader(keeper, doc, screen, sections.current);
+      if (disposed) return;
+      // A copy of the home that Steam (or React) left mounted but detached must
+      // not touch Steam's bar: two copies would fight over it.
+      if (!root.current?.isConnected) {
+        keeper.keepOnly(new Set());
+        return;
+      }
+      syncHeader(keeper, doc, screen, sections.current);
     };
     sync();
     const ts = [150, 400].map((ms) => setTimeout(sync, ms));

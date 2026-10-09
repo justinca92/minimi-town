@@ -13,7 +13,7 @@ function Focusable(props) {
   return h("div", { ref, style, tabIndex: 0, "data-focusable": "", ...rest }, children);
 }
 const comp = (n) => (p) => h("div", { "data-c": n, "data-label": typeof p.label === "string" ? p.label : undefined, "data-desc": typeof p.description === "string" ? p.description : undefined }, p.children);
-window.DFL = { Focusable, GamepadButton: B, Navigation: { Navigate: (p) => (window.__nav = p), NavigateBack() {}, CloseSideMenus() {} },
+window.DFL = { Focusable, GamepadButton: B, Navigation: { Navigate: (p) => (window.__nav = p), NavigateBack() {}, CloseSideMenus() {}, OpenMainMenu() { window.__mainMenu = (window.__mainMenu || 0) + 1; } },
   ButtonItem: comp("ButtonItem"), DialogButton: comp("DialogButton"), DropdownItem: comp("DropdownItem"), PanelSection: comp("PanelSection"), PanelSectionRow: comp("PanelSectionRow"),
   SliderField: comp("SliderField"), TextField: comp("TextField"), ToggleField: comp("ToggleField"), ModalRoot: comp("ModalRoot"), staticClasses: {}, showContextMenu() {}, showModal() {} };
 // Decky's RouterHook: patches per path in a Set (run in registration order),

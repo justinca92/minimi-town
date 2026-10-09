@@ -921,7 +921,8 @@ function drawFrame(){
 /* ---------------- loop ---------------- */
 let last=0,raf=0,frozen=false,active=false,trimT=0;var drawErr=false;
 function loop(ts){
-  raf=0;let dt=(ts-last)/1000;if(!(dt>0))dt=0.016;dt=Math.min(.05,dt);last=ts;
+  raf=0;if(!cv.isConnected)return; // a detached copy: stop (setActive restarts it)
+  let dt=(ts-last)/1000;if(!(dt>0))dt=0.016;dt=Math.min(.05,dt);last=ts;
   update(dt);updRain(dt);updHoles(dt);
   if(!frozen)drawFrame();
   trimT+=dt;if(trimT>2){trimT=0;trimCaches()}
