@@ -530,7 +530,13 @@ const LAMP_TOP=SIDE-196;
 // The lamp whose head leans over the picked shop burns full; the rest are dimmed.
 // Levels ease, so the light follows you along the street.
 let LAMP_DIM=typeof host.lampDim==='number'?host.lampDim:.3;const lampLv=new Map();
-function lampLevel(i,dt){const want=i===sel-1?1:LAMP_DIM;let v=lampLv.get(i);if(v===undefined)v=want;v+=(want-v)*(1-Math.exp(-dt*3.5));lampLv.set(i,v);return v}
+// How fast the light follows depends on how fast you browse: resting on a shop,
+// its lamp warms up slowly (~1 s); flicking through, the light keeps pace.
+let lampRate=2.2;
+function lampTick(dt){const nr=navRate(),want=clamp(2.2+Math.max(0,nr-1)*3,2.2,12);lampRate+=(want-lampRate)*(1-Math.exp(-dt*(want>lampRate?12:1.5)))}
+function lampLevel(i,dt){const want=i===sel-1?1:LAMP_DIM;let v=lampLv.get(i);if(v===undefined)v=want;
+  const r=want>v?lampRate:lampRate*1.3; // dimming a little quicker than warming up
+  v+=(want-v)*(1-Math.exp(-dt*r));lampLv.set(i,v);return v}
 function drawLamp(x,sk,front,i=0){
   const lit=Z||sk!=='day',lc=Z?(i%2?'#ff3fa4':'#3ff0ff'):'#ffd98a',pole=Z?'#0c0b12':'#2f2a36';
   const hx=x+24,hy=LAMP_TOP-8;
@@ -910,7 +916,7 @@ function drawFrame(){
   const vis=x=>x+ox>-420&&x+ox<W+420;
   {const bi0=Math.max(0,Math.floor((camX-1100)/SP)),bi1=Math.min(B.length-1,Math.ceil((camX+1100)/SP));for(let i=bi0;i<=bi1;i++){try{drawBuilding(B[i],sk,ox)}catch(err){if(!drawErr){drawErr=true;console.debug('[MinimiTown:draw] building failed',B[i]?.appid,err)}}}}
   lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,false,i+li0)}); // in front of the shops
-  lampXs.forEach((x,i)=>{lampLevel(i+li0,frameDt);if(vis(x))drawLamp(x+ox,sk,true,i+li0)});
+  lampTick(frameDt);lampXs.forEach((x,i)=>{lampLevel(i+li0,frameDt);if(vis(x))drawLamp(x+ox,sk,true,i+li0)});
   if(sk==='night'){ctx.fillStyle=Z?'rgba(20,6,40,.12)':'rgba(10,12,40,.18)';ctx.fillRect(-300,-300,W+600,H+600)}
   if(!m.behind&&m.state!=='inside')drawMinimi(m.x+ox,f);
   drawParts(ox);
@@ -1028,5 +1034,5 @@ function destroy(){active=false;stop();clearTimeout(moodSaveT);try{host.saveMood
 setTimeout(()=>{if(mode==='browse')say('안녕!',1.6)},600);
 return {fit,emerge,poke,setLampDim,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
   get selected(){return sel},get mode(){return mode},get mood(){return mood},set mood(v){mood=clamp(v,0,100);saveMood()},
-  get debug(){return {m,B,camX}}};
+  get debug(){return {m,B,camX,lampLv,lampRate}}};
 }

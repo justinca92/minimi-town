@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.8
+
+- The lamps fade between 30% and full at the pace you browse: resting on a shop, its lamp warms up over about a second; flicking quickly through the street, the light speeds up to keep up with you.
+
 ## 0.1.7
 
 - Only the lamp over the picked shop burns full; the others are dimmed to 30%, and the light follows you along the street.
