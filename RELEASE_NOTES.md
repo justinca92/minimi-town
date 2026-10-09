@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.33
+
+- The trackpad hand has three poses: an open hand hovering while your thumb is on the pad, a palm-down hand patting the top of the head in time with your rubbing (토닥토닥, with little pat marks), and thumb and index pinching the top of the head when you grab.
+- Neon Rain City's tough penguin doesn't do cute when you pet it: it leans away, looks off to the side with an unimpressed face and a blush, and mutters "…하지 마." / "…쳇." / "…5초만이다." — but stays put, and its mood still goes up. Keep going long enough and it admits "…나쁘진 않군." or "…아무한테도 말하지 마." Hearts are rare there.
+
 ## 0.1.32
 
 - Trackpad flicks throw properly. The throw speed is now taken from the last moment your thumb actually moved (the pad only reports a lift after a short silence, which used to read as "standing still" and just dropped the penguin), and a pad touch-up lets go at once.

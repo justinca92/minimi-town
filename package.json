@@ -1,6 +1,6 @@
 {
   "name": "minimi-town",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "description": "Steam Deck home screen as a street of game storefronts, with a penguin that walks you to your game",
   "type": "module",
   "scripts": {

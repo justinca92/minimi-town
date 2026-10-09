@@ -61,7 +61,7 @@ function fit(w,h){
   cv.width=Math.round(W*K);cv.height=Math.round(H*K);
   drawFrame();
 }
-const EN={'퍽!':'Splat!','콩!':'Bonk!','철퍼덕!':'Oof!','건드리지 마!':"Don't touch me!",'왜…':'What…','그만해라':'Stop it','내려줘!!':'Put me down!!','잠깐만…':'Hang on…','으아악!':'Aaargh!','화났어!!':"I'm mad!!",'진짜!!':'Seriously!!','비다! 우비 입어야지':'Rain! Raincoat time','순찰 시작.':'On patrol.','출동.':'Moving out.','흥… 가면 되잖아.':'Hmph… fine, I\'m going.','…알았어, 간다고.':'…okay, okay, going.','햇살 좋다!':'What a sunny day!','흥.':'Hmph.','흥. 안 가.':'Hmph. Not going.','헉… 헉…':'Huff… huff…','헉… 헉… 가자!':"Huff… let's go!",'하아아암~':'Yaaawn~','콜록… 들어가도 돼?':'Ahem… can I come in?','으앗?':'Whoa?','으아앗!':'Waaah!','으아아아':'Whoaaa','으… 기다려!':'Ugh… wait up!','어질어질…':'So dizzy…','안녕!':'Hi!','설치부터 할게!':"Let's install it!",'버텨…!':'Hold on…!','놓쳤다아':'Lost my grip','…헤헤':'…hehe','잠깐만~!':'Wait for me~!','같이 가아~!':'Coming~!','간다.':'Going in.','…들어간다.':'…going in.'};
+const EN={'…하지 마.':'…Don\'t.','…쳇.':'…Tch.','…그만해라.':'…Knock it off.','…5초만이다.':'…Five seconds.','…나쁘진 않군.':'…Not bad.','…아무한테도 말하지 마.':'…Tell no one.','퍽!':'Splat!','콩!':'Bonk!','철퍼덕!':'Oof!','건드리지 마!':"Don't touch me!",'왜…':'What…','그만해라':'Stop it','내려줘!!':'Put me down!!','잠깐만…':'Hang on…','으아악!':'Aaargh!','화났어!!':"I'm mad!!",'진짜!!':'Seriously!!','비다! 우비 입어야지':'Rain! Raincoat time','순찰 시작.':'On patrol.','출동.':'Moving out.','흥… 가면 되잖아.':'Hmph… fine, I\'m going.','…알았어, 간다고.':'…okay, okay, going.','햇살 좋다!':'What a sunny day!','흥.':'Hmph.','흥. 안 가.':'Hmph. Not going.','헉… 헉…':'Huff… huff…','헉… 헉… 가자!':"Huff… let's go!",'하아아암~':'Yaaawn~','콜록… 들어가도 돼?':'Ahem… can I come in?','으앗?':'Whoa?','으아앗!':'Waaah!','으아아아':'Whoaaa','으… 기다려!':'Ugh… wait up!','어질어질…':'So dizzy…','안녕!':'Hi!','설치부터 할게!':"Let's install it!",'버텨…!':'Hold on…!','놓쳤다아':'Lost my grip','…헤헤':'…hehe','잠깐만~!':'Wait for me~!','같이 가아~!':'Coming~!','간다.':'Going in.','…들어간다.':'…going in.'};
 const tx=s=>host.lang==='en'?(EN[s]??s):s;
 
 const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t, rnd=(a,b)=>a+Math.random()*(b-a);
@@ -319,10 +319,10 @@ function goBack(){
 /* ---------------- minimi update ---------------- */
 function faceFrom(){
   // returns {eyes,mouth,brow,blush,red,extras}
-  const f={eyes:'open',mouth:'smile',brow:null,blush:.5,red:0,sweat:0,steam:0,zzz:0,stars:0,tongue:0,lookY:0};
+  const f={eyes:'open',mouth:'smile',brow:null,blush:.5,red:0,sweat:0,steam:0,zzz:0,stars:0,tongue:0,lookY:0,lookX:null};
   const s=m.state,t=m.t;
   if(m.react){const r=m.react;if(r.type==='flinch'){f.eyes='squint';f.mouth='o';f.brow='worry'}else if(r.type==='annoy'){f.eyes='half';f.mouth='pout';f.brow='flat';f.blush=.9}else{f.eyes='angry';f.mouth='grit';f.brow='angry';f.red=.7;f.steam=1}}
-  else if(m.petT>0){f.eyes='happy';f.mouth='open';f.blush=1}
+  else if(m.petT>0){if(Z){f.eyes='half';f.mouth='pout';f.brow='angry';f.blush=1;f.sweat=1;f.lookX=(hand.a>.3&&hand.x>m.x?-1:1)*7}else{f.eyes='happy';f.mouth='open';f.blush=1}}
   else if(m.pantT>0){f.eyes='closedU';f.mouth='pant';f.tongue=1;f.sweat=1}
   else if(m.sleepyT>0){f.eyes='half';f.mouth='flat';f.zzz=1;f.blush=.3}
   else if(mood<35){f.eyes='half';f.mouth='frown';f.brow='flat'}
@@ -545,7 +545,11 @@ function poke(){
 function pet(amount){
   if(['air','splatW','splatG','enter','inside','exit','roll'].includes(m.state))return;
   mood=clamp(mood+amount*.025,0,100);lastBother=T-6;saveMood();
-  m.petT=.6;if(Math.random()<amount*.02){hearts(m.x,m.y-2*R-10);sfx('pet')}
+  m.petT=.6;m.petRun=(T-(m.petLast||-9)<.8?(m.petRun||0):0)+amount;m.petLast=T;
+  if(Z){ // the tough guy doesn't want to be petted… but doesn't really leave either
+    if(T-(m.petSaid||-9)>4){m.petSaid=T;say(m.petRun>900?(Math.random()<.5?'…나쁘진 않군.':'…아무한테도 말하지 마.'):['…하지 마.','…쳇.','…그만해라.','…5초만이다.'][Math.floor(Math.random()*4)],1.4)}
+    if(Math.random()<amount*.006){hearts(m.x,m.y-2*R-10);sfx('pet')}}
+  else if(Math.random()<amount*.02){hearts(m.x,m.y-2*R-10);sfx('pet')}
 }
 function shake(){
   if((mode!=='browse'&&mode!=='launching')||['inside','enter','exit'].includes(m.state))return;
@@ -991,7 +995,7 @@ function drawMinimi(sx,f){
   if(s==='enter'){sxx*=1-.35*Math.sin(clamp(m.t/.16,0,1)*Math.PI)} // quick turn toward the door
   if(m.react&&m.react.type==='angry'){bob=Math.abs(Math.sin(T*18))*5;armL=-1+Math.sin(T*18)*.6;armR=-1-Math.sin(T*18)*.6}
   if(m.react&&m.react.type==='flinch'){const k=1-m.react.t/m.react.dur;sxx*=1-.15*k;syy*=1+.15*k}
-  if(m.petT>0&&s!=='held'){syy*=1+Math.sin(T*10)*.03;armL=-.6;armR=-.6}
+  if(m.petT>0&&s!=='held'){if(Z){const away=hand.a>.3&&hand.x>m.x?-1:1;lean=away*.2+Math.sin(T*7)*.02;syy*=.95;sxx*=1.03;armL=.1;armR=.1}else{syy*=1+Math.sin(T*10)*.03;armL=-.6;armR=-.6}}
   if(s==='sulk'&&m.sulkKind==='back'){syy*=.86;sxx*=1.06}
   if(s==='cheer'){armL=-2.4;armR=-2.4}
   // neon city: blaster out while chasing, at the door, and when it's had enough
@@ -1112,7 +1116,7 @@ function drawMinimi(sx,f){
 function star(x,y,r,col){ctx.fillStyle=col;ctx.beginPath();for(let k=0;k<10;k++){const a=k*Math.PI/5-Math.PI/2,rr2=k%2?r*.45:r;ctx.lineTo(x+Math.cos(a)*rr2,y+Math.sin(a)*rr2)}ctx.closePath();ctx.fill()}
 function mix(a,b,t){const p=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];const A=p(a),Bc=p(b);return`rgb(${A.map((v,i)=>Math.round(lerp(v,Bc[i],t))).join(',')})`}
 function drawFace(f){
-  const ink='#26283a',d=m.fdir||m.dir||1,pf=m.pfE||0,lx=d*(4+pf*R*.3),ly=f.lookY,ey=-R*1.4+ly,ex=R*.34*(1-pf*.5),farA=clamp((.55-pf)/.35,0,1);
+  const ink='#26283a',d=m.fdir||m.dir||1,pf=m.pfE||0,lx=f.lookX!=null?f.lookX:d*(4+pf*R*.3),ly=f.lookY,ey=-R*1.4+ly,ex=R*.34*(1-pf*.5),farA=clamp((.55-pf)/.35,0,1);
   // blush
   if(f.blush>0){ctx.fillStyle=`rgba(255,130,140,${.45*f.blush})`;[-1,1].forEach(sd=>{if(sd!==d&&farA<.5)return;ell(ctx,sd*R*.56*(1-pf*.75)+lx-d*pf*3,-R*1.1+pf*2,6-pf*1.5,3.8);ctx.fill()})}
   ctx.strokeStyle=ink;ctx.fillStyle=ink;ctx.lineWidth=2.8;ctx.lineCap='round';
@@ -1283,7 +1287,7 @@ on('pointerup',endPointer);on('pointercancel',endPointer);
 function flipCard(){const b=B[sel];if(!b||mode!=='browse'||!b.game.info)return;flipPick=!((b.flip||0)>.5);sfx('tick')}
 /* ---------------- the left trackpad as a hand ---------------- */
 // Rub (no click) to pet; click to grab, keep the thumb on the pad to carry, flick and lift it to throw.
-const pad={touch:false,click:false,x:0,y:0,px:0,py:0},hand={a:0,x:0,y:0,grip:false,ax:0,ay:0,bx:0,by:0,hist:[],wig:0};
+const pad={touch:false,click:false,x:0,y:0,px:0,py:0},hand={a:0,x:0,y:0,grip:false,ax:0,ay:0,bx:0,by:0,hist:[],wig:0,pat:0,patting:false,patAt:0,px:null,py:null};
 const HAND_OFF=['enter','inside','exit','air','splatW','splatG','shoot','brace','roll'];
 function padInput(st){
   const wasClick=pad.click;pad.touch=!!st.touch;pad.click=!!st.click;if(pad.touch){pad.x=st.x;pad.y=st.y}
@@ -1318,27 +1322,52 @@ function handTick(dt){
     hand.hist.push({t:T,x:m.x,y:m.y});while(hand.hist.length>40)hand.hist.shift();
     hand.x=m.x;hand.y=m.y-2.2*R*m.scale;return}
   if(hand.grip&&m.state!=='held')hand.grip=false;
-  if(!on)return;
-  const tx=m.x+pad.x*120,ty=m.y-R*1.3-pad.y*90;
+  if(!on){hand.px=hand.py=null;hand.patting=false;return}
+  const px=m.x+pad.x*120,py=m.y-R*1.3-pad.y*90;
+  // the thumb's own movement (not the hand's easing) is what rubs
+  const mv=Math.hypot(px-(hand.px??px),py-(hand.py??py));hand.px=px;hand.py=py;
+  const near=overMinimi({x:px,y:py},16);
+  hand.patting=near&&(mv>.6||(hand.patting&&T-(hand.patAt||0)<.35));if(near&&mv>.6)hand.patAt=T;
+  hand.pat+=mv*.09;
+  const head=m.y-1.9*R*m.scale,tx=hand.patting?clamp(px,m.x-R*.7,m.x+R*.7):px,ty=hand.patting?head-Math.abs(Math.sin(hand.pat))*9:py;
   if(hand.a<.05){hand.x=tx;hand.y=ty}
-  const ox2=hand.x,oy2=hand.y;hand.x+=(tx-hand.x)*(1-Math.exp(-dt*22));hand.y+=(ty-hand.y)*(1-Math.exp(-dt*22));
-  const step=Math.hypot(hand.x-ox2,hand.y-oy2);hand.wig+=step*.08;
-  if(step>.6&&overMinimi({x:hand.x,y:hand.y},10)){pet(step);if(m.state==='sit')m.lookUp=0}
+  hand.x+=(tx-hand.x)*(1-Math.exp(-dt*22));hand.y+=(ty-hand.y)*(1-Math.exp(-dt*(hand.patting?40:22)));
+  if(near&&mv>.6){pet(mv*1.4);if(m.state==='sit')m.lookUp=0}
 }
-/** A cartoon glove: open while it hovers or rubs, a fist while it carries the penguin. */
+/** A cartoon glove in three poses: an open hand hovering, a flat hand patting the head (토닥토닥),
+ *  and thumb + index pinching the top of the head to carry the penguin. */
 function drawHand(ox){
-  if(hand.a<.02)return;const x=hand.x+ox,y=hand.y,g=hand.grip;
-  ctx.save();ctx.globalAlpha=hand.a;ctx.translate(x,y);ctx.rotate(g?0:Math.sin(hand.wig)*.25);
-  const fill=Z?'#e9f6ff':'#ffffff',line=Z?'#3ff0ff':'#3a3036';ctx.lineWidth=2.2;ctx.strokeStyle=line;ctx.fillStyle=fill;if(Z){ctx.shadowColor='#3ff0ff';ctx.shadowBlur=8}
-  if(g){ // fist holding on to the top of the head
-    rr(ctx,-17,-12,34,22,10);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
-    ctx.beginPath();[-8,0,8].forEach(k=>{ctx.moveTo(k,-12);ctx.lineTo(k,-3)});ctx.stroke();
-    ctx.fillStyle=fill;rr(ctx,-11,-24,22,13,5);ctx.fill();ctx.stroke(); // cuff
-  }else{ // open hand, fingers down
-    [-10,-3.5,3.5,10].forEach((fx,k)=>{rr(ctx,fx-3.6,2,7.2,15-(k===0||k===3?3:0),3.6);ctx.fill();ctx.stroke()});
-    ell(ctx,0,-1,14,11);ctx.fill();ctx.stroke();ctx.shadowBlur=0;
-    ctx.save();ctx.translate(-14,-2);ctx.rotate(-.7);rr(ctx,-3.5,-1,7,13,3.5);ctx.fill();ctx.stroke();ctx.restore();
-    ctx.fillStyle=fill;rr(ctx,-10,-19,20,10,4);ctx.fill();ctx.stroke(); // cuff
+  if(hand.a<.02)return;const x=hand.x+ox,y=hand.y;
+  const fill=Z?'#eaf7ff':'#ffffff',line=Z?'#3ff0ff':'#3a3036',shade2=Z?'rgba(63,240,255,.18)':'rgba(58,48,54,.12)';
+  ctx.save();ctx.globalAlpha=hand.a;ctx.translate(x,y);ctx.lineWidth=2.2;ctx.strokeStyle=line;ctx.fillStyle=fill;ctx.lineJoin='round';ctx.lineCap='round';
+  const glow=()=>{if(Z){ctx.shadowColor='#3ff0ff';ctx.shadowBlur=8}},noGlow=()=>{ctx.shadowBlur=0};
+  const finger=(fx,fy,w,h,r=0)=>{ctx.save();ctx.translate(fx,fy);ctx.rotate(r);rr(ctx,-w/2,0,w,h,w/2);ctx.fill();ctx.stroke();ctx.restore()};
+  // a finger as a soft tube: dark outline, then the glove over it
+  const tube=(pts,w)=>{const path=()=>{ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);if(pts.length===3)ctx.quadraticCurveTo(pts[1][0],pts[1][1],pts[2][0],pts[2][1]);else pts.slice(1).forEach(q=>ctx.lineTo(q[0],q[1]))};
+    ctx.save();ctx.lineCap='round';ctx.strokeStyle=line;ctx.lineWidth=w+4.4;path();ctx.stroke();ctx.strokeStyle=fill;ctx.lineWidth=w;path();ctx.stroke();ctx.restore()};
+  if(hand.grip){
+    // pinch: the hand above, thumb and index closing on the top of the head, the other fingers curled
+    glow();ctx.fillStyle=fill;rr(ctx,-4,-46,30,22,10);ctx.fill();ctx.stroke();noGlow(); // back of the hand
+    tube([[22,-30],[30,-22],[24,-16]],7);tube([[15,-27],[21,-17],[15,-14]],7); // curled fingers
+    tube([[4,-30],[10,-14],[1,-3]],7.5); // index, down to the pinch
+    tube([[-2,-36],[-14,-20],[-3,-3]],7.5); // thumb
+    ctx.fillStyle=fill;rr(ctx,8,-60,20,15,5);ctx.fill();ctx.stroke(); // cuff, the arm goes up and away
+    ctx.strokeStyle=hexA(Z?'#3ff0ff':'#3a3036',.55);ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(-12,-2);ctx.lineTo(-18,-6);ctx.moveTo(10,-2);ctx.lineTo(16,-6);ctx.stroke(); // grip marks
+  }else if(hand.patting){
+    // palm down on the head, fingers draped over the front: 토닥토닥
+    const tilt=-.06+Math.sin(hand.pat)*.07;ctx.rotate(tilt);glow();
+    ell(ctx,4,-10,21,11);ctx.fill();ctx.stroke();noGlow(); // back of the hand
+    [[-10,-2],[-2,0],[6,0],[14,-2]].forEach(([fx,fy],k)=>tube([[fx,fy-8],[fx+(k-1.5)*.6,fy+4]],7)); // four fingertips over the head
+    tube([[-14,-14],[-22,-8],[-21,0]],7); // thumb on the near side
+    ctx.fillStyle=fill;rr(ctx,18,-28,18,14,5);ctx.fill();ctx.stroke(); // cuff, arm comes from the upper right
+    const down=1-Math.abs(Math.sin(hand.pat));if(down>.7){ctx.strokeStyle=hexA(Z?'#ff3fa4':'#ffb938',.9);ctx.lineWidth=2;ctx.beginPath();[[-24,8,-31,14],[2,13,2,21],[26,8,33,14]].forEach(([a1,b1,a2,b2])=>{ctx.moveTo(a1,b1);ctx.lineTo(a2,b2)});ctx.stroke()}
+  }else{
+    // open hand hovering, fingers relaxed and a little spread
+    ctx.rotate(Math.sin(T*2.2)*.06);glow();
+    [[-11,-.28,12],[-4,-.09,15],[3.5,.08,15],[10.5,.26,12]].forEach(([fx,r,h])=>finger(fx,-14,6.8,-h,r));
+    ell(ctx,0,-4,14,12);ctx.fill();ctx.stroke();noGlow();
+    ctx.save();ctx.translate(-14,-2);ctx.rotate(.9);rr(ctx,-3.5,-12,7,13,3.5);ctx.fill();ctx.stroke();ctx.restore();
+    ctx.fillStyle=fill;rr(ctx,-10,7,20,10,4);ctx.fill();ctx.stroke(); // cuff (wrist below: the hand reaches in from the player's side)
   }
   ctx.restore();
 }
