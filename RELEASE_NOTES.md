@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.27
+
+- Neon Rain City's run-down shops: broken windows look like real broken glass now. Jagged cracks wander and fork out to the frame, from an impact off to one side, a long stress crack across the pane, or a piece fallen out. Some panes survived; each shop keeps the same cracks.
+
 ## 0.1.26
 
 - Neon Rain City has its own GRAND OPENING now: two delivery drones hang a blinking light string over the storefront screen, a glitchy hologram banner is projected over the door, and LED ticker pillars scroll GRAND OPENING ✦ 축 개업 (GRATZ in English) on both sides of the door. Balloons and flower stands stay in Minimi Town.

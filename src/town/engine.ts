@@ -830,6 +830,39 @@ function drawScaffold(b,left,top){
   // cone
   const cx=left+BW-30;ctx.fillStyle='#ff7a2f';ctx.beginPath();ctx.moveTo(cx-12,SIDE+26);ctx.lineTo(cx,SIDE-6);ctx.lineTo(cx+12,SIDE+26);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(cx-7,SIDE+8,14,5);ctx.fillStyle='#ff7a2f';ctx.fillRect(cx-16,SIDE+24,32,5);
 }
+function prng(seed){let t=seed>>>0;return()=>{t=(t+0x6D2B79F5)>>>0;let r=Math.imul(t^(t>>>15),1|t);r^=r+Math.imul(r^(r>>>7),61|r);return((r^(r>>>14))>>>0)/4294967296}}
+/** Broken glass that looks broken, not shot: jagged cracks that wander and fork out to the frame,
+ *  from an impact near an edge, a long stress crack, or a piece fallen out. Same window, same cracks. */
+function drawGlassCracks(x,y,w,h,seed){
+  const R=prng(seed),inBox=(px,py)=>px>x+.5&&px<x+w-.5&&py>y+.5&&py<y+h-.5,lines=[];
+  const walk=(px,py,ang,len,depth)=>{const pts=[[px,py]];let a=ang,l=0;
+    while(l<len){const st=2.5+R()*4;a+=(R()-.5)*.7;const nx=px+Math.cos(a)*st,ny=py+Math.sin(a)*st;
+      if(!inBox(nx,ny)){pts.push([clamp(nx,x,x+w),clamp(ny,y,y+h)]);break}
+      px=nx;py=ny;pts.push([px,py]);l+=st;
+      if(depth<2&&R()<.09){walk(px,py,a+(R()<.5?-1:1)*(.45+R()*.6),len*(.25+R()*.4),depth+1)}}
+    lines.push([pts,depth])};
+  const kind=R();ctx.save();ctx.beginPath();ctx.rect(x,y,w,h);ctx.clip();ctx.lineJoin='round';ctx.lineCap='round';
+  let ix,iy;
+  if(kind<.34){ // one long stress crack across the pane, with a few forks
+    const e=R()<.5;ix=e?x+R()*w:x;iy=e?y:y+R()*h;walk(ix,iy,Math.atan2(y+h*(.3+R()*.4)-iy,x+w*(.4+R()*.5)-ix),w+h,0);
+  }else{ // an impact somewhere off-centre: uneven spokes running out to the frame
+    ix=x+w*(.15+R()*.7);iy=y+h*(.15+R()*.7);const n=5+Math.floor(R()*4);let a0=R()*6.28;
+    for(let k=0;k<n;k++){a0+=6.28/n*(.55+R()*.9);walk(ix,iy,a0,(w+h)*(.35+R()*.6),0)}
+    // a couple of short broken rings close to the impact (not a neat circle)
+    for(let r=0;r<2;r++){const rad=4+r*5+R()*3,sa=R()*6.28,ea=sa+1.5+R()*2.5,pts=[];for(let t=sa;t<ea;t+=.35)pts.push([ix+Math.cos(t)*(rad+(R()-.5)*2.5),iy+Math.sin(t)*(rad+(R()-.5)*2.5)]);lines.push([pts,1])}
+    if(kind>.72){ // a piece has fallen out
+      const a1=R()*6.28,a2=a1+.5+R()*.7,poly=[[ix+(R()-.5)*3,iy+(R()-.5)*3]];
+      for(let t=a1;t<=a2;t+=.12){const rr2=(w+h)*.18+R()*8;poly.push([ix+Math.cos(t)*rr2,iy+Math.sin(t)*rr2])}
+      ctx.fillStyle='rgba(4,3,8,.92)';ctx.beginPath();poly.forEach(([px,py],k)=>k?ctx.lineTo(px,py):ctx.moveTo(px,py));ctx.closePath();ctx.fill();
+      ctx.strokeStyle='rgba(210,230,255,.5)';ctx.lineWidth=.8;ctx.stroke()}
+  }
+  // shards sitting a little out of plane: a faint tint on one side of a crack
+  ctx.fillStyle='rgba(180,210,255,.06)';ctx.beginPath();ctx.moveTo(ix,iy);ctx.lineTo(x+w,y+R()*h);ctx.lineTo(x+w,y+h);ctx.lineTo(x+R()*w,y+h);ctx.closePath();ctx.fill();
+  for(const [pts,depth] of lines){if(pts.length<2)continue;
+    ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=depth?.9:1.3;ctx.beginPath();pts.forEach(([px,py],k)=>k?ctx.lineTo(px+.7,py+.7):ctx.moveTo(px+.7,py+.7));ctx.stroke();
+    ctx.strokeStyle=`rgba(225,238,255,${depth?.42:.68})`;ctx.lineWidth=depth?.6:.9;ctx.beginPath();pts.forEach(([px,py],k)=>k?ctx.lineTo(px,py):ctx.moveTo(px,py));ctx.stroke()}
+  ctx.restore();
+}
 /** Neon Rain City, a game you haven't played in months: a run-down shop. Grime, cracked and
  *  boarded windows, torn posters, a tag on the wall (its tube sputters, see drawBuilding). */
 function drawDerelict(b,left,top,dx,dy,d){
@@ -843,11 +876,8 @@ function drawDerelict(b,left,top,dx,dy,d){
   const board=(h>>>2)%wins.length;
   wins.forEach((w,j)=>{const x=left+w.x,y=top+w.y;
     if(j===board){ctx.fillStyle='#4a3a2c';[[0,.18],[0,.62]].forEach(([,v])=>{ctx.save();ctx.translate(x+w.w/2,y+w.h*v+6);ctx.rotate(((h>>>j)%2?1:-1)*.12);ctx.fillRect(-w.w/2-5,-6,w.w+10,12);ctx.fillStyle='#2e241b';ctx.fillRect(-w.w/2-2,-1,3,3);ctx.fillRect(w.w/2-1,-1,3,3);ctx.fillStyle='#4a3a2c';ctx.restore()});return}
-    const cx=x+w.w*(.25+((h>>>(j+5))%50)/100),cy=y+w.h*(.25+((h>>>(j+9))%50)/100);
-    if((h>>>(j+1))%3===0){ctx.fillStyle='#07060b';ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x+w.w,y+w.h*.15);ctx.lineTo(x+w.w,y+w.h*.7);ctx.closePath();ctx.fill()}
-    ctx.strokeStyle='rgba(220,235,255,.55)';ctx.lineWidth=1;ctx.beginPath();
-    for(let r=0;r<7;r++){const a=r/7*Math.PI*2+j,l=10+((h>>>(r+j))%18);let px=cx,py=cy;ctx.moveTo(px,py);for(let s2=0;s2<3;s2++){px+=Math.cos(a+(s2-1)*.35)*l/3;py+=Math.sin(a+(s2-1)*.35)*l/3;ctx.lineTo(clamp(px,x,x+w.w),clamp(py,y,y+w.h))}}
-    ctx.stroke();ctx.strokeStyle='rgba(220,235,255,.35)';ctx.beginPath();ctx.arc(cx,cy,4,0,Math.PI*2);ctx.stroke()});
+    if(((h>>>(j+4))%3)===0&&j!==(board+1)%wins.length)return; // some panes survived
+    drawGlassCracks(x,y,w.w,w.h,(h^(j*2654435761))>>>0)});
   // torn posters, half peeled off
   [[dx-31,dy+18,'#ff3fa4'],[dx+d.w-9,dy+40,'#ffe14d']].forEach(([px,py,c],q)=>{ctx.save();ctx.translate(px+20,py+20);ctx.scale(.62,.62);ctx.rotate((q?-1:1)*(.06+((h>>>q)%10)/100));
     ctx.fillStyle=hexA(c,.32);ctx.beginPath();ctx.moveTo(-18,-22);ctx.lineTo(18,-22);ctx.lineTo(18,6);ctx.lineTo(9,12);ctx.lineTo(4,4);ctx.lineTo(-5,16);ctx.lineTo(-18,10);ctx.closePath();ctx.fill();
