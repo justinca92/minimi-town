@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.28
+
+- Neon Rain City's LED ticker pillars scroll just the words (GRAND OPENING, 축 개업 / GRATZ), no star marks.
+
 ## 0.1.27
 
 - Neon Rain City's run-down shops: broken windows look like real broken glass now. Jagged cracks wander and fork out to the frame, from an impact off to one side, a long stress crack across the pane, or a piece fallen out. Some panes survived; each shop keeps the same cracks.

@@ -918,12 +918,12 @@ function drawNeonOpening(b,left,top){
     ctx.globalAlpha=fl;ctx.fillStyle='#8ff8ff';ctx.shadowColor='#3ff0ff';ctx.shadowBlur=12;ctx.fillText('GRAND OPENING',ex+gl+1,hy);ctx.shadowBlur=0;
     ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle='rgba(7,6,12,.28)';for(let y=hy-9+((T*30)%3);y<hy+9;y+=3)ctx.fillRect(ex-hw/2,y,hw,1);
     // LED ticker pillars on both sides of the door
-    const msg=(host.lang==='en'?'GRAND OPENING ✦ GRATZ ✦ ':'GRAND OPENING ✦ 축 개업 ✦ ');
+    const msg=(host.lang==='en'?'GRAND OPENING   GRATZ   ':'GRAND OPENING   축 개업   ');
     [left+d.x-24,left+d.x+d.w+24].forEach((px,q)=>{const ph=78,pt=SIDE-ph,pw=18;
       ctx.fillStyle='#0b0a10';rr(ctx,px-pw/2-2,pt-2,pw+4,ph+2,4);ctx.fill();ctx.strokeStyle='#ffb02e';ctx.lineWidth=1.5;ctx.shadowColor='#ffb02e';ctx.shadowBlur=6;rr(ctx,px-pw/2,pt,pw,ph-2,3);ctx.stroke();ctx.shadowBlur=0;
       ctx.save();rr(ctx,px-pw/2+1,pt+1,pw-2,ph-4,3);ctx.clip();ctx.font='11px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';
       const chars=[...msg],step=12,off=(T*26+q*60)%(chars.length*step);
-      for(let k=-1;k<ph/step+2;k++){const idx=((Math.floor(off/step)+k)%chars.length+chars.length)%chars.length,y=pt+6+k*step-(off%step);ctx.fillStyle=chars[idx]==='✦'?'#ff3fa4':'#ffc24a';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=6;ctx.fillText(chars[idx],px,y)}
+      for(let k=-1;k<ph/step+2;k++){const idx=((Math.floor(off/step)+k)%chars.length+chars.length)%chars.length,y=pt+6+k*step-(off%step);ctx.fillStyle='#ffc24a';ctx.shadowColor=ctx.fillStyle;ctx.shadowBlur=6;ctx.fillText(chars[idx],px,y)}
       ctx.restore();ctx.fillStyle='rgba(0,0,0,.35)';for(let y=pt+2;y<SIDE-2;y+=2)ctx.fillRect(px-pw/2+1,y,pw-2,.6)});
   }
   ctx.restore();
