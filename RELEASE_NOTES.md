@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.1.11
+
+- The street (shops, lamps, road) sits 40 px lower, leaving room above for the game's name.
+- The game's name and its info line are bigger, over a slightly darker shade under Steam's bar.
+- Fixed: on a non-Steam game, "NOT PLAYED YET" flashed for a moment before its playtime appeared. A shortcut's playtime only exists in Steam's app details, which answer a moment later; until they do, no playtime is shown, and once seen it is remembered for the session.
+
 ## 0.1.10
 
 - Neon Rain City: the penguin wears tactical gear instead of the police uniform: a short-sleeve shirt, a leather shoulder rig with a holster at each side and magazine pouches on the back, fingerless gloves, a belt with pouches, and a neon earpiece.

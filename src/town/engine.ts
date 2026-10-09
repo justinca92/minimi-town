@@ -35,7 +35,7 @@ export interface TownHost {
 
 export function createTown(cv: HTMLCanvasElement, host: TownHost) {
 'use strict';
-const W=1280,H=800,SIDE=588,FEET=626,SP=360,R=30;
+const W=1280,H=800,SIDE=628,FEET=666,SP=360,R=30; // street sits low: room for the title above
 const view=cv.ownerDocument?.defaultView||window;
 // Timestamps must come from the window that draws: Steam runs plugin code in a
 // separate (SharedJSContext) window whose performance.now() has another origin.

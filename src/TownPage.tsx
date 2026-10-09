@@ -17,6 +17,9 @@ import { ARRIVAL_IGNORE_MS, LIBRARY_POLL_MS, WINDOW_REFOCUS_DELAY_MS } from "./c
 // Remembered across remounts (Steam unmounts the home while a game page is open),
 // runtime only: the selected game, and a penguin that went in and should step out.
 let lastAppid: number | null = null;
+// App details seen this session (achievements, and the playtime non-Steam shortcuts only have there).
+const extraSeen = new Map<number, AppExtra>();
+const APP_TYPE_SHORTCUT = 1073741824;
 let pendingEmerge: number | null = null;
 
 const DAY = 86400;
@@ -320,14 +323,19 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
     const appid = current.appid;
     let alive = true;
     let unsub = () => {};
-    const tm = setTimeout(() => (unsub = subscribeAppExtra(appid, (x) => alive && setExtra({ ...x, appid }))), 120);
+    const tm = setTimeout(() => (unsub = subscribeAppExtra(appid, (x) => {
+      extraSeen.set(appid, x);
+      if (alive) setExtra({ ...x, appid });
+    })), extraSeen.has(appid) ? 120 : 30);
     return () => {
       alive = false;
       clearTimeout(tm);
       unsub();
     };
   }, [current?.appid]);
-  const ex = current && extra?.appid === current.appid ? extra : null;
+  const ex = current ? (extra?.appid === current.appid ? extra : extraSeen.get(current.appid) ?? null) : null;
+  // A non-Steam shortcut's playtime only comes with its details: until they arrive, show none rather than "not played".
+  const pending = !!current && !ex && current.overview?.app_type === APP_TYPE_SHORTCUT && overviewMinutes(current.overview) === 0;
   const ach = ex ? ex.ach : current ? cachedAchievements(current.appid) ?? null : null;
   const minutes = current ? Math.max(overviewMinutes(current.overview), ex?.minutes ?? 0) : 0;
   const lastAt = Math.max(current?.lastPlayed ?? 0, ex?.lastPlayed ?? 0);
@@ -340,7 +348,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   const display = '"Jua","Motiva Sans","Noto Sans CJK KR",sans-serif';
   const info = (size: number) => (
     <InfoRow
-      playtime={t.playtimeShort(minutes)}
+      playtime={pending ? "" : t.playtimeShort(minutes)}
       lastPlayed={lastAt > STEAM_EPOCH ? t.ago(Math.floor((Date.now() / 1000 - lastAt) / DAY)) : null}
       ach={ach}
       friends={friends ? t.friendsPlaying(friends) : null}
@@ -356,18 +364,18 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       </span>
     ) : null;
   const fade = { opacity: mode === "playing" ? 0 : 1, transition: "opacity .3s" };
-  const titleShadow = neon ? "0 0 8px rgba(63,240,255,.7), 0 0 22px rgba(255,63,164,.45), 0 3px 0 rgba(0,0,0,.6)" : "0 3px 0 rgba(0,0,0,.45), 0 0 16px rgba(0,0,0,.35)";
+  const titleShadow = neon ? "0 0 10px rgba(63,240,255,.75), 0 0 24px rgba(255,63,164,.45), 0 3px 0 rgba(0,0,0,.7)" : "0 3px 0 rgba(0,0,0,.55), 0 0 18px rgba(0,0,0,.45)";
   /** The picked game's info: top-left under Steam's bar, like a page title. */
   const renderInfo = () =>
     tg ? (
       <>
         {/* a soft shade under Steam's bar so the title reads over a bright sky */}
-        <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: 170, pointerEvents: "none", background: neon ? "linear-gradient(to bottom, rgba(5,4,12,.55), rgba(5,4,12,0))" : "linear-gradient(to bottom, rgba(20,30,50,.42), rgba(20,30,50,0))" }} />
+        <div style={{ position: "absolute", left: 0, right: 0, top: 0, height: 210, pointerEvents: "none", background: neon ? "linear-gradient(to bottom, rgba(5,4,12,.78) 0%, rgba(5,4,12,.5) 55%, rgba(5,4,12,0) 100%)" : "linear-gradient(to bottom, rgba(14,22,40,.66) 0%, rgba(14,22,40,.38) 55%, rgba(14,22,40,0) 100%)" }} />
         <div style={{ position: "absolute", left: 32, top: 54, right: 32, pointerEvents: "none", ...fade }}>
-          <div style={{ fontFamily: display, fontSize: 38, lineHeight: 1.1, color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: titleShadow }}>{tg.name}</div>
-          <div style={{ display: "flex", gap: 20, alignItems: "center", marginTop: 8 }}>
-            {info(15)}
-            {badges(14)}
+          <div style={{ fontFamily: display, fontSize: 46, lineHeight: 1.08, letterSpacing: "0.01em", color: "#fff", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", textShadow: titleShadow }}>{tg.name}</div>
+          <div style={{ display: "flex", gap: 22, alignItems: "center", marginTop: 10 }}>
+            {info(18)}
+            {badges(16)}
           </div>
         </div>
       </>

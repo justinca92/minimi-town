@@ -32,6 +32,8 @@ const names = ["Hades", "스타듀 밸리", "Celeste", "Elden Ring", "Hollow Kni
 const apps = Array.from({ length: 30 }, (_, i) => ({ appid: 100 + i, app_type: 1, display_name: names[i % 12] + (i >= 12 ? " " + i : ""),
   installed: i % 6 !== 4, rt_last_time_played: [now - 2 * D, 0, now - 300 * D, now - 20 * D, now - 3 * D, now - 40 * D][i % 6], minutes_playtime_forever: [142 * 60, 0, 236 * 60, 5 * 60, 30, 527 * 60][i % 6],
   local_per_client_data: i === 3 ? { status_percentage: 42, bytes_to_download: 1000, bytes_downloaded: 420 } : {} }));
+// a non-Steam shortcut: no playtime in the library overview, only in its app details (which answer late)
+Object.assign(apps[1], { app_type: 1073741824, display_name: "My Emulator", installed: true, minutes_playtime_forever: 0, rt_last_time_played: 0, rt_last_time_locally_played: now - 2.5 * D });
 window.collectionStore = { GetCollection: () => ({ allApps: apps }), userCollections: [] };
 window.appStore = { GetCustomLandcapeImageURLs: (a) => ["/head" + (a.appid % 3) + ".png?" + a.appid], GetCustomHeroImageURLs: (a) => ["/hero" + (a.appid % 3) + ".png?" + a.appid] };
 window.__runs = [];
@@ -43,7 +45,7 @@ const hapticModule = function () { return "PlaySteamDeckHaptic Playing legacy ha
 const fakeReq = (id) => ({ svc: { PlaySteamDeckHaptic: (...a) => window.__pulses.push(a) } });
 fakeReq.m = { 1: hapticModule };
 window.webpackChunksteamui = { push: ([, , cb]) => cb(fakeReq) };
-window.SteamClient = { Input: { TriggerHapticPulse: (...a) => window.__pulses.push(a), RegisterForControllerAnalogInputMessages: (cb) => { window.__analog = cb; return { unregister() { window.__ks.push("unreg"); } }; }, EnableControllerAnalogInputMessages: (v) => window.__ks.push("analog:" + v), SetKeyboardActionset: (a, b) => window.__ks.push("kb:" + a) }, Apps: { RegisterForAppDetails: () => ({ unregister() {} }), RunGame: (...a) => window.__runs.push(a) }, GameSessions: { RegisterForAppLifetimeNotifications: (cb) => { window.__life = cb; return { unregister() { window.__life = null; } }; } }, Settings: { GetCurrentLanguage: async () => "english" } };
+window.SteamClient = { Input: { TriggerHapticPulse: (...a) => window.__pulses.push(a), RegisterForControllerAnalogInputMessages: (cb) => { window.__analog = cb; return { unregister() { window.__ks.push("unreg"); } }; }, EnableControllerAnalogInputMessages: (v) => window.__ks.push("analog:" + v), SetKeyboardActionset: (a, b) => window.__ks.push("kb:" + a) }, Apps: { RegisterForAppDetails: (id, cb) => { const t = setTimeout(() => cb(id === 101 ? { nPlaytimeForever: 754, rtLastTimePlayed: now - 3 * D } : {}), 90); return { unregister() { clearTimeout(t); } }; }, RunGame: (...a) => window.__runs.push(a) }, GameSessions: { RegisterForAppLifetimeNotifications: (cb) => { window.__life = cb; return { unregister() { window.__life = null; } }; } }, Settings: { GetCurrentLanguage: async () => "english" } };
 window.__start = async () => {
   const mod = await import(/* @vite-ignore */ ["", "plugin.js"].join("/"));
   // #decky-sgdb-first: SteamGridDB registers its home patch before Spindeck loads.

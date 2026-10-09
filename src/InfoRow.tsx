@@ -38,10 +38,10 @@ const FRIENDS_GREEN = "#8bc53f"; // Steam's "in game" green
 const TEXT = "#e4e9ef";
 const SHADOW = "0 2px 0 rgba(0,0,0,.65), 0 0 10px rgba(0,0,0,.6)";
 
-function Item({ icon, color = TEXT, children }: { icon: keyof typeof PATHS; color?: string; children?: ReactNode }) {
+function Item({ icon, color = TEXT, size = 16, children }: { icon: keyof typeof PATHS; color?: string; size?: number; children?: ReactNode }) {
   return (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 7, color, textShadow: SHADOW }}>
-      <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none", filter: "drop-shadow(0 1.5px 0 rgba(0,0,0,.6))" }}>
+      <svg width={Math.round(size * 1.15)} height={Math.round(size * 1.15)} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" style={{ flex: "none", filter: "drop-shadow(0 1.5px 0 rgba(0,0,0,.6))" }}>
         {PATHS[icon]}
       </svg>
       {children}
@@ -68,10 +68,10 @@ export function InfoRow({
 }) {
   return (
     <span style={{ display: "flex", alignItems: "center", gap: 20, fontSize: size, fontWeight: 600, letterSpacing: "0.05em", fontFamily: "Motiva Sans, sans-serif", whiteSpace: "nowrap", ...style }}>
-      <Item icon="clock">{playtime}</Item>
-      {lastPlayed && <Item icon="recent">{lastPlayed}</Item>}
+      {playtime ? <Item size={size} icon="clock">{playtime}</Item> : null}
+      {lastPlayed && <Item size={size} icon="recent">{lastPlayed}</Item>}
       {ach && (
-        <Item icon="trophy">
+        <Item size={size} icon="trophy">
           {ach.achieved}/{ach.total}
           <span style={{ width: 50, height: 5, borderRadius: 3, background: "#ffffff40", overflow: "hidden", marginLeft: 2, boxShadow: "0 1px 0 rgba(0,0,0,.5)" }}>
             <span style={{ display: "block", height: "100%", width: `${(ach.achieved / ach.total) * 100}%`, background: accent }} />
@@ -79,7 +79,7 @@ export function InfoRow({
         </Item>
       )}
       {friends && (
-        <Item icon="friends" color={FRIENDS_GREEN}>
+        <Item size={size} icon="friends" color={FRIENDS_GREEN}>
           {friends}
         </Item>
       )}
