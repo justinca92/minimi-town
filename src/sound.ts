@@ -52,6 +52,20 @@ export function funSound(type: string, view: any = globalThis) {
     if (!Ctx) return;
     AC = AC || new Ctx();
     if (AC.state === "suspended") AC.resume?.();
+    if (type === "bang") {
+      // a short pew-bang: a noise burst through a falling low-pass, plus a thump
+      const t0 = AC.currentTime, len = Math.floor(AC.sampleRate * 0.16);
+      const buf = AC.createBuffer(1, len, AC.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.2);
+      const src = AC.createBufferSource(), lp = AC.createBiquadFilter(), g = AC.createGain();
+      src.buffer = buf; lp.type = "lowpass"; lp.frequency.setValueAtTime(3200, t0); lp.frequency.exponentialRampToValueAtTime(400, t0 + 0.14);
+      g.gain.setValueAtTime(0.32, t0); src.connect(lp); lp.connect(g); g.connect(AC.destination); src.start(t0);
+      const o2 = AC.createOscillator(), g2 = AC.createGain(); o2.type = "sine";
+      o2.frequency.setValueAtTime(160, t0); o2.frequency.exponentialRampToValueAtTime(50, t0 + 0.12);
+      g2.gain.setValueAtTime(0.4, t0); g2.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.14);
+      o2.connect(g2); g2.connect(AC.destination); o2.start(t0); o2.stop(t0 + 0.16);
+      return;
+    }
     const t = AC.currentTime,
       o = AC.createOscillator(),
       g = AC.createGain();

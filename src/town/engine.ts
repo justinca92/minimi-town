@@ -23,7 +23,7 @@ export interface TownHost {
   sky: "auto" | "day" | "dusk" | "night";
   cardStyle: "wide" | "capsule";
   mood: number;
-  sound(kind: string): void;      // tick, door, boing, splat, poke, pet, angry, yawn
+  sound(kind: string): void;      // tick, door, boing, splat, poke, pet, angry, yawn, bang
   haptic(strength: number): void;
   saveMood(mood: number): void;
   onSelect(i: number): void;      // selection changed
@@ -52,7 +52,7 @@ function fit(w,h){
   cv.width=Math.round(W*K);cv.height=Math.round(H*K);
   drawFrame();
 }
-const EN={'퍽!':'Splat!','콩!':'Bonk!','철퍼덕!':'Oof!','건드리지 마!':"Don't touch me!",'왜…':'What…','그만해라':'Stop it','내려줘!!':'Put me down!!','잠깐만…':'Hang on…','으아악!':'Aaargh!','화났어!!':"I'm mad!!",'진짜!!':'Seriously!!','비다! 우비 입어야지':'Rain! Raincoat time','햇살 좋다!':'What a sunny day!','흥.':'Hmph.','흥. 안 가.':'Hmph. Not going.','헉… 헉…':'Huff… huff…','헉… 헉… 가자!':"Huff… let's go!",'하아아암~':'Yaaawn~','콜록… 들어가도 돼?':'Ahem… can I come in?','으앗?':'Whoa?','으아앗!':'Waaah!','으아아아':'Whoaaa','으… 기다려!':'Ugh… wait up!','어질어질…':'So dizzy…','안녕!':'Hi!','설치부터 할게!':"Let's install it!",'버텨…!':'Hold on…!','놓쳤다아':'Lost my grip','…헤헤':'…hehe','잠깐만~!':'Wait for me~!','같이 가아~!':'Coming~!'};
+const EN={'퍽!':'Splat!','콩!':'Bonk!','철퍼덕!':'Oof!','건드리지 마!':"Don't touch me!",'왜…':'What…','그만해라':'Stop it','내려줘!!':'Put me down!!','잠깐만…':'Hang on…','으아악!':'Aaargh!','화났어!!':"I'm mad!!",'진짜!!':'Seriously!!','비다! 우비 입어야지':'Rain! Raincoat time','햇살 좋다!':'What a sunny day!','흥.':'Hmph.','흥. 안 가.':'Hmph. Not going.','헉… 헉…':'Huff… huff…','헉… 헉… 가자!':"Huff… let's go!",'하아아암~':'Yaaawn~','콜록… 들어가도 돼?':'Ahem… can I come in?','으앗?':'Whoa?','으아앗!':'Waaah!','으아아아':'Whoaaa','으… 기다려!':'Ugh… wait up!','어질어질…':'So dizzy…','안녕!':'Hi!','설치부터 할게!':"Let's install it!",'버텨…!':'Hold on…!','놓쳤다아':'Lost my grip','…헤헤':'…hehe','잠깐만~!':'Wait for me~!','같이 가아~!':'Coming~!','간다.':'Going in.','…들어간다.':'…going in.'};
 const tx=s=>host.lang==='en'?(EN[s]??s):s;
 
 const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t, rnd=(a,b)=>a+Math.random()*(b-a);
@@ -191,7 +191,7 @@ function saveMood(){clearTimeout(moodSaveT);moodSaveT=setTimeout(()=>{try{host.s
 function setState(s){m.state=s;m.t=0}
 function standX(b){return b.cx+72*m.side}
 const GROUNDED=['idle','move','sit','sulk','cheer','goDoor','hesitate','react'];
-const BUSY=['held','air','splatW','splatG','recover','trip','getup','dizzy','collapse','roll','cling','enter','inside','exit','yawn'];
+const BUSY=['brace','shoot','held','air','splatW','splatG','recover','trip','getup','dizzy','collapse','roll','cling','enter','inside','exit','yawn'];
 function navRate(){const now=T;navTimes=navTimes.filter(t=>now-t<1.3);return navTimes.length}
 function viewL(){return camX-640+34}function viewR(){return camX+640-34}
 
@@ -202,7 +202,7 @@ function nav(d){
   sel=n;navTimes.push(T);sfx('tick');
   m.side=(B[sel].cx>m.x)?-1:1;
   if(['idle','sit','react','cheer'].includes(m.state))setState('move');
-  if(m.state==='goDoor'||m.state==='hesitate')setState('move');
+  if(m.state==='goDoor'||m.state==='hesitate'||m.state==='brace')setState('move');
   host.onSelect(sel);
 }
 function select(i){if(!B.length)return;i=clamp(i|0,0,B.length-1);if(i!==sel)nav(i-sel)}
@@ -255,6 +255,12 @@ function faceFrom(){
   if(s==='yawn'){f.eyes='closedU';f.mouth=t<1.3?'yawn':'smile';f.blush=.6}
   if(s==='sulk'){f.eyes='half';f.mouth='pout';f.brow='angry';f.blush=.9}
   if(s==='cheer'){f.eyes='happy';f.mouth='open';f.blush=1}
+  if(Z){ // neon city: a cop-movie penguin
+    const chase=(s==='move'&&(m.mode==='run'||m.mode==='sprint'))||s==='goDoor';
+    if(chase&&!m.react&&m.petT<=0){f.eyes='open';f.mouth='flat';f.brow='angry';f.sweat=0;f.tongue=0}
+    if(s==='brace'){f.eyes='open';f.mouth='flat';f.brow='angry';f.blush=.2}
+    if(s==='shoot'){f.eyes='squint';f.mouth='grit';f.brow='angry';f.red=.3;f.blush=0}
+  }
   if(f.eyes==='open'&&m.blink>0&&!((m.pfE||0)>.03&&(m.pfE||0)<.97))f.eyes='blink'; // no random blink mid-turn
   return f;
 }
@@ -319,12 +325,14 @@ function update(dt){
         m.dir=m.side<0?1:-1;setState('idle');
         if(mood<22){startSulk()}
       }
-      if(s==='goDoor'){m.dir=1;if(m.rush){m.rush=false;m.pantT=1.4;say('헉… 헉… 가자!',1.2)}if(b.st==='dusty'&&!m.hes){setState('hesitate');say('콜록… 들어가도 돼?',1.6)}else{setState('enter');b.doorTarget=1;sfx('door')}}
+      if(s==='goDoor'){m.dir=1;if(m.rush){m.rush=false;m.pantT=1.4;say('헉… 헉… 가자!',1.2)}if(Z){setState('brace');say(Math.random()<.5?'간다.':'…들어간다.',1.1)}else if(b.st==='dusty'&&!m.hes){setState('hesitate');say('콜록… 들어가도 돼?',1.6)}else{setState('enter');b.doorTarget=1;sfx('door')}}
       if(s==='idle'&&m.t>3.5&&mode==='browse')setState('sit');
     }
     m.x+=m.vx*dt;m.phase+=Math.abs(m.vx)*dt*.055;
   }
   else if(s==='sit'){m.vx=0;m.lookUp=clamp((m.t-1.1)*2,0,1);if(Math.abs(standX(b)-m.x)>4)setState('move');if(m.t>12&&m.sleepyT<=0&&Math.random()<dt*.15)m.sleepyT=3}
+  else if(s==='brace'){m.vx=0;m.dir=1;if(m.t>.6&&!m.braceOpen){m.braceOpen=true;b.doorTarget=1;sfx('door');shakeT=.12;buzz(25)}if(m.t>1.15){m.braceOpen=false;setState('enter')}}
+  else if(s==='shoot'){m.vx=0;const at=[.5,.78,1.06];while((m.shots||0)<3&&m.t>at[m.shots||0]){fireShot();m.shots=(m.shots||0)+1}if(m.t>1.8){setState('recover');m.t=.45}}
   else if(s==='hesitate'){m.x+=Math.sin(m.t*40)*.6;if(m.t>1.5){m.hes=true;setState('enter');b.doorTarget=1;sfx('door')}}
   else if(s==='enter'){const k=clamp(m.t/0.62,0,1);m.x=lerp(m.x,b.cx,.28);m.y=lerp(FEET,SIDE+2,k);m.scale=lerp(1,.8,k);m.alpha=clamp(1-(m.t-.3)/.32,0,1);m.phase+=dt*11;
     if(m.t>.7){m.alpha=0;setState('inside');b.doorTarget=0;enterDone()}}
@@ -378,6 +386,43 @@ function update(dt){
   // particles
   for(let i=parts.length-1;i>=0;i--){const p=parts[i];p.life+=dt;if(p.life>p.max){parts.splice(i,1);continue}p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.k==='dust'){p.vx*=.92;p.vy*=.92}if(p.k==='conf'){p.vy+=500*dt;p.rot+=dt*8}}
 }
+/* ---- neon city: the penguin shoots the screen (cracks in the glass, they fade) ---- */
+const holes=[];let flashT=0;
+function startShoot(){m.react=null;m.behind=false;m.y=FEET;m.rot=0;m.shots=0;m.prof=0;m.fdir=m.dir;m.targets=[0,1,2].map(()=>({x:640+rnd(-130,130),y:360+rnd(-90,50)}));setState('shoot');say('…',.6);sfx('angry')}
+function fireShot(){
+  const r=srand((Math.random()*1e9)|0);
+  const tg=(m.targets||[])[m.shots||0]||{x:640+rnd(-120,120),y:380+rnd(-80,60)};
+  holes.push({x:tg.x,y:tg.y,t:0,r,rot:rnd(0,6.28),n:7+((r()*4)|0)});
+  if(holes.length>9)holes.shift();
+  flashT=.07;m.recoil=1;sfx('bang');buzz(45);shakeT=Math.max(shakeT,.16);
+}
+function updHoles(dt){if(flashT>0)flashT-=dt;if(m.recoil>0)m.recoil=Math.max(0,m.recoil-dt*8);for(let i=holes.length-1;i>=0;i--){holes[i].t+=dt;if(holes[i].t>7)holes.splice(i,1)}}
+function drawHoles(){
+  if(flashT>0){ctx.fillStyle=`rgba(255,250,235,${flashT*3})`;ctx.fillRect(0,0,W,H);
+    const h=holes[holes.length-1];if(h&&m.muzzle){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=`rgba(255,240,170,${flashT*12})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(m.muzzle.x,m.muzzle.y);ctx.lineTo(h.x,h.y);ctx.stroke();ctx.restore()}}
+  if(m.state==='shoot'&&(m.shots||0)<3&&m.targets){ // the laser dot settles on where the next one lands
+    const tg=m.targets[m.shots||0],j=Math.max(0,.4-m.t%.3)*12;const x=tg.x+Math.sin(T*31)*j,y=tg.y+Math.cos(T*27)*j;
+    ctx.save();ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(x,y,0,x,y,16);g.addColorStop(0,'rgba(255,60,80,.9)');g.addColorStop(1,'rgba(255,60,80,0)');ctx.fillStyle=g;ctx.fillRect(x-16,y-16,32,32);ctx.fillStyle='#fff';ell(ctx,x,y,1.8,1.8);ctx.fill();
+    if(m.muzzle){ctx.strokeStyle='rgba(255,60,80,.35)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(m.muzzle.x,m.muzzle.y);ctx.lineTo(x,y);ctx.stroke()}ctx.restore()}
+  for(const h of holes){const a=h.t<6?1:1-(h.t-6);const g=srand(h.n*977+(h.x|0));ctx.save();ctx.translate(h.x,h.y);ctx.rotate(h.rot);ctx.globalAlpha=a;
+    ctx.strokeStyle='rgba(235,245,255,.75)';ctx.lineWidth=1.4;ctx.beginPath();
+    for(let k=0;k<h.n;k++){const ang=k/h.n*6.28+g()*.5,len=26+g()*48;let px=0,py=0;ctx.moveTo(0,0);for(let seg=1;seg<=3;seg++){const t2=seg/3;px=Math.cos(ang+(g()-.5)*.3)*len*t2;py=Math.sin(ang+(g()-.5)*.3)*len*t2;ctx.lineTo(px,py)}}
+    ctx.stroke();ctx.strokeStyle='rgba(235,245,255,.45)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,14+g()*6,0,6.28);ctx.stroke();ctx.beginPath();ctx.arc(0,0,30+g()*10,g()*3,g()*3+2.4);ctx.stroke();
+    ctx.fillStyle='rgba(10,8,16,.9)';ell(ctx,0,0,5.5,5);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1.5;ell(ctx,0,0,7,6.5);ctx.stroke();
+    ctx.restore()}
+  ctx.globalAlpha=1;
+}
+/** A toy-like neon blaster, drawn along +x with the grip down. */
+function drawGun(glow){
+  ctx.save();ctx.lineWidth=1.6;ctx.strokeStyle='#0b0a12';
+  ctx.fillStyle='#262a3c';rr(ctx,-6,-5,24,10,3);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#3a3f58';rr(ctx,16,-3,12,6,2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#262a3c';rr(ctx,-4,3,8,11,2);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#3ff0ff';ctx.fillRect(-2,-2.2,15,2.2);
+  ctx.fillStyle='#ff3fa4';ell(ctx,27,0,1.8,1.8);ctx.fill();
+  if(glow){ctx.globalCompositeOperation='lighter';const g=ctx.createRadialGradient(28,0,1,28,0,14);g.addColorStop(0,'rgba(63,240,255,.8)');g.addColorStop(1,'rgba(63,240,255,0)');ctx.fillStyle=g;ctx.fillRect(14,-14,28,28)}
+  ctx.restore();
+}
 function afterBother(){if(mood<22)startSulk();else setState('idle')}
 function startSulk(){m.sulkKind=Math.random()<.5?'hide':'back';m.sulkIdx=sel;setState('sulk');say('흥.',1.4);
   if(m.sulkKind==='hide'){const b=cur();m.side=(m.x>b.cx)?1:-1}}
@@ -389,6 +434,7 @@ function poke(){
   if(m.state==='sulk'){say(n>2?'건드리지 마!':'…',1);bother(2);m.react={type:'annoy',t:0,dur:.8};sfx('poke');return}
   if(n<=2){m.react={type:'flinch',t:0,dur:.45};bother(3);sfx('poke');m.sx=.8;m.sy=1.2;if(m.state==='sit')m.sitJolt=.3}
   else if(n<=5){m.react={type:'annoy',t:0,dur:1.3};bother(4);say(n===3?'왜…':'그만해라',1);sfx('poke')}
+  else if(Z&&!['sulk','cling','roll'].includes(m.state)){bother(6);startShoot();return}
   else{m.react={type:'angry',t:0,dur:2.2};bother(6);say(['으아악!','화났어!!','진짜!!'][n%3],1.2);sfx('angry');buzz(30);m.stomp=1.5}
   if(m.state==='sit'&&n>2)setState('idle');
   if(mood<22&&n>2)setTimeout(()=>{if(GROUNDED.includes(m.state)&&m.state!=='sulk')startSulk()},900);
@@ -693,10 +739,19 @@ function drawMinimi(sx,f){
   if(m.petT>0&&s!=='held'){syy*=1+Math.sin(T*10)*.03;armL=-.6;armR=-.6}
   if(s==='sulk'&&m.sulkKind==='back'){syy*=.86;sxx*=1.06}
   if(s==='cheer'){armL=-2.4;armR=-2.4}
+  // neon city: blaster out while chasing, at the door, and when it's had enough
+  const armed=Z&&((s==='move'&&(mod==='run'||mod==='sprint')&&spd>120)||s==='goDoor'||s==='brace'||s==='shoot');
+  if(armed&&moving)lean+=.08*dd;
+  if(s==='brace'){lean=0;bob=0;rot=0;armR=2.75;armL=.25+Math.sin(T*3)*.05}
+  if(s==='shoot'){const rc=m.recoil||0,tg=(m.targets||[])[Math.min(2,m.shots||0)];const sideR=!tg||tg.x>=sx;if(sideR){armR=2.1;armL=.35}else{armL=2.1;armR=.35}syy*=1+rc*.05;bob=-rc*3;rot=0}
   // squash recovery towards 1
   m.sx+=(1-m.sx)*.15;m.sy+=(1-m.sy)*.15;
   sxx*=1-.1*pf;
   ctx.translate(0,-bob);
+  if(armed&&moving&&spd>200){ // chase streaks
+    ctx.save();ctx.globalCompositeOperation='lighter';ctx.lineCap='round';ctx.lineWidth=2.4;
+    for(let k=0;k<3;k++){const y=-R*(.55+k*.5),x0=-dd*(R+6),len=26+k*10+Math.sin(T*20+k)*6;ctx.strokeStyle=`rgba(63,240,255,${.45-k*.1})`;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x0-dd*len,y);ctx.stroke()}
+    ctx.restore()}
   ctx.translate(0,-R);ctx.rotate(rot+lean);ctx.translate(0,R);
   ctx.scale(sxx,syy);
   const back=(s==='sulk'&&m.sulkKind==='back')||(s==='enter'&&m.t>.08);
@@ -740,7 +795,17 @@ function drawMinimi(sx,f){
   // flippers
   ctx.lineWidth=2.6;
   [[-1,armL],[1,armR]].forEach(([sd,a])=>{const far=sd!==dd,fa=far?clamp((.7-pf)/.35,0,1):1;if(fa<=.02)return;ctx.save();ctx.translate(sd*R*.92*(1-(far?0:pf*.72)),-R*1.08);
-    let r=sd*-a*.9;if(!far&&pf>0&&!['held','air','splatW','splatG','trip'].includes(s))r=lerp(r,(moving?Math.sin(ph)*.75:0)-dd*.12,pf);ctx.rotate(r);ctx.fillStyle=Z?coat:navy;ctx.beginPath();ctx.ellipse(sd*2.5*fa,12,Math.max(.5,5.8*fa),15,sd*-.12,0,Math.PI*2);ctx.fill();ctx.stroke();ctx.restore()});
+    let r=sd*-a*.9;if(!far&&pf>0&&!['held','air','splatW','splatG','trip'].includes(s))r=lerp(r,(moving?Math.sin(ph)*.75:0)-dd*.12,pf);if(armed&&!far&&s!=='brace'&&s!=='shoot')r=-dd*1.35+Math.sin(ph*2)*.04; // arm out, aiming ahead
+    ctx.rotate(r);ctx.fillStyle=Z?coat:navy;ctx.beginPath();ctx.ellipse(sd*2.5*fa,12,Math.max(.5,5.8*fa),15,sd*-.12,0,Math.PI*2);ctx.fill();ctx.stroke();
+    if(armed&&s!=='shoot'&&(s==='brace'?sd===1:!far)){ctx.translate(sd*2.5*fa,24);ctx.rotate(Math.PI/2);ctx.scale(1,s==='brace'?1:dd);drawGun(s==='brace'&&m.t>.25)}
+    ctx.restore()});
+  if(s==='shoot'){ // aimed at the glass: the blaster points at where the shot lands
+    const rc=m.recoil||0,tg=(m.targets||[])[Math.min(2,m.shots||0)]||{x:640,y:380};
+    const side=tg.x>=sx?1:-1,gx=side*R*1.05,gy=-R*1.15,py=m.y+gy-bob,ang=Math.atan2(tg.y-py,tg.x-(sx+gx)),left=Math.cos(ang)<0;
+    m.muzzle={x:sx+gx+Math.cos(ang)*36,y:py+Math.sin(ang)*36};
+    ctx.save();ctx.translate(gx,gy);ctx.rotate(ang);ctx.translate(8-rc*5,0);ctx.scale(1,left?-1:1);drawGun(true);
+    if(flashT>0){ctx.globalCompositeOperation='lighter';star(30,0,20,'rgba(255,240,170,.95)');star(30,0,10,'#ffffff')}
+    ctx.restore()}
   if(!back)drawFace(f);
   else{ // back view: little tail nub
     ctx.fillStyle=Z?coat:navyD;ctx.strokeStyle=ink;ctx.lineWidth=2.2;ctx.beginPath();ctx.moveTo(-7,-R*.3);ctx.quadraticCurveTo(0,-R*.3+14+Math.sin(T*8)*1.5,7,-R*.3);ctx.closePath();ctx.fill();ctx.stroke()}
@@ -838,6 +903,7 @@ function drawFrame(){
   if(Z)drawRain();
   if(m.state!=='inside')drawBubble(m.x+ox);
   ctx.restore();
+  if(holes.length||flashT>0)drawHoles();
   // off-screen marker
   const msx=m.x+ox;if(m.state!=='inside'&&(msx<-20||msx>W+20)){const side=msx<0?-1:1,x=side<0?34:W-34,y=FEET-40;ctx.fillStyle='rgba(22,17,30,.8)';ell(ctx,x,y,24,24);ctx.fill();ctx.fillStyle=Z?'#ffd23f':'#33405e';ell(ctx,x,y+2,16,15);ctx.fill();ctx.fillStyle='#fff';ell(ctx,x-4,y+1,6,6);ctx.fill();ell(ctx,x+4,y+1,6,6);ctx.fill();ctx.fillStyle='#26283a';ell(ctx,x-4,y,1.8,2.4);ctx.fill();ell(ctx,x+4,y,1.8,2.4);ctx.fill();ctx.fillStyle='#ff9d3a';ell(ctx,x,y+6,3,2);ctx.fill();ctx.fillStyle='#ffb938';ctx.beginPath();ctx.moveTo(x+side*30,y);ctx.lineTo(x+side*22,y-7);ctx.lineTo(x+side*22,y+7);ctx.fill()}
 }
@@ -847,7 +913,7 @@ function drawFrame(){
 let last=0,raf=0,frozen=false,active=false,trimT=0;var drawErr=false;
 function loop(ts){
   raf=0;let dt=(ts-last)/1000;if(!(dt>0))dt=0.016;dt=Math.min(.05,dt);last=ts;
-  update(dt);updRain(dt);
+  update(dt);updRain(dt);updHoles(dt);
   if(!frozen)drawFrame();
   trimT+=dt;if(trimT>2){trimT=0;trimCaches()}
   if(active&&!frozen)raf=view.requestAnimationFrame(loop);
@@ -890,7 +956,7 @@ on('pointermove',e=>{
     
   }
 });
-function cancelLaunch(){if(mode==='launching'){mode='browse';if(cur())cur().doorTarget=0;if(['goDoor','hesitate','enter'].includes(m.state)){m.alpha=1;m.scale=1;m.y=FEET;setState('idle')}host.onSelect(sel)}}
+function cancelLaunch(){if(mode==='launching'){mode='browse';if(cur())cur().doorTarget=0;if(['goDoor','hesitate','brace','enter'].includes(m.state)){m.braceOpen=false;m.alpha=1;m.scale=1;m.y=FEET;setState('idle')}host.onSelect(sel)}}
 function grab(kind,w){
   if(!P)return;cancelLaunch();clearTimeout(P.lp);P.kind='held';m.grab=kind;m.behind=false;setState('held');m.react=null;cv.classList.add('held');
   if(kind==='lift'){say('으앗?',1);sfx('boing');m.x=w.x;m.y=Math.min(FEET,w.y+2*R+14)}else{say('으아앗!',1)}
@@ -944,7 +1010,7 @@ function setCardStyle(st){st=st==='capsule'?'capsule':'wide';if(st===cardStyle)r
 function setActive(on){active=!!on;if(active){start()}else stop()}
 function destroy(){active=false;stop();clearTimeout(moodSaveT);try{host.saveMood(Math.round(mood))}catch(e){};listeners.forEach(([t,f])=>cv.removeEventListener(t,f));B=[]}
 setTimeout(()=>{if(mode==='browse')say('안녕!',1.6)},600);
-return {fit,emerge,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
+return {fit,emerge,poke,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
   get selected(){return sel},get mode(){return mode},get mood(){return mood},set mood(v){mood=clamp(v,0,100);saveMood()},
   get debug(){return {m,B,camX}}};
 }
