@@ -839,9 +839,7 @@ function premiumBack(b,left,top,sk){
     ctx.save();ctx.strokeStyle=t>=5?'#ffe14d':'#e8f6ff';ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=12;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.globalAlpha=.9;
     const ay=top+L.card.y-24;ctx.beginPath();ctx.moveTo(left+40,ay+10);ctx.quadraticCurveTo(left+BW/2,ay-18,left+BW-40,ay+10);ctx.stroke();
     star(left+BW/2,ay-5,5,ctx.strokeStyle);ctx.restore();
-    if(t>=2){const x0=left+L.card.x-13,y0=top+L.card.y-13,w=CW+26,h=CH+26,step=12,n=Math.floor(2*(w+h)/step),sh=Math.floor(T*14);
-      for(let k=0;k<n;k++){const p=k*step;let x,y;if(p<w){x=x0+p;y=y0}else if(p<w+h){x=x0+w;y=y0+p-w}else if(p<2*w+h){x=x0+w-(p-w-h);y=y0+h}else{x=x0;y=y0+h-(p-2*w-h)}
-        const on=(k+sh)%4===0;ctx.fillStyle=on?(t>=5?'#ffe14d':b.neon):'rgba(255,255,255,.14)';ell(ctx,x,y,on?2.7:1.8,on?2.7:1.8);ctx.fill()}}
+
     if(t>=4){ // 350h: the spinning neon crown
       ctx.save();ctx.globalCompositeOperation='lighter';ctx.translate(cx,top-66);ctx.strokeStyle='#ffe14d';ctx.shadowColor='#ffe14d';ctx.shadowBlur=16;ctx.lineWidth=2.5;
       if(t>=5){ // 500h: the crown runs through the rainbow as it turns
@@ -854,8 +852,8 @@ function premiumBack(b,left,top,sk){
       for(let k=0;k<5;k++){const u=(k/5+T*.6)%1;ctx.fillStyle=hexA('#ffe14d',.8*(1-u));ell(ctx,dx+d.w/2,SIDE+u*52,lerp(10,26,u),2);ctx.fill()}}
   }
 }
-/** The big, visible step of each tier (on top of the smaller trims): 150h marquee bulbs round
- *  the name sign, 200h columns on both sides, 350h a floor taller (makeBuilding), 500h gilded all round. */
+/** The big, visible step of each tier (on top of the smaller trims):
+ *  200h a rooftop garden (hologram koi in the neon city), 350h a floor taller (makeBuilding), 500h gilded. */
 function tierUpgrades(b,left,top,t,night){
   const L=b.L,a=L.awn;
   if(t>=3&&Z){ // neon frames on every window, and a pair of hologram koi circling over the roof
@@ -893,12 +891,6 @@ function tierUpgrades(b,left,top,t,night){
     const px=left+74;ctx.fillStyle='#6a4a30';ctx.fillRect(px-1.2,ry-46,2.4,44);ctx.fillStyle='#f4efe6';ctx.fillRect(px-10,ry-12,20,3);
     for(let k=0;k<6;k++){ctx.fillStyle=k%2?'#ffffff':(t>=5?'#e6b23a':'#e5484d');ctx.beginPath();ctx.moveTo(px,ry-52);ctx.lineTo(px-30+k*10,ry-38);ctx.lineTo(px-20+k*10,ry-38);ctx.closePath();ctx.fill()}
     ctx.fillStyle=t>=5?'#e6b23a':'#e5484d';for(let k=0;k<6;k++){ctx.beginPath();ctx.arc(px-25+k*10,ry-38,5,0,Math.PI);ctx.fill()}}
-  if(t>=2){ // marquee bulbs round the name sign
-    const x0=left+a.x-8,y0=top+a.y-9,w=a.w+16,h=a.h+18,n=26,sh=Math.floor(T*6);
-    for(let k=0;k<n;k++){const p=k/n*2*(w+h);let x,y;if(p<w){x=x0+p;y=y0}else if(p<w+h){x=x0+w;y=y0+p-w}else if(p<2*w+h){x=x0+w-(p-w-h);y=y0+h}else{x=x0;y=y0+h-(p-2*w-h)}
-      const on=(k+sh)%3!==0,col=Z?(t>=5?'#ffe14d':b.neon):(t>=5?'#ffe48a':'#fff3b0');
-      ctx.fillStyle=on?col:(Z?'rgba(255,255,255,.12)':'#9a8a60');ell(ctx,x,y,on?3:2.4,on?3:2.4);ctx.fill();
-      if(on&&(Z||night)){ctx.save();ctx.globalCompositeOperation='lighter';ctx.fillStyle=hexA(col,.3);ell(ctx,x,y,8,8);ctx.fill();ctx.restore()}}}
   if(t>=5&&!Z){ // gilded: a gold edge round the whole building (Minimi Town only)
     ctx.save();ctx.strokeStyle='#e6b23a';ctx.lineWidth=4;ctx.strokeRect(left-1,top-1,BW+2,b.bh+1);ctx.restore();
     ctx.fillStyle='rgba(255,214,90,.10)';ctx.fillRect(left,top,BW,b.bh)}

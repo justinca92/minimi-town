@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.2.1
+
+- Removed the chasing light bulbs round the storefront screen (Neon Rain City) and round the name sign (150h and up, both themes).
+
 ## 0.2.0
 
 First public release. Minimi Town turns the Steam Deck home into a little street of your games, with a penguin that walks to the one you pick. **[Try the browser demo](https://justinca92.github.io/minimi-town/).**
