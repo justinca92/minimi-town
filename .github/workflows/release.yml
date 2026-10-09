@@ -1,10 +1,12 @@
-# Push a tag like v1.0.0 → builds the plugin and publishes a GitHub Release
-# with the Decky install zip attached.
+# Builds the plugin and publishes a GitHub Release with the Decky install zip attached.
+# Either push a tag like v1.0.0, or run it by hand (Actions → Release → Run workflow):
+# then it tags the current commit with package.json's version itself.
 name: Release
 
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -17,21 +19,28 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
-      - name: Check version matches tag
+      - name: Version
+        id: ver
         run: |
           v=$(node -p "require('./package.json').version")
-          [ "v$v" = "${GITHUB_REF_NAME}" ] || { echo "package.json is $v but tag is ${GITHUB_REF_NAME}"; exit 1; }
+          echo "v=$v" >> "$GITHUB_OUTPUT"
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            [ "v$v" = "${GITHUB_REF_NAME}" ] || { echo "package.json is $v but tag is ${GITHUB_REF_NAME}"; exit 1; }
+          fi
 
       - name: Build and package
         run: ./scripts/package.sh
 
       - name: Release notes for this version
         run: |
-          v=$(node -p "require('./package.json').version")
+          v="${{ steps.ver.outputs.v }}"
           awk -v ver="$v" '$0 == "## "ver {on=1; next} /^## / && on {exit} on' RELEASE_NOTES.md > notes.md
           [ -s notes.md ] || echo "Minimi Town $v" > notes.md
 
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: v${{ steps.ver.outputs.v }}
+          target_commitish: ${{ github.sha }}
+          name: Minimi Town ${{ steps.ver.outputs.v }}
           files: release/minimi-town-*.zip
           body_path: notes.md
