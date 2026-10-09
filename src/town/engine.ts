@@ -276,7 +276,7 @@ const GROUNDED=['idle','move','sit','sulk','cheer','goDoor','hesitate','react'];
 const BUSY=['brace','shoot','held','air','splatW','splatG','recover','trip','getup','dizzy','collapse','roll','cling','enter','inside','exit','yawn'];
 let rushNow=false;
 function navRate(){const now=T;navTimes=navTimes.filter(t=>now-t<1.3);return navTimes.length}
-function viewL(){return camX-640+34}function viewR(){return camX+640-34}
+function viewL(){return camX-camKick-640+34}function viewR(){return camX-camKick+640-34} // the screen edges in street coordinates (camKick shifts the picture)
 
 /* ---------------- navigation / launch ---------------- */
 let camKick=0;
@@ -357,7 +357,7 @@ function update(dt){
   // camera
   restT=selSeen===sel?restT+dt:0;selSeen=sel;const rushing=navRate()>=2&&restT<.18;rushNow=navRate()>=2&&restT<.3; // while you flick, the penguin may fall behind off-screen (no clinging to the edge) // flicking through the street
   const tx=cur().cx;if(!isFinite(camX))camX=tx;if(!isFinite(m.x)||!isFinite(m.y)){m.x=standX(cur());m.y=FEET;m.vx=0;m.vy=0}
-  camX+= (tx-camX)*(1-Math.exp(-dt*(rushing?11:6.5))); // the camera keeps up when you rush, so the street doesn't smearcamKick*=Math.exp(-dt*10);
+  camX+= (tx-camX)*(1-Math.exp(-dt*(rushing?11:6.5))); camKick*=Math.exp(-dt*10); // the camera keeps up when you rush, so the street does not smear
   if(shakeT>0)shakeT-=dt;
   const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*Math.PI/180;
   // doors ease open/closed; lights come on when you pick the building
@@ -680,7 +680,7 @@ function drawBuilding(b,sk,ox){
     if(b.g.roof===1){ctx.fillStyle=`rgba(255,50,70,${Math.sin(T*4+b.i)>0?1:.25})`;ell(ctx,left+BW/2+42,top-34,3,3);ctx.fill()}}
   // windows
   const dusty=b.st==='dusty',closed=b.st==='closed';
-  const lit=b.light*b.light*(3-2*b.light);const wins=L.wins.concat(L.up); // lights come up smoothlyconst wins=L.wins.concat(L.up);
+  const lit=b.light*b.light*(3-2*b.light);const wins=L.wins.concat(L.up); // lights come up smoothly
   wins.forEach((w,j)=>{const x=left+w.x,y=top+w.y;
     ctx.fillStyle=night?'#1d2235':dusk?'#3b3a55':'#33405a';ctx.fillRect(x,y,w.w,w.h);
     if(!night){ctx.fillStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.moveTo(x,y+w.h*.7);ctx.lineTo(x+w.w*.6,y);ctx.lineTo(x+w.w*.85,y);ctx.lineTo(x,y+w.h);ctx.fill()}
@@ -1213,5 +1213,5 @@ function destroy(){active=false;stop();clearTimeout(moodSaveT);try{host.saveMood
 setTimeout(()=>{if(mode==='browse')say('안녕!',1.6)},600);
 return {fit,flipCard,emerge,poke,setLampDim,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
   get selected(){return sel},get mode(){return mode},get mood(){return mood},set mood(v){mood=clamp(v,0,100);saveMood()},
-  get debug(){return {m,B,camX,lampLv,lampRate}}};
+  get debug(){return {m,B,camX,camKick,lampLv,lampRate}}};
 }

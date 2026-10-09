@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.25
+
+- Fixed: after bumping into either end of the street, the whole picture stayed shifted to one side, so the invisible walls the penguin bounces off sat closer to one screen edge than the other. The bump now springs back and both walls sit at the same distance from the edges.
+
 ## 0.1.24
 
 - The info on the back of a storefront screen is never cut off: long names wrap onto more lines and everything shrinks just enough to show in full.
