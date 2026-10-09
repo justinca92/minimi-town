@@ -7,7 +7,7 @@
 ## Features
 
 - **A street instead of a row of tiles.** Each game gets its own building (same building every time), with the game's art on its screen.
-- **The name is on the shop.** Each storefront's sign carries the game's name; in Neon Rain City a little square blade sign shows the game's icon in neon. Rest on a shop for 3 seconds and its screen turns round to show playtime, last played, achievements and friends playing.
+- **The name is on the shop.** Each storefront's sign carries the game's name. Press Ⓧ and the shop's screen turns round to show the game's icon, playtime, last played, achievements and friends playing.
 - **Buildings tell you what's going on.** Recently played (an OPEN sign and a plant by the door), new (GRAND OPENING: a ribbon banner, flower stands and balloons), not installed (shutter and CLOSED sign), downloading (scaffolding with a progress banner), not played for months (dust and cobwebs).
 - **Playtime tiers.** 100 h+ *Regular*, 200 h+ *Landmark* and 500 h+ *Legend* storefronts get fancier: gold trim and flower boxes, string lights, flags and searchlights, then a golden dome and a red carpet. Each theme has its own version.
 - **Two themes.** *Minimi Town*, a sunny street whose sky follows the clock, and *Neon Rain City*, always a rainy night, with wet-street reflections, neon signs and CRT storefront screens.
@@ -23,7 +23,7 @@
 | R2 | What's New / Friends / Recommended (Steam's own sections), sliding in from the right |
 | L2 there (or swipe right) | Back to the street |
 | Ⓑ there | To the top of the sections; at the top, Steam's menu (like the stock home) |
-| Ⓧ | Turn the shop's screen round: game info on the back (it also turns by itself after a 3 s rest) |
+| Ⓧ | Turn the shop's screen round: game info on the back (Ⓧ again turns it back) |
 | ≡ | Steam's game menu (Play, Properties, …) |
 | Ⓨ | Shake the street |
 | Touchscreen | Swipe to move, double-tap to play, grab / poke / pet the penguin |
@@ -54,7 +54,7 @@ Built on Spindeck's home-screen plumbing. The penguin, the buildings and every p
 
 **스팀덱 라이브러리를 작은 거리로.** 게임 하나가 가게 하나이고, 아기 펭귄이 고른 가게 앞까지 걸어가요. Ⓐ를 누르면 문 앞으로 뒤뚱뒤뚱 걸어가 뒤돌아 들어가고 게임 페이지가 열려요. 돌아오면 같은 문에서 걸어 나와요.
 
-- **조작:** ◀ ▶ 이동 · Ⓐ 게임 페이지 · Ⓧ 게임 정보(화면이 뒤집혀요, 3초 머물러도 뒤집혀요) · L2 검색 · R2 새 소식·친구·추천(오른쪽에서 밀려 들어옴, L2로 복귀) · ≡ 게임 메뉴 · Ⓨ 흔들기 · 터치로 펭귄 잡아 던지기/콕콕/쓰다듬기
+- **조작:** ◀ ▶ 이동 · Ⓐ 게임 페이지 · Ⓧ 게임 정보(화면이 뒤집혀요) · L2 검색 · R2 새 소식·친구·추천(오른쪽에서 밀려 들어옴, L2로 복귀) · ≡ 게임 메뉴 · Ⓨ 흔들기 · 터치로 펭귄 잡아 던지기/콕콕/쓰다듬기
 - **테마:** 미니미 타운(시간 따라 바뀌는 하늘) / 네온 레인 시티(비 오는 밤, CRT 화면)
 - **플레이 시간 등급:** 100시간 단골 · 200시간 명소 · 500시간 전설 건물이 점점 화려해져요
 - **설정:** Quick Access(…) → Minimi Town

@@ -15,7 +15,7 @@ export interface TownGame {
   sign: string;       // short label for the neon sign
   art: string[];      // wide art candidates (header / wide capsule), first that loads wins
   capsule: string[];  // tall library capsule candidates
-  icon?: string[];    // the game's square icon (neon blade sign)
+  icon?: string[];    // the game's square icon (on the back of the screen)
   info?: TownInfo;    // the icon info row on the shop's sign
 }
 export interface TownInfo {
@@ -112,6 +112,18 @@ function loadArt(b){
   im.onerror=()=>{b.imgLoading=false;loadArt(b)};
   im.src=url;
 }
+/** Words onto lines no wider than maxW; a single word too long for a line breaks between characters. */
+function wrapText(c,t,maxW){
+  const out=[];let line='';
+  for(const w of t.split(/\s+/).filter(Boolean)){
+    const tryL=line?line+' '+w:w;
+    if(c.measureText(tryL).width<=maxW){line=tryL;continue}
+    if(line)out.push(line);line='';
+    if(c.measureText(w).width<=maxW){line=w;continue}
+    for(const ch of w){if(c.measureText(line+ch).width>maxW&&line){out.push(line);line=''}line+=ch}
+  }
+  if(line)out.push(line);return out.length?out:[t];
+}
 /** The back of the storefront screen: the game's info, shown when you rest on a shop. */
 function infoKey(b){const i=b.game.info;return i?[i.play,i.last,i.ach&&i.ach.join('/'),i.friends,!!b.icon,cardStyle,theme].join('|'):''}
 function renderBack(b){
@@ -122,26 +134,30 @@ function renderBack(b){
   else{c.fillStyle='#fbf4e4';c.fillRect(0,0,CW,CH);c.fillStyle=hexA(b.g.tr,.12);c.fillRect(0,0,CW,4)}
   c.restore();
   if(!Z){c.strokeStyle=shade(b.g.tr,-.2);c.lineWidth=2;rr(c,4,4,CW-8,CH-8,8);c.stroke()}
-  const wide=cardStyle!=='capsule',pad=wide?14:12,isz=wide?30:40;
-  // header: icon + name
+  const wide=cardStyle!=='capsule',pad=wide?14:12,isz=wide?30:34;
+  // header: icon + the whole name (shrinks, then wraps; never cut)
   let y=pad;const ix=wide?pad:(CW-isz)/2;
   if(b.icon){c.save();rr(c,ix,y,isz,isz,6);c.clip();c.drawImage(b.icon,ix,y,isz,isz);c.restore()}
   else{c.fillStyle=sub;rr(c,ix,y,isz,isz,6);c.fill()}
-  c.fillStyle=ink;c.textBaseline='middle';
-  const nx=wide?ix+isz+10:CW/2,nw=wide?CW-nx-pad:CW-2*pad;let fs=wide?21:18,name=b.g.t;c.font=`${fs}px ${DISPLAY}`;
-  while(c.measureText(name).width>nw&&fs>12){fs--;c.font=`${fs}px ${DISPLAY}`}
-  if(c.measureText(name).width>nw){while(name.length>1&&c.measureText(name+'…').width>nw)name=name.slice(0,-1);name=name.trimEnd()+'…'}
-  c.textAlign=wide?'left':'center';c.fillText(name,nx,wide?y+isz/2+1:y+isz+16);
-  y=wide?y+isz+10:y+isz+34;
-  c.fillStyle=hexA(Z?b.neon:'#3a3036',.25);c.fillRect(pad,y,CW-2*pad,1.5);y+=wide?8:10;
-  // rows
+  const nx=wide?ix+isz+10:CW/2,nw=wide?CW-nx-pad:CW-2*pad,maxL=wide?2:3,maxH=wide?isz+6:50;
+  let fs=wide?21:18,lines;
+  for(;;fs--){c.font=`${fs}px ${DISPLAY}`;lines=wrapText(c,b.g.t,nw);if((lines.length<=maxL&&lines.length*fs*1.12<=maxH)||fs<=9)break}
+  c.fillStyle=ink;c.textBaseline='middle';c.textAlign=wide?'left':'center';const lh=fs*1.12;
+  const ly0=wide?y+isz/2-(lines.length-1)*lh/2:y+isz+6+lh/2;lines.forEach((t,k)=>c.fillText(t,nx,ly0+k*lh+1));
+  y=wide?y+Math.max(isz,lines.length*lh)+8:y+isz+6+lines.length*lh+6;
+  c.fillStyle=hexA(Z?b.neon:'#3a3036',.25);c.fillRect(pad,y,CW-2*pad,1.5);y+=6;
+  // rows: one font size for all, as large as lets every item show in full
   const rows=[];if(i.play)rows.push(['clock',i.play,ink]);if(i.last)rows.push(['recent',i.last,ink]);if(i.ach)rows.push(['trophy',i.ach[0]+'/'+i.ach[1],ink,i.ach[0]/i.ach[1]]);if(i.friends)rows.push(['friends',i.friends,fr]);
-  const fsz=wide?15:15,rh=wide?24:27;c.font=`700 ${fsz}px ${INFO_FONT}`;c.textAlign='left';
-  const cells=wide?rows.map((r,k)=>[pad+(k%2)*((CW-2*pad)/2),y+rh/2+Math.floor(k/2)*rh,(CW-2*pad)/2-8]):rows.map((r,k)=>[pad+4,y+rh/2+k*rh,CW-2*pad-8]);
-  rows.forEach(([ic,t,col,pr],k)=>{const [x,cy,w]=cells[k];if(cy>CH-6)return;infoIcon(c,ic,x,cy,fsz*1.2,Z?sub:col===fr?fr:sub);c.fillStyle=col;
-    let tt=t;const tw=w-fsz*1.2-6-(pr!==undefined?(wide?34:50):0);while(tt.length>1&&c.measureText(tt).width>tw)tt=tt.slice(0,-1);c.fillText(tt,x+fsz*1.2+6,cy+1);
-    if(pr!==undefined){const bw=wide?30:46,bx=x+w-bw;c.fillStyle=hexA(Z?'#ffffff':'#3a3036',.18);rr(c,bx,cy-2.5,bw,5,2.5);c.fill();c.fillStyle=acc;rr(c,bx,cy-2.5,Math.max(5,bw*pr),5,2.5);c.fill()}});
-  if(!rows.length){c.fillStyle=sub;c.font=`700 ${fsz}px ${INFO_FONT}`;c.textAlign='center';c.fillText('—',CW/2,y+rh)}
+  const avail=CW-2*pad-4,room=CH-y-6;let fsz=wide?15:15,rh,ww,cols;
+  for(;;fsz--){c.font=`700 ${fsz}px ${INFO_FONT}`;const barW=Math.round(fsz*2.2);ww=rows.map(([,t,,pr])=>fsz*1.2+5+c.measureText(t).width+(pr!==undefined?barW+6:0));rh=Math.round(fsz*1.62);
+    if(wide){const c0=Math.max(ww[0]||0,ww[2]||0),c1=Math.max(ww[1]||0,ww[3]||0);cols=[c0,c1];if((c0+(c1?14+c1:0)<=avail&&Math.ceil(rows.length/2)*rh<=room)||fsz<=8)break}
+    else if((Math.max(0,...ww)<=avail&&rows.length*rh<=room)||fsz<=8)break}
+  const barW=Math.round(fsz*2.2),isz2=fsz*1.2;c.font=`700 ${fsz}px ${INFO_FONT}`;c.textAlign='left';
+  const gapC=wide?Math.max(14,(avail-cols[0]-cols[1])/2):0;
+  rows.forEach(([ic,t,col,pr],k)=>{const x=wide?pad+2+(k%2?cols[0]+gapC:0):pad+2,cy=y+rh/2+(wide?Math.floor(k/2):k)*rh;
+    infoIcon(c,ic,x,cy,isz2,Z?sub:col===fr?fr:sub);c.fillStyle=col;c.fillText(t,x+isz2+5,cy+1);
+    if(pr!==undefined){const bx=x+isz2+5+c.measureText(t).width+6;c.fillStyle=hexA(Z?'#ffffff':'#3a3036',.18);rr(c,bx,cy-2.5,barW,5,2.5);c.fill();c.fillStyle=acc;rr(c,bx,cy-2.5,Math.max(5,barW*pr),5,2.5);c.fill()}});
+  if(!rows.length){c.fillStyle=sub;c.textAlign='center';c.fillText('—',CW/2,y+12)}
   b.back=cc;b.backKey=infoKey(b);
 }
 function renderCard(b){
@@ -346,7 +362,7 @@ function update(dt){
   const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*Math.PI/180;
   // doors ease open/closed; lights come on when you pick the building
   {const ci=Math.round(camX/SP),bi0=Math.max(0,ci-5),bi1=Math.min(B.length-1,ci+5);for(let i=bi0;i<=bi1;i++){const b=B[i];
-   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));if(restT===0)flipPick=null;const ft=b.i===sel&&mode==='browse'&&!rushNow&&!!b.game.info&&(flipPick??restT>3)?1:0;b.flip=(b.flip||0)+Math.sign(ft-(b.flip||0))*Math.min(Math.abs(ft-(b.flip||0)),dt/(ft?.6:.35));
+   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));if(restT===0)flipPick=null;const ft=b.i===sel&&mode==='browse'&&!rushNow&&!!b.game.info&&flipPick===true?1:0;b.flip=(b.flip||0)+Math.sign(ft-(b.flip||0))*Math.min(Math.abs(ft-(b.flip||0)),dt/(ft?.6:.35));
    const lt=((b.i===sel&&!rushing)||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*(lt?3:(rushing?12:2.5))));if(b.cele>0)b.cele-=dt}}
   // mood regen
   if(T-lastBother>5&&mood<70){mood=Math.min(70,mood+dt*1.1)}
@@ -615,7 +631,7 @@ function drawRain(){
 const LAMP_TOP=SIDE-196;
 // The lamp whose head leans over the picked shop burns full; the rest are dimmed.
 // Levels ease, so the light follows you along the street.
-let restT=0,selSeen=-1,flipPick=null; // flipPick: Ⓧ turned the screen by hand (true/false), null = automatic after a rest
+let restT=0,selSeen=-1,flipPick=null; // flipPick: Ⓧ turned the screen round (true) or back
 let LAMP_DIM=typeof host.lampDim==='number'?host.lampDim:.3;const lampLv=new Map();
 // How fast the light follows depends on how fast you browse: resting on a shop,
 // its lamp warms up slowly (~1 s); flicking through, the light keeps pace.
@@ -639,10 +655,11 @@ function drawLamp(x,sk,front,i=0){
   // the cone, falling on the shop front and the pavement
   const cg=ctx.createLinearGradient(0,hy,0,SIDE+40);cg.addColorStop(0,hexA(lc,.26*k));cg.addColorStop(.75,hexA(lc,.08*k));cg.addColorStop(1,hexA(lc,0));
   ctx.fillStyle=cg;ctx.beginPath();ctx.moveTo(hx-9,hy);ctx.lineTo(hx+9,hy);ctx.lineTo(hx+100,SIDE+40);ctx.lineTo(hx-100,SIDE+40);ctx.closePath();ctx.fill();
-  // a soft wash on the wall behind
-  let g=ctx.createRadialGradient(hx,SIDE-70,10,hx,SIDE-70,150);g.addColorStop(0,hexA(lc,.10*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.fillRect(hx-150,SIDE-220,300,300);
+  let g;
+  if(Z){ // a soft wash on the wall behind
+  g=ctx.createRadialGradient(hx,SIDE-70,10,hx,SIDE-70,150);g.addColorStop(0,hexA(lc,.10*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.fillRect(hx-150,SIDE-220,300,300);
   // the bulb
-  g=ctx.createRadialGradient(hx,hy,2,hx,hy,46);g.addColorStop(0,hexA(lc,.6*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.fillRect(hx-46,hy-46,92,92);
+  g=ctx.createRadialGradient(hx,hy,2,hx,hy,46);g.addColorStop(0,hexA(lc,.6*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.fillRect(hx-46,hy-46,92,92)}
   // the pool on the pavement
   g=ctx.createRadialGradient(hx,SIDE+34,4,hx,SIDE+34,130);g.addColorStop(0,hexA(lc,.3*k));g.addColorStop(1,hexA(lc,0));ctx.fillStyle=g;ctx.beginPath();ctx.ellipse(hx,SIDE+34,140,34,0,0,Math.PI*2);ctx.fill();
   ctx.restore();
@@ -657,13 +674,6 @@ function drawBuilding(b,sk,ox){
     ctx.lineCap='round';ctx.beginPath();for(let k=0;k<=40;k++){const u=k/40;ctx.lineTo(left+22+u*(BW-44),top+26+Math.sin(u*Math.PI*4+b.i)*4)}ctx.stroke();
     ctx.lineWidth=2;rr(ctx,left+a.x+6,top+a.y-1,a.w-12,a.h+2,11);ctx.stroke();
     // vertical blade sign hanging off the right edge
-    // square blade sign with the game's icon, hung at a height of its own (always above the lamp heads)
-    const ss=46,is=32,sx=left+BW+5,lo=LAMP_TOP-64-ss,hi=Math.max(top+30,SIDE-440),sy=Math.round(hi+(lo-hi)*(((hash(b.appid>>>0)>>>11)%1000)/1000));
-    ctx.save();ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.fillStyle='#0c0b12';ctx.fillRect(left+BW-4,sy+ss/2-3,10,6);rr(ctx,sx,sy,ss,ss,8);ctx.fill();ctx.restore();
-    const ix=sx+(ss-is)/2,iy=sy+(ss-is)/2;if(!b.icon)loadIcon(b);
-    if(b.icon){ctx.save();ctx.shadowBlur=0;ctx.globalAlpha=(isSel?1:.72)*(.55+.45*fl);rr(ctx,ix,iy,is,is,5);ctx.clip();ctx.drawImage(b.icon,ix,iy,is,is);ctx.restore()}
-    else{const ch=[...b.g.t.replace(/[^가-힣A-Za-z0-9]/g,'')][0]||'?';ctx.font='22px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(ch,sx+ss/2,sy+ss/2+1)}
-    ctx.lineWidth=2.5;rr(ctx,ix-3.5,iy-3.5,is+7,is+7,8);ctx.stroke(); // the neon tube, hugging the icon
     // horizontal sign: the info icons, in neon
     signName(ctx,b.g.t,left+BW/2,top+a.y+a.h/2,a.w-24,17,DISPLAY); // horizontal sign: the game's name, in neon
     ctx.restore();
@@ -689,7 +699,7 @@ function drawBuilding(b,sk,ox){
   // card (the readable part)
   const cs=isSel?1.05:1,cxp=left+L.card.x+CW/2,cyp=top+L.card.y+CH/2;
   const fa=(b.flip||0)*Math.PI,fx=Math.cos(fa),back=fx<0; // the screen turns round to show the info
-  if(back&&(!b.back||b.backKey!==infoKey(b)))renderBack(b);
+  if(back&&!b.icon)loadIcon(b);if(back&&(!b.back||b.backKey!==infoKey(b)))renderBack(b);
   ctx.save();ctx.translate(cxp,cyp-Math.sin(fa)*6);ctx.scale(cs*Math.max(.02,Math.abs(fx))*(1+Math.sin(fa)*.04),cs*(1+Math.sin(fa)*.04));
   if(isSel&&Z){ctx.save();ctx.fillStyle='#0d0b14';rr(ctx,-CW/2-5,-CH/2-5,CW+10,CH+10,13);ctx.fill();ctx.strokeStyle=b.neon;ctx.shadowColor=b.neon;ctx.shadowBlur=18;ctx.lineWidth=3;rr(ctx,-CW/2-8,-CH/2-8,CW+16,CH+16,15);ctx.stroke();ctx.restore()}
   else if(isSel){ctx.fillStyle='#fff';rr(ctx,-CW/2-5,-CH/2-5,CW+10,CH+10,13);ctx.fill();ctx.strokeStyle='rgba(255,185,56,.9)';ctx.lineWidth=3;rr(ctx,-CW/2-8,-CH/2-8,CW+16,CH+16,15);ctx.stroke()}
@@ -728,11 +738,12 @@ function drawBuilding(b,sk,ox){
   if(b.st==='downloading')drawScaffold(b,left,top);
   if(b.st==='new'||b.cele>0)drawBalloons(b,left,top);
   if(b.st==='recent'){ // OPEN neon + plant
-    if(Z){ // the classic window neon: blue tube frame, red letters
-      const w=L.wins[1],x=left+w.x+w.w/2,y=top+w.y+w.h/2,on=flick(b.i+3);ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
-      ctx.fillStyle='rgba(8,6,14,.55)';rr(ctx,x-29,y-15,58,30,14);ctx.fill();
-      ctx.strokeStyle='#3fa8ff';ctx.shadowColor='#3fa8ff';ctx.shadowBlur=12;ctx.lineWidth=2.4;rr(ctx,x-27,y-13,54,26,12);ctx.stroke();
-      ctx.font='16px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=on>.5?'#ff3b4a':'rgba(255,59,74,.35)';ctx.shadowColor='#ff3b4a';ctx.shadowBlur=on>.5?14:0;ctx.fillText('OPEN',x,y+1);ctx.restore()}
+    if(Z){if(b.door<.3){ // the classic neon OPEN sign (blue tube frame, red letters), hung on the door glass
+      const x=dx+d.w/2,y=dy+34,on=flick(b.i+3);ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+      ctx.strokeStyle='#2a2533';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(x-12,y-11);ctx.lineTo(x,dy+8);ctx.lineTo(x+12,y-11);ctx.stroke();
+      ctx.fillStyle='rgba(8,6,14,.7)';rr(ctx,x-25,y-12,50,24,11);ctx.fill();
+      ctx.strokeStyle='#3fa8ff';ctx.shadowColor='#3fa8ff';ctx.shadowBlur=12;ctx.lineWidth=2.2;rr(ctx,x-23,y-10,46,20,9);ctx.stroke();
+      ctx.font='13px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=on>.5?'#ff3b4a':'rgba(255,59,74,.35)';ctx.shadowColor='#ff3b4a';ctx.shadowBlur=on>.5?14:0;ctx.fillText('OPEN',x,y+1);ctx.restore()}}
     else if(b.door<.3){ // a sign hung on the door glass, swinging a little
       const sx=dx+d.w/2,sy=dy+16,sw2=Math.sin(T*1.6+b.i)*.05;ctx.save();ctx.translate(sx,sy);ctx.fillStyle='#8a7a60';ell(ctx,0,0,2,2);ctx.fill();ctx.rotate(sw2);
       ctx.strokeStyle='#5a4a3a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-15,14);ctx.lineTo(0,0);ctx.lineTo(15,14);ctx.stroke();

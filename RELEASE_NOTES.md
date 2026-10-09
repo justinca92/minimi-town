@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.1.24
+
+- The info on the back of a storefront screen is never cut off: long names wrap onto more lines and everything shrinks just enough to show in full.
+- The screen turns round only with Ⓧ now (no more turning by itself after 3 seconds).
+- Neon Rain City: the little icon blade signs are gone, and the neon OPEN sign hangs on the shop's door instead of in the window.
+- Minimi Town at dusk and night: street lamps only throw their light down (cone and pool); the round glow around the bulb and on the wall is gone.
+
 ## 0.1.23
 
 - Flicking fast through the street: the penguin falls behind and drops out of the frame once, instead of being dragged along the screen edge (the ghost trail). No edge marker while you flick; about half a second after you stop it runs back in from the edge.
