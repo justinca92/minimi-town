@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.9
+
+- Neon Rain City: the penguin is a cop now: police cap with a gold badge and a neon band, a blue uniform jacket with a star badge and a duty belt, and "POLICE" on the back. Its toy blaster is always in hand (held low, raised when it chases or goes in).
+- Its shots are neon lasers: a pink-and-cyan beam, then white-hot burns on the glass that cool to neon and fade.
+
 ## 0.1.8
 
 - The lamps fade between 30% and full at the pace you browse: resting on a shop, its lamp warms up over about a second; flicking quickly through the street, the light speeds up to keep up with you.
