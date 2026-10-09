@@ -385,6 +385,12 @@ function update(dt){
   else if(s==='react'){if(m.t>.4)setState('idle')}
   else if(s==='cheer'){m.y=FEET-Math.abs(Math.sin(m.t*9))*22*(1-m.t/1.2);if(m.t>1.2){m.y=FEET;setState('idle')}}
   if(m.queued&&mode==='browse'&&GROUNDED.includes(m.state)&&m.state!=='goDoor'){m.queued=false;launch()}
+  // left behind off-screen (you browsed faster than it can run): after a moment it pops in at the
+  // edge already running, so it's never gone for more than a fraction of a second
+  {const L=camX-640,Rr=camX+640,off=m.x<L-30||m.x>Rr+30,can=['idle','move','sit','sulk','react','cheer','goDoor'].includes(m.state)&&!m.behind;
+   m.offT=off&&can?(m.offT||0)+dt:0;
+   if(m.offT>.3){const side=m.x<camX?-1:1;m.x=camX+side*(640+28);m.y=FEET;m.rot=0;m.alpha=1;m.scale=1;m.dir=-side;m.fdir=-side;m.vx=-side*760;m.sprintT=0;m.stamina=1;m.tripCD=Math.max(m.tripCD,2);m.offT=0;
+     if(m.state==='sulk'||m.state==='sit'||m.state==='react'||m.state==='cheer'){m.y=FEET;setState('move')}}}
   // sulk check / unsulk
   if(m.state==='sulk'&&mood>=55){m.behind=false;m.y=FEET;setState('cheer');say('…헤헤',1.4);for(let i=0;i<5;i++)hearts(m.x,m.y-70)}
   if(m.pantT>0&&Math.random()<dt*3&&m.state==='idle')dust(m.x,FEET,1,.3);

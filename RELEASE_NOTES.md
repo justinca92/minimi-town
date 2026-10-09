@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.14
+
+- If the penguin falls behind off-screen (you browsed faster than it can run, or it was sulking at a shop you left), it pops back in at the screen edge already running within a third of a second.
+
 ## 0.1.13
 
 - The penguin no longer hides behind buildings when it sulks; it just sits with its back to you.
