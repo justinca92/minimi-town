@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createTown, TownGame, TownStatus } from "./town/engine";
 import { AppExtra, cachedAchievements, downloadProgress, GameEntry, loadLibrary, openGamePage, overviewMinutes, subscribeAppExtra } from "./games";
 import { friendsPlayingMap } from "./friends";
-import { noteDir, padDiag, padRecentlyTouched, subscribeLeftPad } from "./padInput";
+import { noteDir, padButton, padDiag, padRecentlyTouched, subscribeLeftPad } from "./padInput";
 import { openNativeGameMenu } from "./nativeMenu";
 import { findHeaderSearch, focusFirstIn } from "./steamDom";
 import { getSettings, updateSettings, useSettings } from "./settings";
@@ -90,7 +90,7 @@ function PadDebug() {
   const d = padDiag;
   return (
     <div style={{ position: "absolute", left: 12, top: 50, zIndex: 5, pointerEvents: "none", padding: "8px 10px", borderRadius: 8, background: "rgba(0,0,0,.72)", color: "#9fffb0", font: "13px/1.45 monospace", whiteSpace: "pre" }}>
-      {`state feed  ${d.state}  ${d.stateBits}\ninput msgs  ${d.input}  ${d.inputLast}\nanalog      ${d.analog}  ${d.analogLast}\nui events   ${d.ui}  ${d.uiLast}\nlast d-pad  ${d.dirLast}\nmerged      ${d.merged}`}
+      {`analog mode  ${d.on ? "on" : "off"}   types seen ${d.types || "-"}\nleft pad     ${d.analog}  ${d.analogLast}\npad buttons  ${d.ui}  ${d.uiLast}\nlast d-pad   ${d.dirLast}\nmerged       ${d.merged}`}
     </div>
   );
 }
@@ -227,23 +227,22 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
     };
   }, []);
   useEffect(() => engine.current?.setActive(active && winFocused), [active, winFocused]);
+  // The street has the controller's focus (not the search box, a game page or the sections).
+  const [townFocused, setTownFocused] = useState(true);
   // The left trackpad is the penguin's hand (rub to pet, click to grab, flick to throw), only while the street is shown.
   useEffect(() => {
-    if (!active || !winFocused || !boxRef.current?.isConnected) return; // a detached copy of the home doesn't listen
-    let off = () => {};
-    let gone = false;
-    off = subscribeLeftPad(boxRef.current?.ownerDocument, (st) => {
-      if (boxRef.current?.isConnected) return engine.current?.padInput(st);
-      if (!gone) {
-        gone = true; // this copy of the home was taken out of the page: stop listening
-        setTimeout(() => off(), 0);
-      }
-    });
+    if (!active || !winFocused || !townFocused || mode === "playing" || !boxRef.current?.isConnected) return; // a detached copy of the home doesn't listen
+    const off = subscribeLeftPad(
+      (st) => {
+        if (boxRef.current?.isConnected) engine.current?.padInput(st);
+      },
+      () => !!boxRef.current?.isConnected
+    );
     return () => {
       off();
       engine.current?.padInput({ touch: false, click: false, x: 0, y: 0 });
     };
-  }, [active, winFocused]);
+  }, [active, winFocused, townFocused, mode === "playing"]);
 
   // ── Back from the game page while this home stayed mounted ──
   // Seen as the street going out of view (the page covers it) and coming back.
@@ -344,8 +343,13 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       // ▲ / ▼ do nothing on the street (L2 / R2 replace them).
       if (b === GamepadButton.DIR_UP || b === GamepadButton.DIR_DOWN) return consume(e);
     },
+    // Left trackpad touch / click (Steam forwards them while the pad is in analog mode): the hand.
+    up: (e: any) => {
+      if (padButton(e?.detail?.button, false)) consume(e);
+    },
     down: (e: any) => {
       const b = e?.detail?.button;
+      if (padButton(b, true)) return consume(e);
       if (b !== GamepadButton.TRIGGER_LEFT && b !== GamepadButton.TRIGGER_RIGHT) return;
       consume(e);
       if (e?.detail?.is_repeat || Date.now() - activeSince.current < ARRIVAL_IGNORE_MS) return;
@@ -378,7 +382,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   };
   const call = useMemo(() => {
     const f = (name: string) => (e: any) => latest.current[name]?.(e);
-    return { dir: f("dir"), down: f("down"), ok: f("ok"), secondary: f("secondary"), options: f("options"), menu: f("menu") };
+    return { dir: f("dir"), down: f("down"), ok: f("ok"), up: f("up"), secondary: f("secondary"), options: f("options"), menu: f("menu") };
   }, []);
 
   // ── The resting game's details (achievements, shortcut playtime) go onto its shop sign ──
@@ -406,13 +410,18 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       noFocusRing
       onGamepadDirection={call.dir}
       onButtonDown={call.down}
+      onButtonUp={call.up}
       onOKButton={call.ok}
       onOKActionDescription={tg?.status === "closed" ? t.install : t.play}
       onSecondaryButton={call.secondary}
       onOptionsButton={call.options}
       onMenuButton={call.menu}
       onMenuActionDescription={t.menu}
-      onGamepadFocus={() => onTownFocus?.()}
+      onGamepadFocus={() => {
+        setTownFocused(true);
+        onTownFocus?.();
+      }}
+      onGamepadBlur={() => setTownFocused(false)}
       style={{ position: "absolute", inset: 0, overflow: "hidden", background: neon ? "#07060c" : "#15121b" }}
     >
       <div ref={boxRef} data-minimi-sel={tg?.name ?? ""} style={{ position: "absolute", inset: 0, overflow: "hidden" }}>

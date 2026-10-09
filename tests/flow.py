@@ -30,6 +30,7 @@ FLOW = """async () => {
   await sleep(600);
   const r1 = ev(6); town().__props.onButtonDown(r1); await sleep(400); log.push(['R1 does nothing now', box.style.left]);
   town().__props.onButtonDown(ev(8)); await sleep(500); log.push(['R2 → sections slide in from the right', box.style.left, 'top stays', box.style.top]);
+  log.push(['  pad: keyboard action set off while away', JSON.stringify((window.__ks || []).filter(k => /^(kb|analog):/.test(k)).slice(-2))]);
   await sleep(1200); log.push(['sections: tab row shares Steam bar look', (document.getElementById('tabs').style.background || 'none').slice(0, 40), document.getElementById('tabs').style.backdropFilter]);
   await sleep(900);
   const row2b = [...document.querySelectorAll('button')].find((b) => b.textContent === 'row2'); row2b.focus();
@@ -49,28 +50,19 @@ FLOW = """async () => {
   log.push(['Ⓑ in search → Steam menu, box stays', vgp(document.activeElement, 2), document.activeElement?.tagName]);
   vgp(document.activeElement, 8); await sleep(50); log.push(['  then R2 → street', document.activeElement?.closest('[data-minimi-town]') ? 'street' : document.activeElement?.tagName]);
   await sleep(150); log.push(['  main menu opened', window.__mainMenu ?? 0]);
-  // left trackpad: a pad click (arrives as a D-pad press too) doesn't move along the street
-  const pkt = (b, x = 0, y = 0) => window.__pad?.([{ ulButtons: b, sLeftPadX: x, sLeftPadY: y }]);
-  log.push(['pad feed registered while shown', window.__padRegs, 'streets in DOM', document.querySelectorAll('[data-minimi-town]').length, 'canvases', document.querySelectorAll('[data-minimi-town] canvas').length]);
-  const selBefore = document.querySelector('[data-minimi-sel]').dataset.minimiSel;
+  // left trackpad (Spindeck's path): keyboard action set + analog messages, pad touch/click as UI buttons
   const sel = () => document.querySelector('[data-minimi-sel]').dataset.minimiSel;
-  pkt((1 << 19) | (1 << 17), 30000, 0); const pd = ev(12); town().__props.onGamepadDirection(pd); await sleep(300);
-  log.push(['pad click ▶ (state feed): no move', !!pd.p, sel() === selBefore]);
-  pkt(0); await sleep(50); log.push(['  after a touch, listeners left (stale copy let go)', window.__padRegs]);
+  const selBefore = sel();
+  await sleep(700);
+  log.push(['pad: keyboard action set + analog', JSON.stringify((window.__ks || []).filter(k => /^(kb|analog):/.test(k)).slice(-2))]);
+  const bt = (fn, button) => { const e = ev(button); town().__props[fn](e); return !!e.p; };
+  const swallowed = bt('onButtonDown', 19);
+  const pd = ev(12); town().__props.onGamepadDirection(pd); await sleep(300); bt('onButtonUp', 19);
+  log.push(['pad touch (UI button) swallowed, ▶ during touch: no move', swallowed, sel() === selBefore]);
   await sleep(400);
-  // touch reported a moment AFTER the D-pad press
-  town().__props.onGamepadDirection(ev(12)); await sleep(15); window.__inmsg?.(0, 38, true); await sleep(300); window.__inmsg?.(0, 38, false);
-  log.push(['pad ▶ with late touch (input msgs): no move', sel() === selBefore]);
-  await sleep(400);
-  // analog position only
-  for (let i = 0; i < 5; i++) { window.__analog?.([{ nA: 14, x: 0.2 * i, y: 0.1, nC: 0 }]); await sleep(16); }
-  const pa = ev(13); town().__props.onGamepadDirection(pa); await sleep(300);
-  log.push(['pad ◀ while analog moving: no move', sel() === selBefore]);
-  await sleep(500);
-  // UI gamepad events
-  const vgpe = (type, button) => document.dispatchEvent(new CustomEvent(type, { bubbles: true, detail: { button } }));
-  vgpe('vgp_onbuttondown', 19); town().__props.onGamepadDirection(ev(12)); await sleep(300); vgpe('vgp_onbuttonup', 19);
-  log.push(['pad ▶ with UI touch event: no move', sel() === selBefore]);
+  for (let i = 0; i < 6; i++) { window.__analog?.(0, 48, false, -0.4 + i * 0.15, 0.1); await sleep(16); }
+  town().__props.onGamepadDirection(ev(13)); await sleep(300);
+  log.push(['pad ◀ while thumb moving (analog 48): no move', sel() === selBefore]);
   await sleep(500);
   const dd = ev(12); town().__props.onGamepadDirection(dd); await sleep(300);
   log.push(['real D-pad ▶ still moves', sel() !== selBefore]);
@@ -105,7 +97,7 @@ async def main():
                     print(" | ".join(str(x) for x in row))
                 await pg.screenshot(path=os.path.join(OUT, "after_flow.png"))
                 # unload: nothing of ours may stay in Steam's DOM
-                left = await pg.evaluate("""() => { window.__plugin.onDismount(); return [document.querySelectorAll('[data-minimi-spacer]').length, document.getElementById('minimi-clear-header-style') ? 1 : 0] }""")
+                left = await pg.evaluate("""() => { window.__plugin.onDismount(); return [document.querySelectorAll('[data-minimi-spacer]').length, document.getElementById('minimi-clear-header-style') ? 1 : 0, (window.__ks || []).filter(k => /^kb:/.test(k)).slice(-1)[0]] }""")
                 print("after unload: spacers, injected style =", left)
             await pg.close()
         # Quick Access panel renders

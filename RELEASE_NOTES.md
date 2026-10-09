@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.1.31
+
+- Left trackpad, done the way Spindeck's trackpad wheel does it (confirmed on device there): while the street has focus, the controller is put into Steam's keyboard action set with analog input on (as Steam's radial menu does, refreshed every second), so the left pad reports your thumb's position without a click (message type 48). Its touch and click reach the street as pad buttons, and the click grabs the penguin. The pad no longer moves along the street.
+- That mode is switched off whenever the street isn't in front: sections, search box, a game page, the panel turned off, or the plugin unloaded.
+- The trackpad diagnostic shows this path: analog mode on/off, the input types seen, pad position and pad button events.
+
 ## 0.1.30
 
 - Left trackpad fix: it kept moving along the street and never reached the penguin. The pad is now read from every channel the Steam client offers (controller state, input messages, analog position, the UI's own pad events), and a D-pad press is held for a split second to check it didn't come from the pad, so a pad touch that's reported a moment late still doesn't move the street.
