@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createTown, TownGame, TownStatus } from "./town/engine";
 import { AppExtra, cachedAchievements, downloadProgress, GameEntry, loadLibrary, openGamePage, overviewMinutes, subscribeAppExtra } from "./games";
 import { friendsPlayingMap } from "./friends";
-import { noteDir, padButton, padDiag, padRecentlyTouched, pausePad, subscribeLeftPad } from "./padInput";
+import { noteDir, padButton, padRecentlyTouched, pausePad, subscribeLeftPad } from "./padInput";
 import { openNativeGameMenu } from "./nativeMenu";
 import { findHeaderSearch, focusFirstIn } from "./steamDom";
 import { getSettings, updateSettings, useSettings } from "./settings";
@@ -80,21 +80,6 @@ interface Props {
   onRequestSections?: () => void; // R2 → What's New / Friends / Recommended
 }
 
-/** Trackpad diagnostic (Quick Access → Minimi Town): what each input channel reports, live. */
-function PadDebug() {
-  const [, tick] = useState(0);
-  useEffect(() => {
-    const iv = setInterval(() => tick((n) => n + 1), 100);
-    return () => clearInterval(iv);
-  }, []);
-  const d = padDiag;
-  return (
-    <div style={{ position: "absolute", left: 12, top: 50, zIndex: 5, pointerEvents: "none", padding: "8px 10px", borderRadius: 8, background: "rgba(0,0,0,.72)", color: "#9fffb0", font: "13px/1.45 monospace", whiteSpace: "pre" }}>
-      {`analog mode  ${d.on ? "on" : "off"}   types seen ${d.types || "-"}\nleft pad     ${d.analog}  ${d.analogLast}\npad buttons  ${d.ui}  ${d.uiLast}\nlast d-pad   ${d.dirLast}\nmerged       ${d.merged}`}
-    </div>
-  );
-}
-
 export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   const s = useSettings();
   const t = useT();
@@ -123,6 +108,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       sky: s.sky,
       cardStyle: s.cardStyle,
       mood: s.mood,
+      penguin: s.showPenguin,
       sound: (kind) => {
         const st = getSettings();
         if (kind === "tick") return st.soundEnabled && playUiSound("step");
@@ -192,6 +178,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   }, [games]);
   useEffect(() => engine.current?.setTheme(s.theme, true), [s.theme]);
   useEffect(() => engine.current?.setSky(s.sky), [s.sky]);
+  useEffect(() => engine.current?.setPenguin(s.showPenguin), [s.showPenguin]);
   useEffect(() => engine.current?.setCardStyle(s.cardStyle), [s.cardStyle]);
 
   // Installs, downloads and playtime change under us: re-read now and then while shown.
@@ -231,7 +218,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   const [townFocused, setTownFocused] = useState(true);
   // The left trackpad is the penguin's hand (rub to pet, click to grab, flick to throw), only while the street is shown.
   useEffect(() => {
-    if (!active || !winFocused || !townFocused || mode === "playing" || !boxRef.current?.isConnected) return; // a detached copy of the home doesn't listen
+    if (!active || !winFocused || !townFocused || !s.showPenguin || mode === "playing" || !boxRef.current?.isConnected) return; // a detached copy of the home doesn't listen
     const off = subscribeLeftPad(
       (st) => {
         if (boxRef.current?.isConnected) engine.current?.padInput(st);
@@ -242,7 +229,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
       off();
       engine.current?.padInput({ touch: false, click: false, x: 0, y: 0 });
     };
-  }, [active, winFocused, townFocused, mode === "playing"]);
+  }, [active, winFocused, townFocused, s.showPenguin, mode === "playing"]);
 
   // ── Back from the game page while this home stayed mounted ──
   // Seen as the street going out of view (the page covers it) and coming back.
@@ -431,7 +418,6 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
           <span style={{ fontSize: 26, color: "#fff", textShadow: neon ? "0 0 10px #ff3fa4, 0 0 22px rgba(255,63,164,.6)" : "0 2px 0 rgba(0,0,0,.35)" }}>{neon ? t.brandNeon : t.brandTown}</span>
           <span style={{ fontSize: 14, fontWeight: 600, padding: "4px 11px", borderRadius: 99, background: "rgba(20,16,28,.55)", color: "#fff", fontFamily: "Motiva Sans, sans-serif" }}>{t.games(games.length)}</span>
         </div>
-        {s.padDebug ? <PadDebug /> : null}
         {games.length === 0 ? (
           <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#fff", fontFamily: display, fontSize: 22, padding: 40, textAlign: "center" }}>{t.empty}</div>
         ) : null}

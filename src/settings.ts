@@ -20,9 +20,9 @@ export interface TownSettings {
   funSounds: boolean;     // the penguin's little boings and splats
   hapticEnabled: boolean; // a light tick on bumps and splats
   mood: number;           // the penguin's mood, 0–100 (it remembers being bothered)
+  showPenguin: boolean;   // the penguin on the street (off: just the street, Ⓐ opens the page at once)
   language: "auto" | "ko" | "en";
   barLook?: { color: string; image: string; backdrop: string }; // Steam's opaque top bar, learned
-  padDebug?: boolean;     // show the trackpad diagnostic over the street
 }
 
 export const DEFAULTS: TownSettings = {
@@ -36,6 +36,7 @@ export const DEFAULTS: TownSettings = {
   funSounds: true,
   hapticEnabled: true,
   mood: 80,
+  showPenguin: true,
   language: "auto",
 };
 

@@ -1,5 +1,21 @@
 # Release notes
 
+## 0.2.0
+
+First public release. Minimi Town turns the Steam Deck home into a little street of your games, with a penguin that walks to the one you pick. **[Try the browser demo](https://justinca92.github.io/minimi-town/).**
+
+- **Two themes:** Minimi Town (a sunny street whose sky follows the clock) and Neon Rain City (rain, CRT storefront screens, a wet street that mirrors the neon).
+- **Buildings that tell you things:** OPEN for games played this week, GRAND OPENING for new ones, CLOSED and scaffolding for installs and downloads, dust (or a run-down shop in the neon city) for games you haven't touched in months.
+- **Five playtime tiers** (100 / 150 / 200 / 350 / 500 h) that visibly upgrade the building, and **achievement medals** (50% bronze, 80% silver, 100% gold).
+- **Ⓧ turns the storefront screen round** to show playtime, last played, achievements and friends playing.
+- **The penguin:** follows you, sprints, drops behind when you flick fast, sulks when bothered; poke it, pet it, throw it. The left trackpad works as a hand (rub to pet, quick click to poke, hold to pick up, flick to throw), so it works without a touchscreen too.
+- **Steam's own pieces stay:** L2 opens search, R2 slides in What's New / Friends / Recommended, Ⓐ opens the game's own page (nothing launches by itself).
+
+New since 0.1.41:
+
+- Quick Access → Minimi Town → **Show the penguin**: turn it off for just the street; Ⓐ then opens the game's page straight away (and the trackpad stays Steam's).
+- The trackpad diagnostic toggle is gone.
+
 ## 0.1.41
 
 - Neon Rain City's 500h crown turns through the rainbow as it spins (its ring follows), while the hologram koi go gold and orange.

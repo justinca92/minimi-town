@@ -31,6 +31,7 @@ export interface TownHost {
   sky: "auto" | "day" | "dusk" | "night";
   cardStyle: "wide" | "capsule";
   lampDim?: number;    // brightness of the lamps away from the picked shop (0–1)
+  penguin?: boolean;   // false = no penguin on the street (Ⓐ opens the game's page straight away)
   mood: number;
   sound(kind: string): void;      // tick, door, boing, splat, poke, pet, angry, yawn, bang
   haptic(strength: number): void;
@@ -264,7 +265,8 @@ function sfx(type){try{host.sound(type)}catch(e){}}
 function buzz(ms){try{host.haptic(ms)}catch(e){}}
 
 const cur=()=>B[sel];
-function say(text,dur=1.6){m.bubble={text:tx(text),t:0,dur}}
+let showP=host.penguin!==false;
+function say(text,dur=1.6){if(!showP)return;m.bubble={text:tx(text),t:0,dur}}
 function pop(text,x,y,size=44,col='#fff'){parts.push({k:'text',text:tx(text),x,y,vx:0,vy:-40,life:0,max:.9,size,col,rot:rnd(-.2,.2)})}
 function dust(x,y,n=6,s=1){for(let i=0;i<n;i++)parts.push({k:'dust',x:x+rnd(-10,10),y:y-rnd(0,6),vx:rnd(-60,60)*s,vy:rnd(-60,-10)*s,life:0,max:rnd(.4,.8),r:rnd(5,10)*s})}
 function hearts(x,y){parts.push({k:'heart',x:x+rnd(-14,14),y,vx:rnd(-20,20),vy:-70,life:0,max:1.1,r:rnd(7,10)})}
@@ -294,6 +296,8 @@ function launch(){
   if(mode!=='browse'||!B.length)return;const b=cur();
   if(b.st==='closed'){say('설치부터 할게!');sfx('tick');host.onInstall(sel);return}
   if(b.st==='downloading'){say(host.lang==='en'?`Only ${Math.floor(b.p)}% so far…`:`아직 ${Math.floor(b.p)}%야…`);if(m.state==='idle')setState('sit');return}
+  // no penguin on the street: the door opens and the page follows
+  if(!showP){mode='launching';b.doorTarget=1;sfx('door');setTimeout(()=>{if(mode==='launching')enterDone()},380);return}
   // a bad mood or a tumble never cancels it: busy now → it goes as soon as it's back on its feet
   if(['enter','inside','exit'].includes(m.state))return;
   if(BUSY.includes(m.state)){m.queued=true;say(m.state==='held'?'내려줘!!':'잠깐만…',1);return}
@@ -1314,7 +1318,7 @@ function drawFrame(){
   // where the picked building is, for page overlays that follow it (stage px)
   if(host.onFrame&&B.length){const b=cur(),top=SIDE-b.bh;host.onFrame({x:b.cx+ox,roof:top,cardTop:top+b.L.card.y,cardBottom:top+b.L.card.y+CH,awning:top+b.L.awn.y,door:top+b.L.door.y,ground:SIDE,S,offX:parseFloat(cv.style.left)||0,offY:parseFloat(cv.style.top)||0})}
   const f=faceFrom();
-  if(m.behind){ctx.save();drawMinimi(m.x+ox+(m.sulkKind==='hide'?m.side*m.peek*16:0),f);ctx.restore()}
+  if(showP&&m.behind){ctx.save();drawMinimi(m.x+ox+(m.sulkKind==='hide'?m.side*m.peek*16:0),f);ctx.restore()}
   Z?drawGroundNeon(ox):drawGround(sk);
   const lampXs=[];const li0=Math.max(-1,Math.floor((camX-900)/SP)),li1=Math.min(B.length-1,Math.ceil((camX+900)/SP));for(let i=li0;i<=li1;i++)lampXs.push(i*SP+SP/2);
   const vis=x=>x+ox>-420&&x+ox<W+420;
@@ -1322,15 +1326,15 @@ function drawFrame(){
   lampXs.forEach((x,i)=>{if(vis(x))drawLamp(x+ox,sk,false,i+li0)}); // in front of the shops
   lampTick(frameDt);lampXs.forEach((x,i)=>{lampLevel(i+li0,frameDt);if(vis(x))drawLamp(x+ox,sk,true,i+li0)});
   if(sk==='night'){ctx.fillStyle=Z?'rgba(20,6,40,.12)':'rgba(10,12,40,.18)';ctx.fillRect(-300,-300,W+600,H+600)}
-  if(!m.behind&&m.state!=='inside')drawMinimi(m.x+ox,f);
-  drawHand(ox);
+  if(showP&&!m.behind&&m.state!=='inside')drawMinimi(m.x+ox,f);
+  if(showP)drawHand(ox);
   drawParts(ox);
   if(Z)drawRain();
-  if(m.state!=='inside')drawBubble(m.x+ox);
+  if(showP&&m.state!=='inside')drawBubble(m.x+ox);
   ctx.restore();
   if(holes.length||flashT>0||beamT>0)drawHoles();
   // off-screen marker
-  const msx=m.x+ox;if(m.state!=='inside'&&!rushNow&&(msx<-20||msx>W+20)){const side=msx<0?-1:1,x=side<0?34:W-34,y=FEET-40;ctx.fillStyle='rgba(22,17,30,.8)';ell(ctx,x,y,24,24);ctx.fill();ctx.fillStyle=Z?'#4b5249':'#33405e';ell(ctx,x,y+2,16,15);ctx.fill();ctx.fillStyle='#fff';ell(ctx,x-4,y+1,6,6);ctx.fill();ell(ctx,x+4,y+1,6,6);ctx.fill();ctx.fillStyle='#26283a';ell(ctx,x-4,y,1.8,2.4);ctx.fill();ell(ctx,x+4,y,1.8,2.4);ctx.fill();ctx.fillStyle='#ff9d3a';ell(ctx,x,y+6,3,2);ctx.fill();ctx.fillStyle='#ffb938';ctx.beginPath();ctx.moveTo(x+side*30,y);ctx.lineTo(x+side*22,y-7);ctx.lineTo(x+side*22,y+7);ctx.fill()}
+  const msx=m.x+ox;if(showP&&m.state!=='inside'&&!rushNow&&(msx<-20||msx>W+20)){const side=msx<0?-1:1,x=side<0?34:W-34,y=FEET-40;ctx.fillStyle='rgba(22,17,30,.8)';ell(ctx,x,y,24,24);ctx.fill();ctx.fillStyle=Z?'#4b5249':'#33405e';ell(ctx,x,y+2,16,15);ctx.fill();ctx.fillStyle='#fff';ell(ctx,x-4,y+1,6,6);ctx.fill();ell(ctx,x+4,y+1,6,6);ctx.fill();ctx.fillStyle='#26283a';ell(ctx,x-4,y,1.8,2.4);ctx.fill();ell(ctx,x+4,y,1.8,2.4);ctx.fill();ctx.fillStyle='#ff9d3a';ell(ctx,x,y+6,3,2);ctx.fill();ctx.fillStyle='#ffb938';ctx.beginPath();ctx.moveTo(x+side*30,y);ctx.lineTo(x+side*22,y-7);ctx.lineTo(x+side*22,y+7);ctx.fill()}
 }
 
 
@@ -1354,7 +1358,7 @@ function on(type,fn){cv.addEventListener(type,fn);listeners.push([type,fn])}
 let P=null,lastTap={t:0,x:0};
 function stagePt(e){const r=cv.getBoundingClientRect();return{x:(e.clientX-r.left)*W/r.width,y:(e.clientY-r.top)*H/r.height}}
 function toWorld(p){const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*.5*Math.PI/180,c=Math.cos(-tilt),s=Math.sin(-tilt),dx=p.x-640,dy=p.y-400;return{x:dx*c-dy*s+640-640+camX-camKick,y:dx*s+dy*c+400}}
-function overMinimi(w,pad=0){if(['inside','enter','exit'].includes(m.state)||m.alpha<.5)return false;const cy=m.y-R*1.15*m.scale;return Math.hypot(w.x-m.x,(w.y-cy)*.75)<R*1.5+pad+(m.behind?14:0)}
+function overMinimi(w,pad=0){if(!showP)return false;if(['inside','enter','exit'].includes(m.state)||m.alpha<.5)return false;const cy=m.y-R*1.15*m.scale;return Math.hypot(w.x-m.x,(w.y-cy)*.75)<R*1.5+pad+(m.behind?14:0)}
 on('pointerdown',e=>{
   if(mode==='playing'){return}
   cv.setPointerCapture(e.pointerId);const p=stagePt(e),w=toWorld(p),now=view.performance.now();
@@ -1418,6 +1422,7 @@ function flipCard(){const b=B[sel];if(!b||mode!=='browse'||!b.game.info)return;f
 const pad={touch:false,click:false,x:0,y:0,px:0,py:0},hand={pending:null,poke:-9,pokeSide:1,a:0,x:0,y:0,grip:false,ax:0,ay:0,bx:0,by:0,hist:[],wig:0,pat:0,patting:false,patAt:0,px:null,py:null};
 const HAND_OFF=['enter','inside','exit','air','splatW','splatG','shoot','brace','roll'];
 function padInput(st){
+  if(!showP){pad.touch=pad.click=false;return}
   const wasClick=pad.click;pad.touch=!!st.touch;pad.click=!!st.click;if(pad.touch){pad.x=st.x;pad.y=st.y}
   // a click: short = a poke (like tapping the screen), held or dragged = pick the penguin up
   if(pad.click&&!wasClick&&!hand.grip&&pad.touch&&(mode==='browse'||mode==='launching')&&!HAND_OFF.includes(m.state)&&!P)hand.pending={t:T,x:pad.x,y:pad.y};
@@ -1516,6 +1521,8 @@ function drawHand(ox){
   }
   ctx.restore();
 }
+/** Show or hide the penguin (Quick Access). Hidden, the street is just the street. */
+function setPenguin(on){showP=!!on;if(!showP){hand.grip=false;hand.pending=null;m.bubble=null;m.react=null;if(!['enter','inside','exit','goDoor'].includes(m.state)){m.y=FEET;m.rot=0;m.vx=m.vy=0;setState('idle')}}}
 function setGames(list,selAppid){
   const prevSel=B[sel]?.appid;
   B=list.map((g,i)=>makeBuilding(g,i));
@@ -1542,7 +1549,7 @@ function setCardStyle(st){st=st==='capsule'?'capsule':'wide';if(st===cardStyle)r
 function setActive(on){active=!!on;if(active){start()}else stop()}
 function destroy(){active=false;stop();clearTimeout(moodSaveT);try{host.saveMood(Math.round(mood))}catch(e){};listeners.forEach(([t,f])=>cv.removeEventListener(t,f));B=[]}
 setTimeout(()=>{if(mode==='browse')say('안녕!',1.6)},600);
-return {fit,flipCard,padInput,emerge,poke,setLampDim,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
+return {fit,flipCard,padInput,setPenguin,emerge,poke,setLampDim,setGames,patchGames,setTheme,setSky,setCardStyle,setActive,destroy,nav,select,launch,goBack,cancelLaunch,shake,
   get selected(){return sel},get mode(){return mode},get mood(){return mood},set mood(v){mood=clamp(v,0,100);saveMood()},
   get debug(){return {m,B,camX,camKick,lampLv,lampRate}}};
 }

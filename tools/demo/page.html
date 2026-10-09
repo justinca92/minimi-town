@@ -1,0 +1,151 @@
+<title>Minimi Town</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Jua&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: one column — the street as the hero, the controller strip under it, then two short reference lists. */
+:root {
+  color-scheme: dark;
+  --bg: #17131d;        /* plum-black, the street at night */
+  --panel: #221c2b;
+  --line: #3a3146;
+  --fg: #f3ece0;        /* warm cream, the shop signs */
+  --muted: #b4a9bf;
+  --accent: #ffb938;    /* the penguin's feet */
+  --neon: #3ff0ff;
+  --font-display: "Jua", "Noto Sans KR", system-ui, sans-serif;
+  --font-body: "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-key: "Black Han Sans", "Jua", system-ui, sans-serif;
+}
+:root[data-street="neon"] { --accent: #ff3fa4; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1120px; margin: 0 auto; padding-inline: 20px; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 22px; }
+header { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 24px; }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: clamp(34px, 5vw, 52px); line-height: 1; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+h1 .dot { color: var(--accent); transition: color .4s; }
+.tag { margin: 8px 0 0; color: var(--muted); max-width: 60ch; }
+.links { display: flex; gap: 10px; flex-wrap: wrap; }
+.links a { color: var(--fg); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px; font-weight: 500; font-size: 14px; }
+.links a:hover, .links a:focus-visible { border-color: var(--accent); outline: none; }
+.links a.primary { background: var(--accent); color: #1b1220; border-color: var(--accent); }
+
+#stage { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 10; border-radius: 16px; overflow: hidden; background: #0d0b12; border: 1px solid var(--line); }
+#street { position: absolute; display: block; touch-action: none; outline: none; }
+#page { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(13, 11, 18, .86); backdrop-filter: blur(6px); padding: 16px; }
+#page .card { width: min(520px, 100%); display: flex; flex-direction: column; gap: 14px; }
+#page img { width: 100%; border-radius: 10px; display: block; }
+#page h2 { font-family: var(--font-display); font-weight: 400; font-size: 28px; margin: 0; }
+#page p { margin: 0; color: var(--muted); font-size: 14px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.btn { font: inherit; font-weight: 700; border-radius: 10px; padding: 9px 16px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.btn.play { background: var(--accent); color: #1b1220; border-color: var(--accent); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#toast { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 8px 16px; font-size: 14px; white-space: nowrap; max-width: calc(100% - 32px); overflow: hidden; text-overflow: ellipsis; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 14px 18px; align-items: center; justify-content: space-between; }
+.pad { display: flex; gap: 8px; flex-wrap: wrap; }
+.key { font-family: var(--font-key); font-size: 16px; min-width: 46px; height: 46px; border-radius: 12px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; display: grid; place-items: center; padding: 0 12px; }
+.key small { font-family: var(--font-body); font-size: 11px; color: var(--muted); margin-left: 6px; font-weight: 500; }
+.key:hover { border-color: var(--accent); }
+.key:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.key.a { background: var(--accent); color: #1b1220; border-color: var(--accent); }
+.key.a small { color: #3a2a18; }
+.opts { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.opt { display: flex; flex-direction: column; gap: 4px; }
+.opt[data-off] { opacity: .4; pointer-events: none; }
+.opt > span { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; padding: 6px 11px; background: transparent; color: var(--muted); border: 0; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--fg); box-shadow: inset 0 -2px 0 var(--accent); }
+.seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.ref { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px 32px; }
+.ref section { min-width: 0; }
+.ref h3 { font-family: var(--font-display); font-weight: 400; font-size: 21px; margin: 0 0 8px; }
+.ref dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; }
+.ref dt { font-family: var(--font-key); color: var(--accent); white-space: nowrap; }
+.ref dd { margin: 0; color: var(--muted); }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; }
+@media (prefers-reduced-motion: reduce) { h1 .dot { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Minimi Town<span class="dot">.</span></h1>
+      <p class="tag">Your Steam Deck library as a little street. Every game is a storefront, and a baby penguin walks to whichever one you pick. This is the plugin's own street running in your browser, with made-up games.</p>
+    </div>
+    <nav class="links" aria-label="Project links">
+      <a class="primary" href="https://github.com/justinca92/minimi-town/releases/latest">Download for Decky</a>
+      <a href="https://github.com/justinca92/minimi-town">GitHub</a>
+    </nav>
+  </header>
+
+  <div id="stage">
+    <canvas id="street" tabindex="0" aria-label="Minimi Town street. Arrow keys move, Enter goes in, X shows game info, Y shakes the street."></canvas>
+    <div id="page" hidden>
+      <div class="card" role="dialog" aria-labelledby="page-title">
+        <img id="page-art" alt="">
+        <h2 id="page-title"></h2>
+        <p>On the Deck, Steam's own game page opens here (Play, Install, achievements). Come back and the penguin steps out of the same door.</p>
+        <div class="row">
+          <button class="btn play" type="button" disabled>▶ Play</button>
+          <button class="btn" id="page-back" type="button">Back to the street (Esc)</button>
+        </div>
+      </div>
+    </div>
+    <div id="toast" hidden></div>
+  </div>
+
+  <div class="controls">
+    <div class="pad" aria-label="Buttons">
+      <button class="key" type="button" data-act="left" aria-label="Previous game">◀</button>
+      <button class="key" type="button" data-act="right" aria-label="Next game">▶</button>
+      <button class="key a" type="button" data-act="a">Ⓐ<small>go in</small></button>
+      <button class="key" type="button" data-act="x">Ⓧ<small>info</small></button>
+      <button class="key" type="button" data-act="y">Ⓨ<small>shake</small></button>
+    </div>
+    <div class="opts">
+      <div class="opt"><span>Theme</span><div class="seg" id="opt-theme"><button type="button" data-v="town" aria-pressed="true">Minimi Town</button><button type="button" data-v="neon" aria-pressed="false">Neon Rain City</button></div></div>
+      <div class="opt" id="opt-sky-wrap"><span>Sky</span><div class="seg" id="opt-sky"><button type="button" data-v="auto" aria-pressed="false">Clock</button><button type="button" data-v="day" aria-pressed="true">Day</button><button type="button" data-v="dusk" aria-pressed="false">Dusk</button><button type="button" data-v="night" aria-pressed="false">Night</button></div></div>
+      <div class="opt"><span>Screens</span><div class="seg" id="opt-card"><button type="button" data-v="wide" aria-pressed="true">Wide</button><button type="button" data-v="capsule" aria-pressed="false">Tall</button></div></div>
+      <div class="opt"><span>Penguin</span><div class="seg" id="opt-penguin"><button type="button" data-v="true" aria-pressed="true">On</button><button type="button" data-v="false" aria-pressed="false">Off</button></div></div>
+      <div class="opt"><span>Sound</span><div class="seg" id="opt-sound"><button type="button" data-v="false" aria-pressed="true">Off</button><button type="button" data-v="true" aria-pressed="false">On</button></div></div>
+      <div class="opt"><span>Language</span><div class="seg" id="opt-lang"><button type="button" data-v="ko" aria-pressed="false">한국어</button><button type="button" data-v="en" aria-pressed="false">English</button></div></div>
+    </div>
+  </div>
+
+  <div class="ref">
+    <section>
+      <h3>Play with it</h3>
+      <dl>
+        <dt>◀ ▶</dt><dd>Move along the street (or swipe)</dd>
+        <dt>Enter</dt><dd>Ⓐ: the penguin walks in and the game's page opens</dd>
+        <dt>X</dt><dd>Ⓧ: the screen turns round to show playtime, achievements, friends</dd>
+        <dt>Y</dt><dd>Ⓨ: shake the street</dd>
+        <dt>Mouse</dt><dd>Click to poke the penguin, rub to pet it, drag and fling to throw it. Poke it too often and it gets cross.</dd>
+        <dt>Deck</dt><dd>The left trackpad is a hand: rub to pet, quick click to poke, hold to pick up, flick to throw.</dd>
+      </dl>
+    </section>
+    <section>
+      <h3>Reading the street</h3>
+      <dl>
+        <dt>OPEN</dt><dd>Played in the last 7 days</dd>
+        <dt>GRAND OPENING</dt><dd>New, never played</dd>
+        <dt>CLOSED</dt><dd>Not installed; scaffolding while it downloads</dd>
+        <dt>Dusty</dt><dd>Not played for months (run-down in Neon Rain City)</dd>
+        <dt>100–500h</dt><dd>Five playtime tiers: 단골, 인기, 명소, 명물, 전설. The building grows with each.</dd>
+        <dt>Medals</dt><dd>Achievements: bronze 50%, silver 80%, gold 100%</dd>
+      </dl>
+    </section>
+  </div>
+
+  <footer>Game titles and art on this page are invented for the demo. On your Deck the street shows your own Steam library.</footer>
+</div>
+
+<script type="module">
+/*DEMO_JS*/
+</script>

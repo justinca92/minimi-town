@@ -110,11 +110,11 @@ function QuickAccessPanel() {
           <ToggleField label={t.pSound} checked={s.soundEnabled} onChange={(v: boolean) => updateSettings({ soundEnabled: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
+          <ToggleField label={t.pPenguin} description={t.pPenguinDesc} checked={s.showPenguin} onChange={(v: boolean) => updateSettings({ showPenguin: v })} />
           <ToggleField label={t.pFun} checked={s.funSounds} onChange={(v: boolean) => updateSettings({ funSounds: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
           <ToggleField label={t.pHaptic} checked={s.hapticEnabled} onChange={(v: boolean) => updateSettings({ hapticEnabled: v })} />
-          <ToggleField label={t.pPadDebug} description={t.pPadDebugDesc} checked={!!s.padDebug} onChange={(v: boolean) => updateSettings({ padDebug: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
           <SliderField label={t.pMood(Math.round(s.mood))} value={Math.round(s.mood)} min={0} max={100} step={1} disabled={true} onChange={() => {}} />
