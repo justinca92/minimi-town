@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.21
+
+- Recently played shops hang a real OPEN sign: a little plate swinging on the door glass in Minimi Town, a classic window neon (blue frame, red letters) in Neon Rain City.
+- New games celebrate a GRAND OPENING: a ribbon banner over the door and two congratulation flower stands (축 개업 / CONG), next to the balloons. The NEW tag and pennant string are gone.
+
 ## 0.1.20
 
 - Ⓧ turns the picked shop's screen round to its info right away, and Ⓧ again turns it back (it then stays on the art while you rest there).

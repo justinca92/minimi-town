@@ -728,8 +728,16 @@ function drawBuilding(b,sk,ox){
   if(b.st==='downloading')drawScaffold(b,left,top);
   if(b.st==='new'||b.cele>0)drawBalloons(b,left,top);
   if(b.st==='recent'){ // OPEN neon + plant
-    const w=L.wins[1],x=left+w.x+w.w/2,y=top+w.y+w.h/2;ctx.font='14px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillStyle=`rgba(98,214,178,${.75+.25*Math.sin(T*3)})`;ctx.shadowColor='#62d6b2';ctx.shadowBlur=night?12:4;ctx.fillText('OPEN',x,y);ctx.shadowBlur=0;
+    if(Z){ // the classic window neon: blue tube frame, red letters
+      const w=L.wins[1],x=left+w.x+w.w/2,y=top+w.y+w.h/2,on=flick(b.i+3);ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+      ctx.fillStyle='rgba(8,6,14,.55)';rr(ctx,x-29,y-15,58,30,14);ctx.fill();
+      ctx.strokeStyle='#3fa8ff';ctx.shadowColor='#3fa8ff';ctx.shadowBlur=12;ctx.lineWidth=2.4;rr(ctx,x-27,y-13,54,26,12);ctx.stroke();
+      ctx.font='16px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=on>.5?'#ff3b4a':'rgba(255,59,74,.35)';ctx.shadowColor='#ff3b4a';ctx.shadowBlur=on>.5?14:0;ctx.fillText('OPEN',x,y+1);ctx.restore()}
+    else if(b.door<.3){ // a sign hung on the door glass, swinging a little
+      const sx=dx+d.w/2,sy=dy+16,sw2=Math.sin(T*1.6+b.i)*.05;ctx.save();ctx.translate(sx,sy);ctx.fillStyle='#8a7a60';ell(ctx,0,0,2,2);ctx.fill();ctx.rotate(sw2);
+      ctx.strokeStyle='#5a4a3a';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(-15,14);ctx.lineTo(0,0);ctx.lineTo(15,14);ctx.stroke();
+      ctx.fillStyle='rgba(0,0,0,.2)';rr(ctx,-24,15,50,24,5);ctx.fill();ctx.fillStyle='#fffaf0';rr(ctx,-25,13,50,24,5);ctx.fill();ctx.strokeStyle='#c8323c';ctx.lineWidth=2;rr(ctx,-22.5,15.5,45,19,3.5);ctx.stroke();
+      ctx.fillStyle='#c8323c';ctx.font='14px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('OPEN',0,26);ctx.restore()}
     const px=dx-22,py=SIDE;ctx.fillStyle='#a5583c';ctx.beginPath();ctx.moveTo(px-12,py-22);ctx.lineTo(px+12,py-22);ctx.lineTo(px+9,py);ctx.lineTo(px-9,py);ctx.fill();
     ctx.fillStyle='#4f9a5a';[[-8,-34,-.5],[0,-40,0],[8,-34,.5]].forEach(([a,bq,r])=>{ctx.save();ctx.translate(px+a,py+bq+Math.sin(T*2+a)*1);ctx.rotate(r);ell(ctx,0,0,5,11);ctx.fill();ctx.restore()})}
   premiumFront(b,left,top);
@@ -810,16 +818,35 @@ function drawScaffold(b,left,top){
   // cone
   const cx=left+BW-30;ctx.fillStyle='#ff7a2f';ctx.beginPath();ctx.moveTo(cx-12,SIDE+26);ctx.lineTo(cx,SIDE-6);ctx.lineTo(cx+12,SIDE+26);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(cx-7,SIDE+8,14,5);ctx.fillStyle='#ff7a2f';ctx.fillRect(cx-16,SIDE+24,32,5);
 }
+/** A new game's shop: a GRAND OPENING ribbon over the door and congratulation flower stands. */
+function drawGrandOpening(b,left,top){
+  const L=b.L,y=top+L.awn.y+L.awn.h+17,w=BW-70,x0=left+35,h=20,sw=Math.sin(T*2+b.i)*1.5;
+  ctx.save();
+  // swallowtail ends
+  [[x0,-1],[x0+w,1]].forEach(([ex,sd])=>{ctx.fillStyle=Z?'#5a0f3a':'#9e1f2a';ctx.beginPath();ctx.moveTo(ex,y-h/2+3);ctx.lineTo(ex+sd*20,y-h/2+3+sw);ctx.lineTo(ex+sd*13,y+3+sw);ctx.lineTo(ex+sd*20,y+h/2+3+sw);ctx.lineTo(ex,y+h/2+3);ctx.fill()});
+  ctx.fillStyle=Z?'#16081a':'#d6303c';rr(ctx,x0,y-h/2,w,h,3);ctx.fill();
+  ctx.strokeStyle=Z?'#ffd24a':'#ffd98a';ctx.lineWidth=1.5;if(Z){ctx.shadowColor='#ffd24a';ctx.shadowBlur=8}rr(ctx,x0+3,y-h/2+3,w-6,h-6,2);ctx.stroke();
+  if(Z){for(let k=0;k<14;k++){const on=((Math.floor(T*8)+k)%3)===0;ctx.fillStyle=on?'#fff3b0':'rgba(255,210,74,.35)';ell(ctx,x0+6+k*(w-12)/13,y-h/2-3,1.8,1.8);ctx.fill()}}
+  ctx.font='13px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle=Z?'#ffe27a':'#fff6d8';ctx.fillText('GRAND OPENING',left+BW/2,y+1);
+  ctx.restore();
+  // flower stands on both sides of the door (축 개업)
+  const d=L.door;[left+d.x-26,left+d.x+d.w+26].forEach((fx,q)=>{
+    const fy=SIDE-58,r=19;ctx.strokeStyle=Z?'#2a2533':'#7a5a3a';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(fx,fy);ctx.lineTo(fx-11,SIDE);ctx.moveTo(fx,fy);ctx.lineTo(fx+11,SIDE);ctx.moveTo(fx,fy);ctx.lineTo(fx,SIDE);ctx.stroke();
+    const pet=Z?['#ff3fa4','#ffd24a','#b26bff']:['#ff8fa8','#fff2a8','#ffb6c9'];
+    for(let k=0;k<12;k++){const a=k/12*Math.PI*2;ctx.fillStyle=pet[k%3];if(Z){ctx.shadowColor=pet[k%3];ctx.shadowBlur=6}ell(ctx,fx+Math.cos(a)*r,fy-14+Math.sin(a)*r,6.5,6.5);ctx.fill()}
+    ctx.shadowBlur=0;ctx.fillStyle=Z?'#2a1030':'#5f9a54';ell(ctx,fx,fy-14,11,11);ctx.fill();
+    // the ribbon hanging down the middle
+    ctx.fillStyle=Z?'#ffd24a':'#d6303c';ctx.fillRect(fx-5,fy-14,10,40);ctx.fillStyle=Z?'#16081a':'#fff6d8';ctx.font='8px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';
+    (host.lang==='en'?['C','O','N','G']:['축','개','업']).forEach((ch,k)=>ctx.fillText(ch,fx,fy-6+k*10));
+  });
+}
 function drawBalloons(b,left,top){
   const L=b.L,cols=['#ff7f8e','#ffb938','#86c9ff','#62d6b2','#c79bff'];
   [[left+6,-1],[left+BW-6,1]].forEach(([ax,sd],q)=>{
     const ay=SIDE-10;for(let k=0;k<3;k++){const bx=ax+sd*(10+(k%2)*14)+Math.sin(T*1.6+k+q)*5,by=top+L.card.y+CH-10-k*34+Math.cos(T*1.3+k)*4;
       ctx.strokeStyle='rgba(255,255,255,.7)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(ax,ay);ctx.quadraticCurveTo(ax+sd*8,(ay+by)/2,bx,by+18);ctx.stroke();
       ctx.fillStyle=cols[(k+q*2+b.i)%5];ell(ctx,bx,by,13,16);ctx.fill();ctx.fillStyle='rgba(255,255,255,.45)';ell(ctx,bx-4,by-6,3,5);ctx.fill();ctx.fillStyle=cols[(k+q*2+b.i)%5];ctx.beginPath();ctx.moveTo(bx-3,by+18);ctx.lineTo(bx+3,by+18);ctx.lineTo(bx,by+14);ctx.fill()}});
-  // pennant string + NEW tag
-  const y0=top+L.awn.y+L.awn.h+7; // under the sign, so it never covers itctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(left+14,y0);ctx.quadraticCurveTo(left+BW/2,y0+18,left+BW-14,y0);ctx.stroke();
-  for(let k=1;k<10;k++){const t=k/10,x=lerp(left+14,left+BW-14,t),y=y0+18*4*t*(1-t)*.5*2;ctx.fillStyle=cols[k%5];ctx.beginPath();ctx.moveTo(x-7,y);ctx.lineTo(x+7,y);ctx.lineTo(x,y+12);ctx.fill()}
-  if(b.st==='new'){const tx=left+L.card.x+CW-6,ty=top+L.card.y-4;ctx.save();ctx.translate(tx,ty);ctx.rotate(.18);ctx.fillStyle='#ffb938';rr(ctx,-26,-12,52,24,6);ctx.fill();ctx.fillStyle='#1b1420';ctx.font='15px '+HEAVY;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('NEW',0,1);ctx.restore()}
+  if(b.st==='new')drawGrandOpening(b,left,top);
 }
 
 /* the minimi: an original round baby penguin (scarf in town; in the neon city tactical gear: short-sleeve shirt, leather shoulder rig, fingerless gloves, toy blaster) */

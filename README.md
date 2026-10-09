@@ -8,7 +8,7 @@
 
 - **A street instead of a row of tiles.** Each game gets its own building (same building every time), with the game's art on its screen.
 - **The name is on the shop.** Each storefront's sign carries the game's name; in Neon Rain City a little square blade sign shows the game's icon in neon. Rest on a shop for 3 seconds and its screen turns round to show playtime, last played, achievements and friends playing.
-- **Buildings tell you what's going on.** Recently played (lights on, OPEN sign, a plant by the door), new (balloons and a NEW tag), not installed (shutter and CLOSED sign), downloading (scaffolding with a progress banner), not played for months (dust and cobwebs).
+- **Buildings tell you what's going on.** Recently played (an OPEN sign and a plant by the door), new (GRAND OPENING: a ribbon banner, flower stands and balloons), not installed (shutter and CLOSED sign), downloading (scaffolding with a progress banner), not played for months (dust and cobwebs).
 - **Playtime tiers.** 100 h+ *Regular*, 200 h+ *Landmark* and 500 h+ *Legend* storefronts get fancier: gold trim and flower boxes, string lights, flags and searchlights, then a golden dome and a red carpet. Each theme has its own version.
 - **Two themes.** *Minimi Town*, a sunny street whose sky follows the clock, and *Neon Rain City*, always a rainy night, with wet-street reflections, neon signs and CRT storefront screens.
 - **A penguin with moods.** It follows you along the street, sprints if you rush, trips sometimes, and arrives out of breath. Poke it, fling it into a wall, or pet it with the touchscreen. Bother it too much and it sulks in an alley until you cheer it up.
