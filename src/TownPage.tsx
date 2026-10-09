@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createTown, TownGame, TownStatus } from "./town/engine";
 import { AppExtra, cachedAchievements, downloadProgress, GameEntry, loadLibrary, openGamePage, overviewMinutes, subscribeAppExtra } from "./games";
 import { friendsPlayingMap } from "./friends";
-import { padRecentlyTouched, subscribeLeftPad } from "./padInput";
+import { noteDir, padDiag, padRecentlyTouched, subscribeLeftPad } from "./padInput";
 import { openNativeGameMenu } from "./nativeMenu";
 import { findHeaderSearch, focusFirstIn } from "./steamDom";
 import { getSettings, updateSettings, useSettings } from "./settings";
@@ -78,6 +78,21 @@ interface Props {
   active: boolean;                // false while Steam's sections are shown
   onTownFocus?: () => void;
   onRequestSections?: () => void; // R2 → What's New / Friends / Recommended
+}
+
+/** Trackpad diagnostic (Quick Access → Minimi Town): what each input channel reports, live. */
+function PadDebug() {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => tick((n) => n + 1), 100);
+    return () => clearInterval(iv);
+  }, []);
+  const d = padDiag;
+  return (
+    <div style={{ position: "absolute", left: 12, top: 50, zIndex: 5, pointerEvents: "none", padding: "8px 10px", borderRadius: 8, background: "rgba(0,0,0,.72)", color: "#9fffb0", font: "13px/1.45 monospace", whiteSpace: "pre" }}>
+      {`state feed  ${d.state}  ${d.stateBits}\ninput msgs  ${d.input}  ${d.inputLast}\nanalog      ${d.analog}  ${d.analogLast}\nui events   ${d.ui}  ${d.uiLast}\nlast d-pad  ${d.dirLast}\nmerged      ${d.merged}`}
+    </div>
+  );
 }
 
 export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
@@ -217,7 +232,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
     if (!active || !winFocused || !boxRef.current?.isConnected) return; // a detached copy of the home doesn't listen
     let off = () => {};
     let gone = false;
-    off = subscribeLeftPad((st) => {
+    off = subscribeLeftPad(boxRef.current?.ownerDocument, (st) => {
       if (boxRef.current?.isConnected) return engine.current?.padInput(st);
       if (!gone) {
         gone = true; // this copy of the home was taken out of the page: stop listening
@@ -314,11 +329,17 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
   latest.current = {
     dir: (e: any) => {
       const b = e?.detail?.button;
-      // A left-trackpad click arrives as a D-pad press too: the pad is the hand now, not a way to move.
-      if (padRecentlyTouched() && (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT || b === GamepadButton.DIR_UP || b === GamepadButton.DIR_DOWN)) return consume(e);
+      if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT || b === GamepadButton.DIR_UP || b === GamepadButton.DIR_DOWN) noteDir(b, e?.detail?.source);
       if (b === GamepadButton.DIR_LEFT || b === GamepadButton.DIR_RIGHT) {
-        engine.current?.nav(b === GamepadButton.DIR_RIGHT ? 1 : -1);
-        return consume(e);
+        consume(e);
+        // The left trackpad also arrives as D-pad presses, and its touch can be reported a moment
+        // later: wait a beat, and move only if no thumb is on the pad (the pad is the hand now).
+        if (padRecentlyTouched()) return;
+        const d = b === GamepadButton.DIR_RIGHT ? 1 : -1;
+        setTimeout(() => {
+          if (!padRecentlyTouched()) engine.current?.nav(d);
+        }, 45);
+        return;
       }
       // ▲ / ▼ do nothing on the street (L2 / R2 replace them).
       if (b === GamepadButton.DIR_UP || b === GamepadButton.DIR_DOWN) return consume(e);
@@ -400,6 +421,7 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
           <span style={{ fontSize: 26, color: "#fff", textShadow: neon ? "0 0 10px #ff3fa4, 0 0 22px rgba(255,63,164,.6)" : "0 2px 0 rgba(0,0,0,.35)" }}>{neon ? t.brandNeon : t.brandTown}</span>
           <span style={{ fontSize: 14, fontWeight: 600, padding: "4px 11px", borderRadius: 99, background: "rgba(20,16,28,.55)", color: "#fff", fontFamily: "Motiva Sans, sans-serif" }}>{t.games(games.length)}</span>
         </div>
+        {s.padDebug ? <PadDebug /> : null}
         {games.length === 0 ? (
           <div style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", color: "#fff", fontFamily: display, fontSize: 22, padding: 40, textAlign: "center" }}>{t.empty}</div>
         ) : null}

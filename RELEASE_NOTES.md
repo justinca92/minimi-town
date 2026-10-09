@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.30
+
+- Left trackpad fix: it kept moving along the street and never reached the penguin. The pad is now read from every channel the Steam client offers (controller state, input messages, analog position, the UI's own pad events), and a D-pad press is held for a split second to check it didn't come from the pad, so a pad touch that's reported a moment late still doesn't move the street.
+- New Quick Access toggle "Show trackpad diagnostic": a small live readout of what each channel sees, to send in if the pad still doesn't work on your device.
+
 ## 0.1.29
 
 - The left trackpad is the penguin's hand now (Steam Deck, Steam Controller, Steam Machine): a cartoon glove appears while your thumb is on the pad. Rub without clicking to pet it (it cheers up); click to grab it, keep your thumb on the pad to carry it around, then flick and lift your thumb to throw it (lift slowly to just put it down). Left-pad clicks no longer move along the street; the D-pad still does.

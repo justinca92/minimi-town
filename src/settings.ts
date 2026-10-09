@@ -22,6 +22,7 @@ export interface TownSettings {
   mood: number;           // the penguin's mood, 0–100 (it remembers being bothered)
   language: "auto" | "ko" | "en";
   barLook?: { color: string; image: string; backdrop: string }; // Steam's opaque top bar, learned
+  padDebug?: boolean;     // show the trackpad diagnostic over the street
 }
 
 export const DEFAULTS: TownSettings = {

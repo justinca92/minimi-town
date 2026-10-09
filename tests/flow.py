@@ -53,12 +53,27 @@ FLOW = """async () => {
   const pkt = (b, x = 0, y = 0) => window.__pad?.([{ ulButtons: b, sLeftPadX: x, sLeftPadY: y }]);
   log.push(['pad feed registered while shown', window.__padRegs, 'streets in DOM', document.querySelectorAll('[data-minimi-town]').length, 'canvases', document.querySelectorAll('[data-minimi-town] canvas').length]);
   const selBefore = document.querySelector('[data-minimi-sel]').dataset.minimiSel;
+  const sel = () => document.querySelector('[data-minimi-sel]').dataset.minimiSel;
   pkt((1 << 19) | (1 << 17), 30000, 0); const pd = ev(12); town().__props.onGamepadDirection(pd); await sleep(300);
-  log.push(['pad click ▶: consumed, no move', !!pd.p, document.querySelector('[data-minimi-sel]').dataset.minimiSel === selBefore]);
+  log.push(['pad click ▶ (state feed): no move', !!pd.p, sel() === selBefore]);
   pkt(0); await sleep(50); log.push(['  after a touch, listeners left (stale copy let go)', window.__padRegs]);
-  await sleep(1150);
+  await sleep(400);
+  // touch reported a moment AFTER the D-pad press
+  town().__props.onGamepadDirection(ev(12)); await sleep(15); window.__inmsg?.(0, 38, true); await sleep(300); window.__inmsg?.(0, 38, false);
+  log.push(['pad ▶ with late touch (input msgs): no move', sel() === selBefore]);
+  await sleep(400);
+  // analog position only
+  for (let i = 0; i < 5; i++) { window.__analog?.([{ nA: 14, x: 0.2 * i, y: 0.1, nC: 0 }]); await sleep(16); }
+  const pa = ev(13); town().__props.onGamepadDirection(pa); await sleep(300);
+  log.push(['pad ◀ while analog moving: no move', sel() === selBefore]);
+  await sleep(500);
+  // UI gamepad events
+  const vgpe = (type, button) => document.dispatchEvent(new CustomEvent(type, { bubbles: true, detail: { button } }));
+  vgpe('vgp_onbuttondown', 19); town().__props.onGamepadDirection(ev(12)); await sleep(300); vgpe('vgp_onbuttonup', 19);
+  log.push(['pad ▶ with UI touch event: no move', sel() === selBefore]);
+  await sleep(500);
   const dd = ev(12); town().__props.onGamepadDirection(dd); await sleep(300);
-  log.push(['real D-pad ▶ still moves', document.querySelector('[data-minimi-sel]').dataset.minimiSel !== selBefore]);
+  log.push(['real D-pad ▶ still moves', sel() !== selBefore]);
   town().__props.onGamepadDirection(ev(13)); await sleep(1500);
   // Ⓐ: the penguin walks in, then the game's page opens (nothing starts by itself)
   window.__nav = null;

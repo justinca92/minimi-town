@@ -114,6 +114,7 @@ function QuickAccessPanel() {
         </PanelSectionRow>
         <PanelSectionRow>
           <ToggleField label={t.pHaptic} checked={s.hapticEnabled} onChange={(v: boolean) => updateSettings({ hapticEnabled: v })} />
+          <ToggleField label={t.pPadDebug} description={t.pPadDebugDesc} checked={!!s.padDebug} onChange={(v: boolean) => updateSettings({ padDebug: v })} />
         </PanelSectionRow>
         <PanelSectionRow>
           <SliderField label={t.pMood(Math.round(s.mood))} value={Math.round(s.mood)} min={0} max={100} step={1} disabled={true} onChange={() => {}} />
