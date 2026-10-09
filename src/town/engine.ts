@@ -840,8 +840,11 @@ function premiumBack(b,left,top,sk){
         const on=(k+sh)%4===0;ctx.fillStyle=on?(t>=5?'#ffe14d':b.neon):'rgba(255,255,255,.14)';ell(ctx,x,y,on?2.7:1.8,on?2.7:1.8);ctx.fill()}}
     if(t>=4){ // 350h: the spinning neon crown
       ctx.save();ctx.globalCompositeOperation='lighter';ctx.translate(cx,top-66);ctx.strokeStyle='#ffe14d';ctx.shadowColor='#ffe14d';ctx.shadowBlur=16;ctx.lineWidth=2.5;
+      if(t>=5){ // 500h: the crown runs through the rainbow as it turns
+        const h0=(T*70)%360,rg=ctx.createLinearGradient(-34,0,34,0);for(let k=0;k<=4;k++)rg.addColorStop(k/4,`hsl(${(h0+k*55)%360},100%,62%)`);
+        ctx.strokeStyle=rg;ctx.shadowColor=`hsl(${(h0+110)%360},100%,60%)`;ctx.lineWidth=3}
       ctx.save();ctx.scale(Math.abs(Math.cos(T*1.4))*.85+.15,1);ctx.beginPath();ctx.moveTo(-34,14);ctx.lineTo(-34,-10);ctx.lineTo(-17,4);ctx.lineTo(0,-18);ctx.lineTo(17,4);ctx.lineTo(34,-10);ctx.lineTo(34,14);ctx.closePath();ctx.stroke();ctx.restore();
-      ctx.lineWidth=1.5;ctx.strokeStyle='rgba(255,225,77,.55)';ell(ctx,0,24,48,8);ctx.stroke();ctx.restore()}
+      ctx.lineWidth=1.5;ctx.strokeStyle=t>=5?`hsla(${(T*70+180)%360},100%,65%,.6)`:'rgba(255,225,77,.55)';ell(ctx,0,24,48,8);ctx.stroke();ctx.restore()}
     if(t>=5){ // 500h: the neon carpet
       carpet(dx,d,'#3a0f2a');ctx.save();ctx.strokeStyle='#ffe14d';ctx.shadowColor='#ffe14d';ctx.shadowBlur=10;ctx.lineWidth=2;ctx.stroke();ctx.restore();
       for(let k=0;k<5;k++){const u=(k/5+T*.6)%1;ctx.fillStyle=hexA('#ffe14d',.8*(1-u));ell(ctx,dx+d.w/2,SIDE+u*52,lerp(10,26,u),2);ctx.fill()}}

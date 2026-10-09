@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.41
+
+- Neon Rain City's 500h crown turns through the rainbow as it spins (its ring follows), while the hologram koi go gold and orange.
+
 ## 0.1.40
 
 - Neon Rain City's 500h buildings no longer get the glowing gold outline round the whole building (Minimi Town keeps its gold edge); everything else of the Legend tier stays.
