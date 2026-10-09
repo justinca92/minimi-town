@@ -45,7 +45,7 @@ const CHIP: Record<TownStatus, string> = { recent: "#62d6b2", dusty: "#b9adc2", 
 interface Props {
   active: boolean;                // false while Steam's sections are shown
   onTownFocus?: () => void;
-  onRequestSections?: () => void; // R1 → What's New / Friends / Recommended
+  onRequestSections?: () => void; // R2 → What's New / Friends / Recommended
 }
 
 export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
@@ -244,16 +244,16 @@ export function TownPage({ active, onTownFocus, onRequestSections }: Props) {
         engine.current?.nav(b === GamepadButton.DIR_RIGHT ? 1 : -1);
         return consume(e);
       }
-      // ▲ / ▼ do nothing on the street (L1 / R1 replace them).
+      // ▲ / ▼ do nothing on the street (L2 / R2 replace them).
       if (b === GamepadButton.DIR_UP || b === GamepadButton.DIR_DOWN) return consume(e);
     },
     down: (e: any) => {
       const b = e?.detail?.button;
-      if (b !== GamepadButton.BUMPER_LEFT && b !== GamepadButton.BUMPER_RIGHT) return;
+      if (b !== GamepadButton.TRIGGER_LEFT && b !== GamepadButton.TRIGGER_RIGHT) return;
       consume(e);
       if (e?.detail?.is_repeat || Date.now() - activeSince.current < ARRIVAL_IGNORE_MS) return;
-      if (b === GamepadButton.BUMPER_LEFT) {
-        // L1: Steam's search, like ▲ on the stock home.
+      if (b === GamepadButton.TRIGGER_LEFT) {
+        // L2: Steam's search, like ▲ on the stock home.
         const box = findHeaderSearch(boxRef.current?.ownerDocument);
         if (box) box.focus();
         else Navigation.Navigate("/search");

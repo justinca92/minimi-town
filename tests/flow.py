@@ -27,12 +27,17 @@ FLOW = """async () => {
   log.push(['▶▶ HUD', hud()]);
   const up = ev(9); town().__props.onGamepadDirection(up); log.push(['▲ on street consumed, no nav', !!up.p, window.__nav ?? 'none', box.style.left]);
   await sleep(600);
-  town().__props.onButtonDown(ev(6)); await sleep(500); log.push(['R1 → sections slide in from the right (left)', box.style.left, 'top stays', box.style.top]);
+  const r1 = ev(6); town().__props.onButtonDown(r1); await sleep(400); log.push(['R1 does nothing now', box.style.left]);
+  town().__props.onButtonDown(ev(8)); await sleep(500); log.push(['R2 → sections slide in from the right', box.style.left, 'top stays', box.style.top]);
   await sleep(900);
-  const bb = ev(2); sec.__props.onButtonDown(bb); await sleep(500); log.push(['Ⓑ → back to street', box.style.left, 'consumed', !!bb.p]);
+  const row2b = [...document.querySelectorAll('button')].find((b) => b.textContent === 'row2'); row2b.focus();
+  const b1 = ev(2); sec.__props.onButtonDown(b1); await sleep(50); log.push(['Ⓑ deep → to top', document.activeElement?.textContent, 'consumed', !!b1.p, box.style.left]);
+  const b2 = ev(2); sec.__props.onButtonDown(b2); log.push(['Ⓑ at top → Steam (not consumed)', !b2.p, box.style.left]);
+  const l2 = ev(7); sec.__props.onButtonDown(l2); await sleep(500); log.push(['L2 → back to street', box.style.left, 'consumed', !!l2.p]);
+  await sleep(700);
   await sleep(700);
   document.activeElement?.blur?.();
-  town().__props.onButtonDown(ev(5)); await sleep(50); log.push(['L1 → search focused', document.activeElement?.tagName]);
+  town().__props.onButtonDown(ev(7)); await sleep(50); log.push(['L2 → search focused', document.activeElement?.tagName]);
   // Ⓐ: the penguin walks in, then RunGame
   town().__props.onOKButton(); await sleep(4500);
   log.push(['Ⓐ → RunGame', JSON.stringify(window.__runs)]);

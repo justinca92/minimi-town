@@ -30,9 +30,9 @@ import {
  *     "wheel":    the town street (replaces the original recent-games area)
  *     "sections": the original home's lower sections (What's New, Friends, Recommended…)
  *   (the screen is still called "wheel" internally; the switching code is shared with Spindeck)
- *   wheel    → R1 (TownPage): the sections slide in from the right → sections
- *   sections → Ⓑ, ▲ from the top row, or a swipe to the right       → wheel
- *   (a popup Steam opens inside the sections keeps Steam's own Ⓑ)
+ *   wheel    → R2 (TownPage): the sections slide in from the right → sections
+ *   sections → L2, ▲ from the top row, or a swipe to the right      → wheel
+ *   sections → Ⓑ: to the top of the sections; at the top, Steam's own Ⓑ (Steam menu)
  */
 export function HomeSwitch({ original }: { original: ReactNode }) {
   // Other plugins patch the home route too, and some of them (SteamGridDB's
@@ -453,8 +453,12 @@ function WheelHome({ original }: { original: ReactNode }) {
   useEffect(() => {
     const el = sections.current;
     if (!el) return;
-    el.addEventListener("vgp_onbuttondown", onUp, true);
-    return () => el.removeEventListener("vgp_onbuttondown", onUp, true);
+    const onCapture = (e: any) => {
+      onUp(e);
+      if (e?.detail?.button === GamepadButton.TRIGGER_LEFT) latestSectionsButton.current(e);
+    };
+    el.addEventListener("vgp_onbuttondown", onCapture, true);
+    return () => el.removeEventListener("vgp_onbuttondown", onCapture, true);
   }, []);
 
   /** Focus moving inside the home: catches ▲ that Steam handled itself. */
@@ -483,14 +487,35 @@ function WheelHome({ original }: { original: ReactNode }) {
     else toSections();
   };
 
-  /** Ⓑ on the sections screen: back to the street (it opened like a page to the right). */
+  /**
+   * On the sections screen: L2 goes back to the street (it opened like a page
+   * to the right with R2). Ⓑ works like the stock home: first to the top of the
+   * sections, then Steam's own Ⓑ (the Steam menu). Handled from the capture
+   * listener and the Focusable both; each press only once.
+   */
+  const seenBtn = useRef(new WeakSet<object>());
+  const latestSectionsButton = useRef<(e: any) => void>(() => {});
   const onSectionsButton = (e: any) => {
-    if (e?.detail?.button !== GamepadButton.CANCEL || screenRef.current !== "sections") return;
+    if (screenRef.current !== "sections" || !e?.detail) return;
+    if (seenBtn.current.has(e)) return;
+    const b = e.detail.button;
+    if (b === GamepadButton.TRIGGER_LEFT) {
+      seenBtn.current.add(e);
+      if (focusInOverlay(sections.current) || e.detail.is_repeat) return;
+      e.preventDefault?.();
+      e.stopPropagation?.();
+      toWheel();
+      return;
+    }
+    if (b !== GamepadButton.CANCEL) return;
+    seenBtn.current.add(e);
     if (focusInOverlay(sections.current)) return; // popup open: Ⓑ closes it (Steam)
+    if (atTopOfSections(sections.current)) return; // at the top: Steam's turn (Steam menu)
     e.preventDefault?.();
     e.stopPropagation?.();
-    toWheel();
+    revealSections(sections.current);
   };
+  latestSectionsButton.current = onSectionsButton;
 
   // Touch swipes (the container itself never scrolls).
   useEffect(() => {

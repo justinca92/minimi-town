@@ -81,8 +81,8 @@ const ko = {
   controls: [
     ["◀ ▶", "건물 이동"],
     ["Ⓐ", "실행 (펭귄이 문으로 들어가요)"],
-    ["L1", "검색"],
-    ["R1", "새 소식 · 친구 · 추천"],
+    ["L2", "검색"],
+    ["R2", "새 소식 · 친구 · 추천 (L2로 복귀)"],
     ["≡", "게임 메뉴"],
     ["Ⓨ", "흔들기"],
     ["터치", "펭귄 잡아 던지기 · 콕콕 · 쓰다듬기"],
@@ -166,8 +166,8 @@ const en: Strings = {
   controls: [
     ["◀ ▶", "Move along the street"],
     ["Ⓐ", "Play (the penguin goes in)"],
-    ["L1", "Search"],
-    ["R1", "What's New · Friends · Recommended"],
+    ["L2", "Search"],
+    ["R2", "What's New · Friends · Recommended (L2 back)"],
     ["≡", "Game menu"],
     ["Ⓨ", "Shake"],
     ["Touch", "Grab & fling, poke, pet the penguin"],

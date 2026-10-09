@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.1.2
+
+- Triggers instead of bumpers: L2 = search, R2 = What's New / Friends / Recommended. L1 / R1 are left to Steam (they switch the tabs there).
+- On the sections page, L2 goes back to the street.
+- Ⓑ on the sections works like the stock home again: first to the top, then Steam's menu.
+
 ## 0.1.1
 
 - Fixed: the street could show only the sky and the road, with no buildings and no penguin. Steam runs plugin code in a separate window with its own clock; the first frame got a huge negative time step and threw the camera away. The street now uses the clock of the window it draws in, and a bad frame can no longer move the camera or the penguin off to infinity.

@@ -3,7 +3,7 @@ import * as ReactDOMClient from "/opt/npm-tools/node_modules/react-dom/client.js
 let patchFn;
 window.SP_REACT = React;
 const h = React.createElement;
-const B = { OK: 1, CANCEL: 2, SECONDARY: 3, OPTIONS: 4, BUMPER_LEFT: 5, BUMPER_RIGHT: 6, DIR_UP: 9, DIR_DOWN: 10, DIR_LEFT: 11, DIR_RIGHT: 12, START: 14, LPAD_TOUCH: 19, LPAD_CLICK: 20, RPAD_TOUCH: 21, RPAD_CLICK: 22 };
+const B = { OK: 1, CANCEL: 2, SECONDARY: 3, OPTIONS: 4, BUMPER_LEFT: 5, BUMPER_RIGHT: 6, TRIGGER_LEFT: 7, TRIGGER_RIGHT: 8, DIR_UP: 9, DIR_DOWN: 10, DIR_LEFT: 11, DIR_RIGHT: 12, START: 14, LPAD_TOUCH: 19, LPAD_CLICK: 20, RPAD_TOUCH: 21, RPAD_CLICK: 22 };
 window.__focusables = [];
 function Focusable(props) {
   if (location.hash === "#crash" && props.onOptionsButton) throw new Error("simulated Steam change");

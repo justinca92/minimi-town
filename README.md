@@ -18,9 +18,10 @@
 |---|---|
 | D-pad ◀ ▶ | Move along the street |
 | Ⓐ | Play (the penguin goes in). Not installed: opens the game's page to install |
-| L1 | Search, like ▲ on the stock home |
-| R1 | What's New / Friends / Recommended (Steam's own sections), sliding in from the right |
-| Ⓑ there (or swipe right) | Back to the street |
+| L2 | Search, like ▲ on the stock home |
+| R2 | What's New / Friends / Recommended (Steam's own sections), sliding in from the right |
+| L2 there (or swipe right) | Back to the street |
+| Ⓑ there | To the top of the sections; at the top, Steam's menu (like the stock home) |
 | ≡ | Steam's game menu (Play, Properties, …) |
 | Ⓨ | Shake the street |
 | Touchscreen | Swipe to move, double-tap to play, grab / poke / pet the penguin |
@@ -51,7 +52,7 @@ Built on Spindeck's home-screen plumbing. The penguin, the buildings and every p
 
 **스팀덱 라이브러리를 작은 거리로.** 게임 하나가 가게 하나이고, 아기 펭귄이 고른 가게 앞까지 걸어가요. Ⓐ를 누르면 문 앞으로 뒤뚱뒤뚱 걸어가 뒤돌아 들어가고 게임이 시작돼요. 게임을 끄면 하품하며 다시 나와요.
 
-- **조작:** ◀ ▶ 이동 · Ⓐ 실행 · L1 검색 · R1 새 소식·친구·추천(오른쪽에서 밀려 들어옴, Ⓑ로 복귀) · ≡ 게임 메뉴 · Ⓨ 흔들기 · 터치로 펭귄 잡아 던지기/콕콕/쓰다듬기
+- **조작:** ◀ ▶ 이동 · Ⓐ 실행 · L2 검색 · R2 새 소식·친구·추천(오른쪽에서 밀려 들어옴, L2로 복귀) · ≡ 게임 메뉴 · Ⓨ 흔들기 · 터치로 펭귄 잡아 던지기/콕콕/쓰다듬기
 - **테마:** 미니미 타운(시간 따라 바뀌는 하늘) / 네온 레인 시티(비 오는 밤, CRT 화면)
 - **플레이 시간 등급:** 100시간 단골 · 200시간 명소 · 500시간 전설 건물이 점점 화려해져요
 - **설정:** Quick Access(…) → Minimi Town
