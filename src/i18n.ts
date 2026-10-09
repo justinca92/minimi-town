@@ -27,7 +27,7 @@ const ko = {
     days <= 0 ? "오늘" : days === 1 ? "어제" : days < 7 ? `${days}일 전` : days < 30 ? `${Math.floor(days / 7)}주 전` : days < 365 ? `${Math.floor(days / 30)}개월 전` : `${Math.floor(days / 365)}년 전`,
   friendsPlaying: (n: number) => `${n}명 플레이 중`,
   hours: (h: number) => `총 ${h}시간`,
-  tiers: ["", "단골", "명소", "전설"],
+  tiers: ["", "단골", "인기", "명소", "명물", "전설"],
   // buttons
   play: "게임 페이지",
   install: "설치",
@@ -127,7 +127,7 @@ const en: Strings = {
     days <= 0 ? "TODAY" : days === 1 ? "YESTERDAY" : days < 7 ? `${days} DAYS AGO` : days < 30 ? `${Math.floor(days / 7)} WK AGO` : days < 365 ? `${Math.floor(days / 30)} MO AGO` : `${Math.floor(days / 365)} YR AGO`,
   friendsPlaying: (n) => `${n} PLAYING`,
   hours: (h) => `${h} h total`,
-  tiers: ["", "Regular", "Landmark", "Legend"],
+  tiers: ["", "Regular", "Popular", "Landmark", "Icon", "Legend"],
   play: "Game page",
   install: "Install",
   menu: "Menu",

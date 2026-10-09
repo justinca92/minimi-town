@@ -10,7 +10,7 @@
 - **The name is on the shop.** Each storefront's sign carries the game's name. Press Ⓧ and the shop's screen turns round to show the game's icon, playtime, last played, achievements and friends playing.
 - **Buildings tell you what's going on.** Recently played (an OPEN sign and a plant by the door), new (GRAND OPENING: a ribbon banner, flower stands and balloons), not installed (shutter and CLOSED sign), downloading (scaffolding with a progress banner), not played for months (dust and cobwebs; in Neon Rain City a run-down shop with cracked, boarded windows and a dying neon tube).
 - **Achievement medals.** 50% bronze, 80% silver, 100% gold (with a PERFECT ribbon) on the storefront screen's corner.
-- **Playtime tiers.** 100 h+ *Regular*, 200 h+ *Landmark* and 500 h+ *Legend* storefronts get fancier: gold trim and flower boxes, string lights, flags and searchlights, then a golden dome and a red carpet. Each theme has its own version.
+- **Playtime tiers.** 100 h *Regular*, 150 h *Popular*, 200 h *Landmark*, 350 h *Icon* and 500 h *Legend*: each adds something (gold trim and flower boxes, string lights, a flag and searchlights, a golden dome, a red carpet). Each theme has its own version.
 - **Two themes.** *Minimi Town*, a sunny street whose sky follows the clock, and *Neon Rain City*, always a rainy night, with wet-street reflections, neon signs and CRT storefront screens.
 - **A penguin with moods.** It follows you along the street, sprints if you rush, trips sometimes, and arrives out of breath. Poke it, fling it into a wall, or pet it with the touchscreen. Bother it too much and it sulks in an alley until you cheer it up.
 
@@ -58,7 +58,7 @@ Built on Spindeck's home-screen plumbing. The penguin, the buildings and every p
 
 - **조작:** ◀ ▶ 이동 · Ⓐ 게임 페이지 · Ⓧ 게임 정보(화면이 뒤집혀요) · L2 검색 · R2 새 소식·친구·추천(오른쪽에서 밀려 들어옴, L2로 복귀) · ≡ 게임 메뉴 · Ⓨ 흔들기 · 왼쪽 트랙패드로 펭귄 쓰다듬기/잡기/던지기 · 터치로 펭귄 잡아 던지기/콕콕/쓰다듬기
 - **테마:** 미니미 타운(시간 따라 바뀌는 하늘) / 네온 레인 시티(비 오는 밤, CRT 화면)
-- **플레이 시간 등급:** 100시간 단골 · 200시간 명소 · 500시간 전설 건물이 점점 화려해져요
+- **플레이 시간 등급:** 100시간 단골 · 150시간 인기 · 200시간 명소 · 350시간 명물 · 500시간 전설, 단계마다 건물이 하나씩 화려해져요
 - **설정:** Quick Access(…) → Minimi Town
 - **설치:** Decky 개발자 모드 → URL 또는 ZIP으로 설치. Spindeck을 같이 쓴다면 Spindeck의 홈 교체를 꺼 주세요.
 - 지우면 아무것도 남지 않아요. Steam 설정·컨트롤러 레이아웃·파일을 건드리지 않아요.

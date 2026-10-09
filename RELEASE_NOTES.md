@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.36
+
+- Five playtime tiers instead of three, each adding one more thing so a building grows step by step: 100h 단골 Regular (gold trim, flower boxes), 150h 인기 Popular (string lights; Neon: chase lights around the screen), 200h 명소 Landmark (a flag, searchlights, a frame), 350h 명물 Icon (the golden dome; Neon: the spinning crown sign), 500h 전설 Legend (red carpet, sparkles, everything in gold).
+
 ## 0.1.35
 
 - Achievement medals: a game's storefront screen wears a medal on its top-right corner once you've unlocked 50% of its achievements (bronze), 80% (silver) or all of them (gold, with a laurel, a PERFECT ribbon and sparkles). Neon Rain City gets neon-rimmed medals. Playtime tiers still decide how grand the building itself is. The medal is pinned to the screen's frame, so it turns with the screen when you press Ⓧ, and on the back the achievement row takes the medal's colour. It swings harder when you shake the street (Ⓨ).
