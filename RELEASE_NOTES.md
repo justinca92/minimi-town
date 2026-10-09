@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.19
+
+- Rest on a shop for 3 seconds and its storefront screen turns round to show the game's info on the back: icon and name, playtime, last played, achievements (with a progress bar) and friends playing. Move on and it turns back. A cream card in Minimi Town, a neon CRT card in Neon Rain City; works with both wide and tall screens.
+
 ## 0.1.18
 
 - Shop signs show the game's name instead of the info icons (shrinks to fit, ends in "…" when it's very long): neon lettering in Neon Rain City, painted on the signboard in Minimi Town.

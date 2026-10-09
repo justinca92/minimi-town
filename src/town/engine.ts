@@ -16,6 +16,13 @@ export interface TownGame {
   art: string[];      // wide art candidates (header / wide capsule), first that loads wins
   capsule: string[];  // tall library capsule candidates
   icon?: string[];    // the game's square icon (neon blade sign)
+  info?: TownInfo;    // the icon info row on the shop's sign
+}
+export interface TownInfo {
+  play: string;            // playtime ("" while unknown)
+  last: string | null;     // last played ("2 days ago")
+  ach: [number, number] | null; // achievements unlocked / total
+  friends: string | null;  // friends in game right now
 }
 export interface TownHost {
   lang: "ko" | "en";
@@ -80,6 +87,16 @@ function loadIcon(b){
   im.onerror=()=>{b.iconLoading=false;loadIcon(b)};
   im.src=url;
 }
+// Spindeck's info icons (24×24 line art), drawn on the shop signs.
+const ICON_SRC={clock:['M21 12a9 9 0 1 1-18 0a9 9 0 1 1 18 0','M12 7v5l3 2'],recent:['M3 12a9 9 0 1 0 3-6.7','M3 4v5h5','M12 8v4l2.5 2.5'],
+  trophy:['M8 4h8v5a4 4 0 0 1-8 0z','M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4','M12 13v4M9 20h6'],
+  friends:['M12.2 9a3.2 3.2 0 1 1-6.4 0a3.2 3.2 0 1 1 6.4 0','M3.5 19a5.5 5.5 0 0 1 11 0','M19.6 10a2.6 2.6 0 1 1-5.2 0a2.6 2.6 0 1 1 5.2 0','M15.5 14.6A4.5 4.5 0 0 1 21 19']};
+let ICONS=null;
+function infoIcon(c,k,x,y,sz,col){
+  if(!ICONS){const P=view.Path2D||Path2D;ICONS={};for(const n in ICON_SRC)ICONS[n]=ICON_SRC[n].map(d=>new P(d))}
+  c.save();c.translate(x,y-sz/2);c.scale(sz/24,sz/24);c.strokeStyle=col;c.lineWidth=2.3;c.lineCap='round';c.lineJoin='round';ICONS[k].forEach(p=>c.stroke(p));c.restore();
+}
+const INFO_FONT='"Motiva Sans","Noto Sans CJK KR","Noto Sans KR",sans-serif';
 /** The game's name on a shop sign: shrinks to fit, then ends in "…". */
 function signName(c,t,cx,cy,maxW,size,font){
   let fs=size;c.font=fs+'px '+font;while(c.measureText(t).width>maxW&&fs>12){fs--;c.font=fs+'px '+font}
@@ -94,6 +111,38 @@ function loadArt(b){
   im.onload=()=>{b.imgLoading=false;if(im.naturalWidth>8){b.img=im;b.card=null}else loadArt(b)};
   im.onerror=()=>{b.imgLoading=false;loadArt(b)};
   im.src=url;
+}
+/** The back of the storefront screen: the game's info, shown when you rest on a shop. */
+function infoKey(b){const i=b.game.info;return i?[i.play,i.last,i.ach&&i.ach.join('/'),i.friends,!!b.icon,cardStyle,theme].join('|'):''}
+function renderBack(b){
+  const i=b.game.info,cc=view.document.createElement('canvas'),k=2;cc.width=CW*k;cc.height=CH*k;const c=cc.getContext('2d');c.scale(k,k);
+  const ink=Z?'#e9fbff':'#3a3036',sub=Z?b.neon:shade(b.g.tr,-.2),acc=Z?b.neon:'#ffb938',fr=Z?'#4dff9a':'#3f8f2a';
+  c.save();rr(c,0,0,CW,CH,10);c.clip();
+  if(Z){c.fillStyle='#0d0b16';c.fillRect(0,0,CW,CH);const g=c.createRadialGradient(CW/2,CH/2,10,CW/2,CH/2,CW*.7);g.addColorStop(0,hexA(b.neon,.16));g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.fillRect(0,0,CW,CH)}
+  else{c.fillStyle='#fbf4e4';c.fillRect(0,0,CW,CH);c.fillStyle=hexA(b.g.tr,.12);c.fillRect(0,0,CW,4)}
+  c.restore();
+  if(!Z){c.strokeStyle=shade(b.g.tr,-.2);c.lineWidth=2;rr(c,4,4,CW-8,CH-8,8);c.stroke()}
+  const wide=cardStyle!=='capsule',pad=wide?14:12,isz=wide?30:40;
+  // header: icon + name
+  let y=pad;const ix=wide?pad:(CW-isz)/2;
+  if(b.icon){c.save();rr(c,ix,y,isz,isz,6);c.clip();c.drawImage(b.icon,ix,y,isz,isz);c.restore()}
+  else{c.fillStyle=sub;rr(c,ix,y,isz,isz,6);c.fill()}
+  c.fillStyle=ink;c.textBaseline='middle';
+  const nx=wide?ix+isz+10:CW/2,nw=wide?CW-nx-pad:CW-2*pad;let fs=wide?21:18,name=b.g.t;c.font=`${fs}px ${DISPLAY}`;
+  while(c.measureText(name).width>nw&&fs>12){fs--;c.font=`${fs}px ${DISPLAY}`}
+  if(c.measureText(name).width>nw){while(name.length>1&&c.measureText(name+'…').width>nw)name=name.slice(0,-1);name=name.trimEnd()+'…'}
+  c.textAlign=wide?'left':'center';c.fillText(name,nx,wide?y+isz/2+1:y+isz+16);
+  y=wide?y+isz+10:y+isz+34;
+  c.fillStyle=hexA(Z?b.neon:'#3a3036',.25);c.fillRect(pad,y,CW-2*pad,1.5);y+=wide?8:10;
+  // rows
+  const rows=[];if(i.play)rows.push(['clock',i.play,ink]);if(i.last)rows.push(['recent',i.last,ink]);if(i.ach)rows.push(['trophy',i.ach[0]+'/'+i.ach[1],ink,i.ach[0]/i.ach[1]]);if(i.friends)rows.push(['friends',i.friends,fr]);
+  const fsz=wide?15:15,rh=wide?24:27;c.font=`700 ${fsz}px ${INFO_FONT}`;c.textAlign='left';
+  const cells=wide?rows.map((r,k)=>[pad+(k%2)*((CW-2*pad)/2),y+rh/2+Math.floor(k/2)*rh,(CW-2*pad)/2-8]):rows.map((r,k)=>[pad+4,y+rh/2+k*rh,CW-2*pad-8]);
+  rows.forEach(([ic,t,col,pr],k)=>{const [x,cy,w]=cells[k];if(cy>CH-6)return;infoIcon(c,ic,x,cy,fsz*1.2,Z?sub:col===fr?fr:sub);c.fillStyle=col;
+    let tt=t;const tw=w-fsz*1.2-6-(pr!==undefined?(wide?34:50):0);while(tt.length>1&&c.measureText(tt).width>tw)tt=tt.slice(0,-1);c.fillText(tt,x+fsz*1.2+6,cy+1);
+    if(pr!==undefined){const bw=wide?30:46,bx=x+w-bw;c.fillStyle=hexA(Z?'#ffffff':'#3a3036',.18);rr(c,bx,cy-2.5,bw,5,2.5);c.fill();c.fillStyle=acc;rr(c,bx,cy-2.5,Math.max(5,bw*pr),5,2.5);c.fill()}});
+  if(!rows.length){c.fillStyle=sub;c.font=`700 ${fsz}px ${INFO_FONT}`;c.textAlign='center';c.fillText('—',CW/2,y+rh)}
+  b.back=cc;b.backKey=infoKey(b);
 }
 function renderCard(b){
   const g=b.g,cc=view.document.createElement('canvas'),k=2;cc.width=CW*k;cc.height=CH*k;const c=cc.getContext('2d');c.scale(k,k);
@@ -183,7 +232,7 @@ function makeBuilding(game,i){
 /** Keep bitmaps only near the camera. */
 function trimCaches(){
   const keep=6;
-  for(const b of B){const far=Math.abs(b.i-sel)>keep&&Math.abs(b.cx-camX)>keep*SP;if(far){b.fac=null;b.card=null;if(Math.abs(b.i-sel)>keep*3){b.img=null;b.imgTried=0;b.icon=null;b.iconTried=0}}}
+  for(const b of B){const far=Math.abs(b.i-sel)>keep&&Math.abs(b.cx-camX)>keep*SP;if(far){b.fac=null;b.card=null;b.back=null;if(Math.abs(b.i-sel)>keep*3){b.img=null;b.imgTried=0;b.icon=null;b.iconTried=0}}}
 }
 
 let sel=0,camX=0,tiltDeg=0,tiltSensor=null,skyMode=host.sky||'auto',longPlay=false,mode='browse';
@@ -297,7 +346,8 @@ function update(dt){
   const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*Math.PI/180;
   // doors ease open/closed; lights come on when you pick the building
   {const ci=Math.round(camX/SP),bi0=Math.max(0,ci-5),bi1=Math.min(B.length-1,ci+5);for(let i=bi0;i<=bi1;i++){const b=B[i];
-   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));const lt=((b.i===sel&&!rushing)||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*(lt?3:(rushing?12:2.5))));if(b.cele>0)b.cele-=dt}}
+   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));const ft=b.i===sel&&restT>3&&mode==='browse'&&!rushNow&&!!b.game.info?1:0;b.flip=(b.flip||0)+Math.sign(ft-(b.flip||0))*Math.min(Math.abs(ft-(b.flip||0)),dt/(ft?.6:.35));
+   const lt=((b.i===sel&&!rushing)||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*(lt?3:(rushing?12:2.5))));if(b.cele>0)b.cele-=dt}}
   // mood regen
   if(T-lastBother>5&&mood<70){mood=Math.min(70,mood+dt*1.1)}
   // timers
@@ -638,13 +688,16 @@ function drawBuilding(b,sk,ox){
   premiumBack(b,left,top,sk);
   // card (the readable part)
   const cs=isSel?1.05:1,cxp=left+L.card.x+CW/2,cyp=top+L.card.y+CH/2;
-  ctx.save();ctx.translate(cxp,cyp);ctx.scale(cs,cs);
+  const fa=(b.flip||0)*Math.PI,fx=Math.cos(fa),back=fx<0; // the screen turns round to show the info
+  if(back&&(!b.back||b.backKey!==infoKey(b)))renderBack(b);
+  ctx.save();ctx.translate(cxp,cyp-Math.sin(fa)*6);ctx.scale(cs*Math.max(.02,Math.abs(fx))*(1+Math.sin(fa)*.04),cs*(1+Math.sin(fa)*.04));
   if(isSel&&Z){ctx.save();ctx.fillStyle='#0d0b14';rr(ctx,-CW/2-5,-CH/2-5,CW+10,CH+10,13);ctx.fill();ctx.strokeStyle=b.neon;ctx.shadowColor=b.neon;ctx.shadowBlur=18;ctx.lineWidth=3;rr(ctx,-CW/2-8,-CH/2-8,CW+16,CH+16,15);ctx.stroke();ctx.restore()}
   else if(isSel){ctx.fillStyle='#fff';rr(ctx,-CW/2-5,-CH/2-5,CW+10,CH+10,13);ctx.fill();ctx.strokeStyle='rgba(255,185,56,.9)';ctx.lineWidth=3;rr(ctx,-CW/2-8,-CH/2-8,CW+16,CH+16,15);ctx.stroke()}
-  ctx.drawImage(b.card,-CW/2,-CH/2,CW,CH);
+  ctx.drawImage(back?b.back:b.card,-CW/2,-CH/2,CW,CH);
+  if(Math.abs(fx)<.999){ctx.fillStyle=`rgba(0,0,0,${(1-Math.abs(fx))*.35})`;rr(ctx,-CW/2,-CH/2,CW,CH,10);ctx.fill()}
   if(Z){ // neon theme: every storefront screen is a CRT
     const gl=isSel&&Math.sin(T*17+b.i)>.985?rnd(-6,6):0;
-    if(gl){ctx.save();ctx.globalAlpha=.45;ctx.globalCompositeOperation='lighter';ctx.drawImage(b.card,-CW/2+gl,-CH/2,CW,CH);ctx.restore()}
+    if(gl){ctx.save();ctx.globalAlpha=.45;ctx.globalCompositeOperation='lighter';ctx.drawImage(back?b.back:b.card,-CW/2+gl,-CH/2,CW,CH);ctx.restore()}
     ctx.save();rr(ctx,-CW/2,-CH/2,CW,CH,10);ctx.clip();
     ctx.fillStyle=hexA(b.neon,isSel?.08:.12);ctx.fillRect(-CW/2,-CH/2,CW,CH);
     ctx.fillStyle='rgba(0,0,0,.22)';for(let y=-CH/2+((T*24)%3);y<CH/2;y+=3)ctx.fillRect(-CW/2,y,CW,1.2);

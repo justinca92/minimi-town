@@ -56,3 +56,19 @@ export function friendsInGame(appid: number): number | null {
   }
 }
 
+/** Friends in game right now, by appid (null when the store can't be read). One pass for the whole street. */
+export function friendsPlayingMap(): Map<number, number> | null {
+  try {
+    const fs = store();
+    const list = fs ? friendsList(fs) : [];
+    if (!list.length) return null;
+    const m = new Map<number, number>();
+    for (const f of list) {
+      const id = playing(f);
+      if (id) m.set(id, (m.get(id) ?? 0) + 1);
+    }
+    return m;
+  } catch {
+    return null;
+  }
+}
