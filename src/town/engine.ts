@@ -273,13 +273,14 @@ function update(dt){
   if(!B.length){T+=dt;return}
   T+=dt;
   // camera
+  restT=selSeen===sel?restT+dt:0;selSeen=sel;const rushing=navRate()>=2&&restT<.18; // flicking through the street
   const tx=cur().cx;if(!isFinite(camX))camX=tx;if(!isFinite(m.x)||!isFinite(m.y)){m.x=standX(cur());m.y=FEET;m.vx=0;m.vy=0}
-  camX+= (tx-camX)*(1-Math.exp(-dt*6.5));camKick*=Math.exp(-dt*10);
+  camX+= (tx-camX)*(1-Math.exp(-dt*(rushing?11:6.5))); // the camera keeps up when you rush, so the street doesn't smearcamKick*=Math.exp(-dt*10);
   if(shakeT>0)shakeT-=dt;
   const tilt=(tiltSensor!==null?tiltSensor:tiltDeg)*Math.PI/180;
   // doors ease open/closed; lights come on when you pick the building
   {const ci=Math.round(camX/SP),bi0=Math.max(0,ci-5),bi1=Math.min(B.length-1,ci+5);for(let i=bi0;i<=bi1;i++){const b=B[i];
-   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));const lt=(b.i===sel||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*(lt?3:2.5)));if(b.cele>0)b.cele-=dt}}
+   b.door+=(b.doorTarget-b.door)*(1-Math.exp(-dt*14));const lt=((b.i===sel&&!rushing)||b.playing)?1:0;b.light+=(lt-b.light)*(1-Math.exp(-dt*(lt?3:(rushing?12:2.5))));if(b.cele>0)b.cele-=dt}}
   // mood regen
   if(T-lastBother>5&&mood<70){mood=Math.min(70,mood+dt*1.1)}
   // timers
@@ -435,7 +436,7 @@ function drawGun(glow){
   ctx.restore();
 }
 function afterBother(){if(mood<22)startSulk();else setState('idle')}
-function startSulk(){m.sulkKind=Math.random()<.5?'hide':'back';m.sulkIdx=sel;setState('sulk');say('흥.',1.4);
+function startSulk(){m.sulkKind='back';m.sulkIdx=sel;setState('sulk');say('흥.',1.4);
   if(m.sulkKind==='hide'){const b=cur();m.side=(m.x>b.cx)?1:-1}}
 function splatWall(side){setState('splatW');m.vx=0;m.vy=0;m.side2=side;m.rot=0;pop('퍽!',m.x+side*10,m.y-40,56);dust(m.x+side*20,m.y-30,8,1);bother(8);sfx('splat');buzz(40);shakeT=.25}
 function splatGround(){setState('splatG');m.vx=0;m.vy=0;m.rot=0;pop('퍽!',m.x,FEET-60,56);dust(m.x,FEET,12,1.3);bother(9);sfx('splat');buzz(50);shakeT=.3}
@@ -539,13 +540,14 @@ function drawRain(){
 const LAMP_TOP=SIDE-196;
 // The lamp whose head leans over the picked shop burns full; the rest are dimmed.
 // Levels ease, so the light follows you along the street.
+let restT=0,selSeen=-1;
 let LAMP_DIM=typeof host.lampDim==='number'?host.lampDim:.3;const lampLv=new Map();
 // How fast the light follows depends on how fast you browse: resting on a shop,
 // its lamp warms up slowly (~1 s); flicking through, the light keeps pace.
 let lampRate=2.2;
 function lampTick(dt){const nr=navRate(),want=clamp(2.2+Math.max(0,nr-1)*3,2.2,12);lampRate+=(want-lampRate)*(1-Math.exp(-dt*(want>lampRate?12:1.5)))}
-function lampLevel(i,dt){const want=i===sel-1?1:LAMP_DIM;let v=lampLv.get(i);if(v===undefined)v=want;
-  const r=want>v?lampRate:lampRate*1.3; // dimming a little quicker than warming up
+function lampLevel(i,dt){const want=i===sel-1&&restT>.12?1:LAMP_DIM;let v=lampLv.get(i);if(v===undefined)v=want;
+  const r=want>v?lampRate:(navRate()>=2?14:lampRate*1.3); // passed lamps drop at once while you rush
   v+=(want-v)*(1-Math.exp(-dt*r));lampLv.set(i,v);return v}
 function drawLamp(x,sk,front,i=0){
   const lit=Z||sk!=='day',lc=Z?(i%2?'#ff3fa4':'#3ff0ff'):'#ffd98a',pole=Z?'#0c0b12':'#2f2a36';

@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.1.13
+
+- The penguin no longer hides behind buildings when it sulks; it just sits with its back to you.
+- Flicking quickly through the street no longer leaves a trail of glowing shops and lamps behind: lights only come on once you rest on a shop, passed ones go dark at once, and the camera keeps up with you.
+
 ## 0.1.12
 
 - Ⓐ always gets you in: a sulking or grumpy penguin grumbles ("Hmph… fine, I'm going.") but still walks in, and if it's mid-tumble (flung, dizzy, shooting) it goes as soon as it's back on its feet.
