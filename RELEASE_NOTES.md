@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.1.23
+
+- Flicking fast through the street: the penguin falls behind and drops out of the frame once, instead of being dragged along the screen edge (the ghost trail). No edge marker while you flick; about half a second after you stop it runs back in from the edge.
+
 ## 0.1.22
 
 - The flower stands' ribbon reads GRATZ in English.

@@ -339,7 +339,7 @@ function update(dt){
   if(!B.length){T+=dt;return}
   T+=dt;
   // camera
-  restT=selSeen===sel?restT+dt:0;selSeen=sel;const rushing=navRate()>=2&&restT<.18;rushNow=navRate()>=2; // flicking through the street
+  restT=selSeen===sel?restT+dt:0;selSeen=sel;const rushing=navRate()>=2&&restT<.18;rushNow=navRate()>=2&&restT<.3; // while you flick, the penguin may fall behind off-screen (no clinging to the edge) // flicking through the street
   const tx=cur().cx;if(!isFinite(camX))camX=tx;if(!isFinite(m.x)||!isFinite(m.y)){m.x=standX(cur());m.y=FEET;m.vx=0;m.vy=0}
   camX+= (tx-camX)*(1-Math.exp(-dt*(rushing?11:6.5))); // the camera keeps up when you rush, so the street doesn't smearcamKick*=Math.exp(-dt*10);
   if(shakeT>0)shakeT-=dt;
@@ -375,7 +375,7 @@ function update(dt){
       else target=m.x;
     }
     const dist=target-m.x,ad=Math.abs(dist);
-    if(ad>900){m.x=target-Math.sign(dist)*900}
+    if(ad>900&&!rushNow){m.x=target-Math.sign(dist)*900}
     const th=(s==='move'||s==='goDoor'||s==='sulk')?3:14; // idle needs a real gap before it sets off again
     if(ad>th){
       const nr=navRate();let mode2=(ad>420||nr>=3)?'sprint':(ad>160||nr>=2)?'run':'walk';
@@ -401,8 +401,8 @@ function update(dt){
       if(s==='idle'&&m.t>3.5&&mode==='browse')setState('sit');
     }
     m.x+=m.vx*dt;m.phase+=Math.abs(m.vx)*dt*.055;
-    if(rushNow&&(s==='move'||s==='idle')){const lo=camX-640+90,hi=camX+640-90; // keep up with the camera: never cling to the edge
-      if(m.x<lo){m.x=lo;if(m.vx<0)m.vx=0}else if(m.x>hi){m.x=hi;if(m.vx>0)m.vx=0}}
+    // flicking faster than it can run: once it has dropped out of the frame it stays out (no peeking at the edge)
+    if(rushNow&&(s==='move'||s==='idle')){const Lh=camX-640-60,Rh=camX+640+60;if(m.hidRush||m.x<Lh+30||m.x>Rh-30){m.hidRush=true;m.x=m.x<camX?Math.min(m.x,Lh):Math.max(m.x,Rh)}}else m.hidRush=false;
   }
   else if(s==='sit'){m.vx=0;m.lookUp=clamp((m.t-1.1)*2,0,1);if(Math.abs(standX(b)-m.x)>4)setState('move');if(m.t>12&&m.sleepyT<=0&&Math.random()<dt*.15)m.sleepyT=3}
   else if(s==='brace'){m.vx=0;m.dir=1;if(m.t>.6&&!m.braceOpen){m.braceOpen=true;b.doorTarget=1;sfx('door');shakeT=.12;buzz(25)}if(m.t>1.15){m.braceOpen=false;setState('enter')}}
@@ -457,7 +457,7 @@ function update(dt){
   // left behind off-screen (you browsed faster than it can run): after a moment it pops in at the
   // edge already running, so it's never gone for more than a fraction of a second
   {const L=camX-640,Rr=camX+640,off=m.x<L-30||m.x>Rr+30,can=['idle','move','sit','sulk','react','cheer','goDoor','trip','getup'].includes(m.state)&&!m.behind;
-   m.offT=off&&can?(m.offT||0)+dt:0;
+   m.offT=off&&can&&!rushNow?(m.offT||0)+dt:0; // pops back in once you stop, not while you're still flicking
    if(m.offT>.3){const side=m.x<camX?-1:1;m.x=camX+side*(640+28);m.y=FEET;m.rot=0;m.alpha=1;m.scale=1;m.dir=-side;m.fdir=-side;m.vx=-side*760;m.sprintT=0;m.stamina=1;m.tripCD=Math.max(m.tripCD,2);m.offT=0;
      if(m.state==='sulk'||m.state==='sit'||m.state==='react'||m.state==='cheer'){m.y=FEET;setState('move')}}}
   // sulk check / unsulk
@@ -1091,7 +1091,7 @@ function drawFrame(){
   ctx.restore();
   if(holes.length||flashT>0||beamT>0)drawHoles();
   // off-screen marker
-  const msx=m.x+ox;if(m.state!=='inside'&&(msx<-20||msx>W+20)){const side=msx<0?-1:1,x=side<0?34:W-34,y=FEET-40;ctx.fillStyle='rgba(22,17,30,.8)';ell(ctx,x,y,24,24);ctx.fill();ctx.fillStyle=Z?'#4b5249':'#33405e';ell(ctx,x,y+2,16,15);ctx.fill();ctx.fillStyle='#fff';ell(ctx,x-4,y+1,6,6);ctx.fill();ell(ctx,x+4,y+1,6,6);ctx.fill();ctx.fillStyle='#26283a';ell(ctx,x-4,y,1.8,2.4);ctx.fill();ell(ctx,x+4,y,1.8,2.4);ctx.fill();ctx.fillStyle='#ff9d3a';ell(ctx,x,y+6,3,2);ctx.fill();ctx.fillStyle='#ffb938';ctx.beginPath();ctx.moveTo(x+side*30,y);ctx.lineTo(x+side*22,y-7);ctx.lineTo(x+side*22,y+7);ctx.fill()}
+  const msx=m.x+ox;if(m.state!=='inside'&&!rushNow&&(msx<-20||msx>W+20)){const side=msx<0?-1:1,x=side<0?34:W-34,y=FEET-40;ctx.fillStyle='rgba(22,17,30,.8)';ell(ctx,x,y,24,24);ctx.fill();ctx.fillStyle=Z?'#4b5249':'#33405e';ell(ctx,x,y+2,16,15);ctx.fill();ctx.fillStyle='#fff';ell(ctx,x-4,y+1,6,6);ctx.fill();ell(ctx,x+4,y+1,6,6);ctx.fill();ctx.fillStyle='#26283a';ell(ctx,x-4,y,1.8,2.4);ctx.fill();ell(ctx,x+4,y,1.8,2.4);ctx.fill();ctx.fillStyle='#ff9d3a';ell(ctx,x,y+6,3,2);ctx.fill();ctx.fillStyle='#ffb938';ctx.beginPath();ctx.moveTo(x+side*30,y);ctx.lineTo(x+side*22,y-7);ctx.lineTo(x+side*22,y+7);ctx.fill()}
 }
 
 
